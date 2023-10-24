@@ -1,0 +1,70 @@
+#
+# This file describes the "Port" product
+#
+config:
+  create_summary_forms: false
+  send_email: false
+name: node
+type: Node
+tag: NODE
+description: "Network node"
+fixed_inputs:
+  - name: node_type
+    type: enum
+    description: "type of node"
+    enum_type: str
+    values:
+      - "Cisco"
+      - "Nokia"
+product_blocks:
+  - name: node
+    type: Node
+    tag: NODE
+    description: "node product block"
+    fields:
+      - name: role
+        description: "Role of the node in the network"
+        type: str
+        required: inactive
+        modifiable:
+      - name: type
+        description: "Type of the node"
+        type: str
+        required: inactive
+        modifiable:
+      - name: site
+        description: "Site where the node is located"
+        type: str
+        required: inactive
+        modifiable:
+      - name: status
+        description: "Operational status of the node"
+        type: str
+        required: inactive
+        modifiable:
+      - name: node_name
+        description: "Unique name of the node"
+        type: str
+        # required: inactive  # not needed by NetBox
+        modifiable:
+      - name: node_description
+        description: "Description of the node"
+        type: str
+        # required: inactive  # not needed by NetBox
+        modifiable:
+      - name: ims_id
+        description: "ID of the node in the inventory management system"
+        type: int
+        required: active
+      - name: nrm_id
+        type: int
+        description: "ID of the node in the network resource manager"
+        required: active
+      - name: ipv4_ipam_id
+        type: int
+        description: "ID of the node’s iPv4 loopback address in IPAM"
+        required: active
+      - name: ipv6_ipam_id
+        type: int
+        description: "ID of the node’s iPv6 loopback address in IPAM"
+        required: active

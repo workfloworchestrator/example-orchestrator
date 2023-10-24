@@ -1,0 +1,1 @@
+{"forms": {"fields": {}}, "workflow": {"create_node": "Create node", "modify_node": "Modify node", "validate_node": "Validate node", "terminate_node": "Terminate node", "create_port": "Create port", "modify_port": "Modify port", "validate_port": "Validate port", "terminate_port": "Terminate port"}}
