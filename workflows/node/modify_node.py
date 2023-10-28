@@ -3,7 +3,7 @@ from collections.abc import Generator
 import structlog
 from orchestrator.domain import SubscriptionModel
 from orchestrator.forms import FormPage
-from orchestrator.forms.validators import Divider, MigrationSummary
+from orchestrator.forms.validators import Divider, MigrationSummary, OrganisationId
 from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
@@ -30,7 +30,7 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
     # TODO fill in additional fields if needed
 
     class ModifyNodeForm(FormPage):
-        # organisation: OrganisationId = subscription.customer_id  # type: ignore
+        organisation: OrganisationId = subscription.customer_id  # type: ignore
 
         divider_1: Divider
 
@@ -38,10 +38,10 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
         nrm_id: int = ReadOnlyField(node.nrm_id)
         ipv4_ipam_id: int = ReadOnlyField(node.ipv4_ipam_id)
         ipv6_ipam_id: int = ReadOnlyField(node.ipv6_ipam_id)
-        role: str = node.role
-        type: str = node.type
-        site: str = node.site
-        status: str = node.status
+        role_id: int = node.role_id
+        type_id: int = node.type_id
+        site_id: int = node.site_id
+        node_status: str = node.node_status
         node_name: str = node.node_name
         node_description: str = node.node_description
 
@@ -55,10 +55,10 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
 
 def create_summary_form(user_input: dict, subscription: Node) -> Generator:
     product_summary_fields = [
-        "role",
-        "type",
-        "site",
-        "status",
+        "role_id",
+        "type_id",
+        "site_id",
+        "node_status",
         "node_name",
         "node_description",
         "ims_id",
@@ -92,18 +92,18 @@ def create_summary_form(user_input: dict, subscription: Node) -> Generator:
 @step("Update subscription")
 def update_subscription(
     subscription: NodeProvisioning,
-    role: str,
-    type: str,
-    site: str,
-    status: str,
+    role_id: int,
+    type_id: int,
+    site_id: int,
+    node_status: str,
     node_name: str,
     node_description: str,
 ) -> State:
     # TODO: get all modified fields
-    subscription.node.role = role
-    subscription.node.type = type
-    subscription.node.site = site
-    subscription.node.status = status
+    subscription.node.role_id = role_id
+    subscription.node.type_id = type_id
+    subscription.node.site_id = site_id
+    subscription.node.node_status = node_status
     subscription.node.node_name = node_name
     subscription.node.node_description = node_description
     return {"subscription": subscription}

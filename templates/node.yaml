@@ -22,22 +22,22 @@ product_blocks:
     tag: NODE
     description: "node product block"
     fields:
-      - name: role
-        description: "Role of the node in the network"
-        type: str
+      - name: role_id
+        description: "ID in CMDB of role of the node in the network"
+        type: int
         required: inactive
         modifiable:
-      - name: type
-        description: "Type of the node"
-        type: str
+      - name: type_id
+        description: "ID in CMDB of type of the node"
+        type: int
         required: inactive
         modifiable:
-      - name: site
-        description: "Site where the node is located"
-        type: str
+      - name: site_id
+        description: "ID in CMDB of site where the node is located"
+        type: int
         required: inactive
         modifiable:
-      - name: status
+      - name: node_status
         description: "Operational status of the node"
         type: str
         required: inactive

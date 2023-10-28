@@ -1,8 +1,8 @@
 """Add node product.
 
-Revision ID: c580416cfd12
+Revision ID: a84ca2e5e4db
 Revises: a77227fe5455
-Create Date: 2023-10-24 15:39:47.037726
+Create Date: 2023-10-27 11:25:40.994878
 
 """
 from uuid import uuid4
@@ -18,7 +18,7 @@ from orchestrator.migrations.helpers import (
 from orchestrator.targets import Target
 
 # revision identifiers, used by Alembic.
-revision = "c580416cfd12"
+revision = "a84ca2e5e4db"
 down_revision = "a77227fe5455"
 branch_labels = None
 depends_on = None
@@ -59,12 +59,12 @@ new_products = {
             "tag": "NODE",
             "status": "active",
             "resources": {
+                "role_id": "ID in CMDB of role of the node in the network",
+                "type_id": "ID in CMDB of type of the node",
+                "site_id": "ID in CMDB of site where the node is located",
+                "node_status": "Operational status of the node",
                 "node_name": "Unique name of the node",
-                "role": "Role of the node in the network",
                 "node_description": "Description of the node",
-                "type": "Type of the node",
-                "site": "Site where the node is located",
-                "status": "Operational status of the node",
                 "ims_id": "ID of the node in the inventory management system",
                 "nrm_id": "ID of the node in the network resource manager",
                 "ipv4_ipam_id": "ID of the node’s iPv4 loopback address in IPAM",

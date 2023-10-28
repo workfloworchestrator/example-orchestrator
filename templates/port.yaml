@@ -1,0 +1,53 @@
+#
+# This file describes the "Node" product
+#
+config:
+  create_summary_forms: false
+name: port
+type: Port
+tag: PORT
+description: "Network port"
+fixed_inputs:
+  - name: speed
+    type: int
+    description: "speed of the port"
+product_blocks:
+  - name: port
+    type: Port
+    tag: PORT
+    description: "port product block"
+    fields:
+      - name: port_name  # Pydantic does not allow the use of 'name'
+        description: "Unique name of the port"
+        type: str
+        required: provisioning
+        modifiable:
+      - name: port_description
+        description: "Description of the node"
+        type: str
+        required
+        modifiable:
+      - name: ims_id
+        description: "ID of the node in the inventory management system"
+        type: int
+        required: active
+      - name: nrm_id
+        type: int
+        description: "ID of the node in the network resource manager"
+        required: active
+      - name: mode
+        type: str
+        description: "Mode of the port, either untagged, tagged or a link_member (in an aggregate)"
+        required: active
+      - name: auto_negotiation
+        type: bool
+        description: "is Ethernet auto negotiation enabled or not"
+        required: active
+      - name: lldp
+        type: bool
+        description: "is Link Llayer Discovery Protocol enabled or not"
+        required: active
+      - name: node
+        type: Node
+        description: "link to the Node product block the port is residing on"
+        required: active

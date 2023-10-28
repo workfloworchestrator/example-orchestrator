@@ -5,10 +5,10 @@ from orchestrator.types import SubscriptionLifecycle
 
 
 class NodeBlockInactive(ProductBlockModel, product_block_name="Node"):
-    role: Optional[str] = None
-    type: Optional[str] = None
-    site: Optional[str] = None
-    status: Optional[str] = None
+    role_id: Optional[int] = None
+    type_id: Optional[int] = None
+    site_id: Optional[int] = None
+    node_status: Optional[str] = None  # TODO: should be NodeStatus
     node_name: Optional[str] = None
     node_description: Optional[str] = None
     ims_id: Optional[int] = None
@@ -18,10 +18,10 @@ class NodeBlockInactive(ProductBlockModel, product_block_name="Node"):
 
 
 class NodeBlockProvisioning(NodeBlockInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]):
-    role: str
-    type: str
-    site: str
-    status: str
+    role_id: int
+    type_id: int
+    site_id: int
+    node_status: str  # TODO: should be NodeStatus
     node_name: Optional[str] = None
     node_description: Optional[str] = None
     ims_id: Optional[int] = None
@@ -36,10 +36,10 @@ class NodeBlockProvisioning(NodeBlockInactive, lifecycle=[SubscriptionLifecycle.
 
 
 class NodeBlock(NodeBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
-    role: str
-    type: str
-    site: str
-    status: str
+    role_id: int
+    type_id: int
+    site_id: int
+    node_status: str  # TODO: should be NodeStatus
     node_name: Optional[str] = None
     node_description: Optional[str] = None
     ims_id: int
