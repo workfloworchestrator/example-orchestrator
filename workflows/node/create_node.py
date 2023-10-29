@@ -3,7 +3,6 @@ from collections.abc import Generator
 from random import randrange
 from typing import Optional
 
-from orchestrator.domain import SubscriptionModel
 from orchestrator.forms import FormPage
 from orchestrator.forms.validators import Divider, Label, MigrationSummary
 from orchestrator.services.products import get_product_by_id
@@ -15,6 +14,7 @@ from orchestrator.workflows.utils import create_workflow
 
 from products.product_blocks.shared.types import NodeStatus
 from products.product_types.node import NodeInactive, NodeProvisioning
+from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
 from workflows.node.shared.forms import (
@@ -23,18 +23,10 @@ from workflows.node.shared.forms import (
     node_type_selector,
     site_selector,
 )
-
-
-def subscription_description(subscription: SubscriptionModel) -> str:
-    """The suggested pattern is to implement a subscription service that generates a subscription specific
-    description, in case that is not present the description will just be set to the product name.
-    """
-    return f"{subscription.product.name} subscription"
+from workflows.node.shared.steps import update_node_in_imdb
 
 
 def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGenerator:
-    # TODO add additional fields to form if needed
-
     node_type = get_product_by_id(product).fixed_input_value("node_type")
 
     class CreateNodeForm(FormPage):
@@ -122,7 +114,7 @@ def construct_node_model(
     node.node.nrm_id = randrange(2**16)
 
     node = NodeProvisioning.from_other_lifecycle(node, SubscriptionLifecycle.PROVISIONING)
-    node.description = subscription_description(node)
+    node.description = description(node)
 
     return {
         "subscription": node,
@@ -146,14 +138,6 @@ def reserve_loopback_addresses(subscription: NodeProvisioning) -> State:
         subscription.node.ims_id
     )
     return {"subscription": subscription}
-
-
-@step("Update node in IMS")
-def update_node_in_imdb(subscription: NodeProvisioning) -> State:
-    """Update node in IMDB"""
-    payload = build_payload(subscription.node, subscription)
-    netbox.update(payload, id=subscription.node.ims_id)
-    return {"subscription": subscription, "payload": payload.dict()}
 
 
 @create_workflow("Create node", initial_input_form=initial_input_form_generator)
