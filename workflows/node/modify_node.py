@@ -18,7 +18,7 @@ from workflows.node.shared.forms import (
     node_type_selector,
     site_selector,
 )
-from workflows.node.shared.steps import update_node_in_imdb
+from workflows.node.shared.steps import update_node_in_ims
 
 logger = structlog.get_logger(__name__)
 
@@ -117,6 +117,6 @@ def modify_node() -> StepList:
         >> set_status(SubscriptionLifecycle.PROVISIONING)
         >> update_subscription
         >> update_subscription_description
-        >> update_node_in_imdb
+        >> update_node_in_ims
         >> set_status(SubscriptionLifecycle.ACTIVE)
     )

@@ -23,7 +23,7 @@ from workflows.node.shared.forms import (
     node_type_selector,
     site_selector,
 )
-from workflows.node.shared.steps import update_node_in_imdb
+from workflows.node.shared.steps import update_node_in_ims
 
 
 def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGenerator:
@@ -124,8 +124,8 @@ def construct_node_model(
 
 
 @step("Create node in IMS")
-def create_node_in_imdb(subscription: NodeProvisioning) -> State:
-    """Create node in IMDB"""
+def create_node_in_ims(subscription: NodeProvisioning) -> State:
+    """Create node in IMS"""
     payload = build_payload(subscription.node, subscription)
     subscription.node.ims_id = netbox.create(payload)
     return {"subscription": subscription, "payload": payload.dict()}
@@ -146,7 +146,7 @@ def create_node() -> StepList:
         begin
         >> construct_node_model
         >> store_process_subscription(Target.CREATE)
-        >> create_node_in_imdb
+        >> create_node_in_ims
         >> reserve_loopback_addresses
-        >> update_node_in_imdb
+        >> update_node_in_ims
     )

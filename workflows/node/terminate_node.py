@@ -5,15 +5,13 @@ from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import terminate_workflow
 
 from products.product_types.node import Node
+from services.netbox import delete_device
 
 
 @step("Load initial state")
 def load_initial_state(subscription: Node) -> State:
-    # TODO: optionally add additional values.
-    # Copy values to the root of the state for easy access
-
     return {
-        "subscription": subscription,
+        "ims_id": subscription.node.ims_id,
     }
 
 
@@ -26,15 +24,16 @@ def terminate_initial_input_form_generator(subscription_id: UUIDstr, organisatio
     return TerminateForm
 
 
-additional_steps = begin
+@step("Delete node from IMS")
+def delete_node_from_ims(ims_id: int) -> State:
+    """Delete node from IMS."""
+
+    # This relies on Netbox to delete the loopback interface and associated IP addresses as well.
+    delete_device(ims_id)
+
+    return {}
 
 
-@terminate_workflow(
-    "Terminate node", initial_input_form=terminate_initial_input_form_generator, additional_steps=additional_steps
-)
+@terminate_workflow("Terminate node", initial_input_form=terminate_initial_input_form_generator)
 def terminate_node() -> StepList:
-    return (
-        begin
-        >> load_initial_state
-        # TODO: fill in additional steps if needed
-    )
+    return begin >> load_initial_state >> delete_node_from_ims

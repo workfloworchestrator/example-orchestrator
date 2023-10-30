@@ -7,7 +7,7 @@ from services import netbox
 
 
 @step("Update node in IMS")
-def update_node_in_imdb(subscription: NodeProvisioning) -> State:
+def update_node_in_ims(subscription: NodeProvisioning) -> State:
     """Update node in IMDB"""
     payload = build_payload(subscription.node, subscription)
     netbox.update(payload, id=subscription.node.ims_id)

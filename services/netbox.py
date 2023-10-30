@@ -166,6 +166,18 @@ def get_device(**kwargs):
     return netbox.dcim.devices.get(**kwargs)
 
 
+def delete_from_netbox(endpoint, id) -> None:
+    """Try to delete object with id from endpoint, raise an exception when object does not exist."""
+    if object := endpoint.get(id):
+        object.delete()
+    else:
+        raise ValueError(f"object with id {id} not found on {endpoint.name} endpoint")
+
+
+def delete_device(id: int) -> None:
+    delete_from_netbox(netbox.dcim.devices, id)
+
+
 def get_prefixes(**kwargs) -> List:
     return netbox.ipam.prefixes.filter(**kwargs)
 
