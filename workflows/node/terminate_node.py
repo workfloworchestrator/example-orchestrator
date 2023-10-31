@@ -29,7 +29,7 @@ def delete_node_from_ims(ims_id: int) -> State:
     """Delete node from IMS."""
 
     # This relies on Netbox to delete the loopback interface and associated IP addresses as well.
-    delete_device(ims_id)
+    delete_device(id=ims_id)
 
     return {}
 

@@ -90,6 +90,12 @@ new_workflows = [
         "product_type": "Node",
     },
     {
+        "name": "update_node_interfaces",
+        "target": Target.MODIFY,
+        "description": "Update node interfaces",
+        "product_type": "Node",
+    },
+    {
         "name": "terminate_node",
         "target": Target.TERMINATE,
         "description": "Terminate node",

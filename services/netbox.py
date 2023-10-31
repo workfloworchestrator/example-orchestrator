@@ -117,6 +117,7 @@ class InterfacePayload(NetboxPayload):
     device: int
     name: str
     type: str
+    speed: Optional[int] = None
 
 
 @dataclass
@@ -166,16 +167,28 @@ def get_device(**kwargs):
     return netbox.dcim.devices.get(**kwargs)
 
 
-def delete_from_netbox(endpoint, id) -> None:
-    """Try to delete object with id from endpoint, raise an exception when object does not exist."""
-    if object := endpoint.get(id):
+def get_interfaces(**kwargs) -> List:
+    return netbox.dcim.interfaces.filter(**kwargs)
+
+
+def get_interface(**kwargs):
+    return netbox.dcim.interfaces.get(**kwargs)
+
+
+def delete_from_netbox(endpoint, **kwargs) -> None:
+    """Try to delete object with given kwargs from endpoint, raise an exception when object was not found."""
+    if object := endpoint.get(**kwargs):
         object.delete()
     else:
-        raise ValueError(f"object with id {id} not found on {endpoint.name} endpoint")
+        raise ValueError(f"object not found on {endpoint.name} endpoint")
 
 
-def delete_device(id: int) -> None:
-    delete_from_netbox(netbox.dcim.devices, id)
+def delete_device(**kwargs) -> None:
+    delete_from_netbox(netbox.dcim.devices, **kwargs)
+
+
+def delete_interface(**kwargs) -> None:
+    delete_from_netbox(netbox.dcim.interfaces, **kwargs)
 
 
 def get_prefixes(**kwargs) -> List:

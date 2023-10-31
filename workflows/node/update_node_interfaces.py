@@ -1,0 +1,65 @@
+from typing import List, Tuple
+
+import structlog
+from orchestrator.types import State, SubscriptionLifecycle
+from orchestrator.workflow import StepList, begin, step
+from orchestrator.workflows.steps import set_status
+from orchestrator.workflows.utils import (
+    modify_initial_input_form_generator,
+    modify_workflow,
+)
+
+from products.product_types.node import NodeProvisioning
+from services.netbox import (
+    InterfacePayload,
+    create,
+    delete_interface,
+    get_device,
+    get_interfaces,
+)
+
+logger = structlog.get_logger(__name__)
+
+
+def get_node_interface_list(node_name: str) -> List[Tuple[str, str, int]]:
+    """
+    The list of interfaces installed in the node is usually obtained dynamically
+    through (for example) SNMP, but for demonstration purposes we just return a
+    static list of interfaces here without taking into account the type of the node.
+
+    :param node_name: name of the node to retrieve interfaces from
+    :return: list of interface tuples with name, type, and speed (kbps) details
+    """
+    ten_gig_interfaces = [(f"0/0/{i}", "10gbase-x-xfp", 10000000) for i in range(10)]
+    hundred_gig_interfaces = [(f"0/1/{i}", "100gbase-x-cfp", 100000000) for i in range(4)]
+    return ten_gig_interfaces + hundred_gig_interfaces
+
+
+@step("Update interfaces")
+def update_interfaces(
+    subscription: NodeProvisioning,
+) -> State:
+    node_interfaces = set(get_node_interface_list(subscription.node.node_name))
+    device = get_device(name=subscription.node.node_name)
+    netbox_interfaces = set(
+        (interface.name, interface.type.value, interface.speed)
+        for interface in get_interfaces(device=device)
+        if "Loopback" not in interface.name
+    )
+    interfaces_added = sorted(node_interfaces - netbox_interfaces)
+    interfaces_deleted = sorted(netbox_interfaces - node_interfaces)
+    for interface_name, interface_type, interface_speed in interfaces_added:
+        create(InterfacePayload(device=device.id, name=interface_name, type=interface_type, speed=interface_speed))
+    for interface_name, interface_type, interface_speed in interfaces_deleted:
+        delete_interface(device=device, name=interface_name)
+    return {"interfaces_added": interfaces_added, "interfaces_deleted": interfaces_deleted}
+
+
+@modify_workflow("Update node interfaces", initial_input_form=modify_initial_input_form_generator)
+def update_node_interfaces() -> StepList:
+    return (
+        begin
+        >> set_status(SubscriptionLifecycle.PROVISIONING)
+        >> update_interfaces
+        >> set_status(SubscriptionLifecycle.ACTIVE)
+    )
