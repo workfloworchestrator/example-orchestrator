@@ -2,52 +2,64 @@
 # This file describes the "Node" product
 #
 config:
-  create_summary_forms: false
+  create_summary_forms: true
 name: port
 type: Port
 tag: PORT
 description: "Network port"
 fixed_inputs:
   - name: speed
-    type: int
-    description: "speed of the port"
+    type: enum
+    enum_type: int
+      - 1000
+      - 10000
+      - 40000
+      - 100000
+      - 400000
+    description: "speed of the port im Mbit/s"
 product_blocks:
   - name: port
     type: Port
     tag: PORT
     description: "port product block"
     fields:
-      - name: port_name  # Pydantic does not allow the use of 'name'
-        description: "Unique name of the port"
+      - name: port_name
+        description: "Unique name of the port on the device"
         type: str
-        required: provisioning
-        modifiable:
+        required: inactive
+      - name: port_type
+        description: "Type of the port"
+        type: str
+        required: inactive
       - name: port_description
-        description: "Description of the node"
+        description: "Description of the port"
         type: str
-        required
         modifiable:
-      - name: ims_id
-        description: "ID of the node in the inventory management system"
-        type: int
-        required: active
-      - name: nrm_id
-        type: int
-        description: "ID of the node in the network resource manager"
-        required: active
-      - name: mode
+      - name: port_mode
         type: str
         description: "Mode of the port, either untagged, tagged or a link_member (in an aggregate)"
-        required: active
+        required: inactive
       - name: auto_negotiation
         type: bool
         description: "is Ethernet auto negotiation enabled or not"
-        required: active
+        required: inactive
       - name: lldp
         type: bool
         description: "is Link Llayer Discovery Protocol enabled or not"
-        required: active
+        required: inactive
+      - name: enabled
+        type: bool
+        description: "is port enabled in inventory management system?"
+        required: inactive
       - name: node
         type: Node
         description: "link to the Node product block the port is residing on"
+        required: inactive
+      - name: ims_id
+        description: "ID of the node in the inventory management system"
+        type: int
+        required: inactive
+      - name: nrm_id
+        type: int
+        description: "ID of the node in the network resource manager"
         required: active

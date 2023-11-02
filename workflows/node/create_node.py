@@ -98,28 +98,28 @@ def construct_node_model(
     node_name: Optional[str],
     node_description: Optional[str],
 ) -> State:
-    node = NodeInactive.from_product_id(
+    subscription = NodeInactive.from_product_id(
         product_id=product,
         customer_id=str(uuid.uuid4()),
         status=SubscriptionLifecycle.INITIAL,
     )
     print(f"construct model: type(node_status): {type(node_status)} == {node_status}")
 
-    node.node.role_id = role_id
-    node.node.type_id = type_id
-    node.node.site_id = site_id
-    node.node.node_status = node_status
-    node.node.node_name = node_name
-    node.node.node_description = node_description
-    node.node.nrm_id = randrange(2**16)
+    subscription.node.role_id = role_id
+    subscription.node.type_id = type_id
+    subscription.node.site_id = site_id
+    subscription.node.node_status = node_status
+    subscription.node.node_name = node_name
+    subscription.node.node_description = node_description
+    subscription.node.nrm_id = randrange(2**16)  # TODO: move to separate step that provisions node in NRM
 
-    node = NodeProvisioning.from_other_lifecycle(node, SubscriptionLifecycle.PROVISIONING)
-    node.description = description(node)
+    subscription = NodeProvisioning.from_other_lifecycle(subscription, SubscriptionLifecycle.PROVISIONING)
+    subscription.description = description(subscription)
 
     return {
-        "subscription": node,
-        "subscription_id": node.subscription_id,  # necessary to be able to use older generic step functions
-        "subscription_description": node.description,
+        "subscription": subscription,
+        "subscription_id": subscription.subscription_id,  # necessary to be able to use older generic step functions
+        "subscription_description": subscription.description,
     }
 
 

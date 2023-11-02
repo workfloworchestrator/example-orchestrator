@@ -50,7 +50,7 @@ def update_interfaces(
     interfaces_deleted = sorted(netbox_interfaces - node_interfaces)
     for interface_name, interface_type, interface_speed in interfaces_added:
         create(InterfacePayload(device=device.id, name=interface_name, type=interface_type, speed=interface_speed))
-    for interface_name, interface_type, interface_speed in interfaces_deleted:
+    for interface_name, _, _ in interfaces_deleted:
         delete_interface(device=device, name=interface_name)
     return {"interfaces_added": interfaces_added, "interfaces_deleted": interfaces_deleted}
 

@@ -117,6 +117,7 @@ class InterfacePayload(NetboxPayload):
     device: int
     name: str
     type: str
+    enabled: bool = False
     speed: Optional[int] = None
 
 
@@ -202,7 +203,7 @@ def get_prefix(**kwargs):
 def reserve_loopback_addresses(device_id: int) -> Tuple:
     """Reserve IP IPv4/IPv6 loopback addresses, assign to Loopback0, and return address id."""
     device = get_device(id=device_id)
-    interface_id = create(InterfacePayload(device=device_id, name="Loopback0", type="virtual"))
+    interface_id = create(InterfacePayload(device=device_id, name="Loopback0", type="virtual", enabled=True))
     return tuple(
         get_prefix(prefix=prefix)
         .available_ips.create(
@@ -360,6 +361,11 @@ def _(payload: InterfacePayload, **kwargs: Any) -> bool:
     return _create_object(payload, endpoint=netbox.dcim.interfaces)
 
 
+@create.register
+def _(payload: SitePayload, **kwargs: Any) -> bool:
+    return _create_object(payload, endpoint=netbox.dcim.sites)
+
+
 @singledispatch
 def update(payload: NetboxPayload, **kwargs: Any) -> bool:
     """Update object described by payload in Netbox (generic function).
@@ -416,6 +422,6 @@ def _(payload: DeviceTypePayload, id: int, **kwargs: Any) -> bool:
     return _update_object(payload, id, endpoint=netbox.dcim.device_types)
 
 
-@create.register
-def _(payload: SitePayload, **kwargs: Any) -> bool:
-    return _create_object(payload, endpoint=netbox.dcim.sites)
+@update.register
+def _(payload: InterfacePayload, id: int, **kwargs: Any) -> bool:
+    return _update_object(payload, id, endpoint=netbox.dcim.interfaces)

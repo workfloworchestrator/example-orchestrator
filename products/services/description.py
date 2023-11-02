@@ -17,6 +17,7 @@ from typing import Union
 from orchestrator.domain.base import ProductBlockModel, ProductModel, SubscriptionModel
 
 from products.product_types.node import NodeProvisioning
+from products.product_types.port import PortProvisioning
 from utils.singledispatch import single_dispatch_base
 
 
@@ -45,3 +46,8 @@ def description(model: Union[ProductModel, ProductBlockModel, SubscriptionModel]
 @description.register
 def node_product_description(node: NodeProvisioning) -> str:
     return f"node {node.node.node_name} ({node.node.node_status})"
+
+
+@description.register
+def port_product_description(port: PortProvisioning) -> str:
+    return f"{port.product.name} {port.port.node.node_name} {port.port.port_name} {port.port.port_description}"

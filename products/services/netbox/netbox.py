@@ -16,7 +16,9 @@ from typing import Any
 from orchestrator.domain.base import ProductBlockModel, SubscriptionModel
 
 from products.product_blocks.node import NodeBlockProvisioning
+from products.product_blocks.port import PortBlockProvisioning
 from products.services.netbox.payload.node import build_node_payload
+from products.services.netbox.payload.port import build_port_payload
 from services import netbox
 from utils.singledispatch import single_dispatch_base
 
@@ -47,3 +49,8 @@ def build_payload(model: ProductBlockModel, subscription: SubscriptionModel, **k
 @build_payload.register
 def _(model: NodeBlockProvisioning, subscription: SubscriptionModel, **kwargs: Any) -> netbox.DevicePayload:
     return build_node_payload(model, subscription)
+
+
+@build_payload.register
+def _(model: PortBlockProvisioning, subscription: SubscriptionModel, **kwargs: Any) -> netbox.InterfacePayload:
+    return build_port_payload(model, subscription)

@@ -35,7 +35,7 @@ def build_node_payload(model: NodeBlockProvisioning, subscription: SubscriptionM
 
     Args:
         model: NodeBlockProvisioning
-        subscription: The Subscription that will be changed
+        subscription: The Subscription that will be provisioned
 
     Returns: :class:`netbox.DevicePayload`
 
