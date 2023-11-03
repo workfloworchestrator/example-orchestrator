@@ -23,7 +23,13 @@ def build_port_payload(model: PortBlockProvisioning, subscription: SubscriptionM
 
     Example payload::
 
-        ....
+        {
+           "name": "0/1/0",
+           "type": "100gbase-x-cfp",
+           "speed": 100000000,
+           "device": 27,
+           "enabled": true
+        }
 
     Args:
         model: PortBlockProvisioning
@@ -36,6 +42,7 @@ def build_port_payload(model: PortBlockProvisioning, subscription: SubscriptionM
         device=model.node.ims_id,
         name=model.port_name,
         type=model.port_type,
+        description=model.port_description,
         enabled=model.enabled,
         speed=subscription.speed * 1000,  # type: ignore[attr-defined]
     )

@@ -1,46 +1,36 @@
 from collections.abc import Generator
 
-import structlog
-from orchestrator.domain import SubscriptionModel
 from orchestrator.forms import FormPage
-from orchestrator.forms.validators import Divider, MigrationSummary, OrganisationId
+from orchestrator.forms.validators import Label, MigrationSummary
 from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import modify_workflow
 from pydantic_forms.core import ReadOnlyField
 
+from products.product_blocks.port import PortMode
 from products.product_types.port import Port, PortProvisioning
-
-
-def subscription_description(subscription: SubscriptionModel) -> str:
-    """The suggested pattern is to implement a subscription service that generates a subscription specific
-    description, in case that is not present the description will just be set to the product name.
-    """
-    return f"{subscription.product.name} subscription"
-
-
-logger = structlog.get_logger(__name__)
+from products.services.description import description
+from workflows.port.shared.forms import port_mode_selector
+from workflows.port.shared.steps import update_port_in_ims
 
 
 def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
     subscription = Port.from_subscription(subscription_id)
     port = subscription.port
 
-    # TODO fill in additional fields if needed
-
     class ModifyPortForm(FormPage):
-        organisation: OrganisationId = subscription.customer_id  # type: ignore
+        # organisation: OrganisationId = subscription.customer_id  # type: ignore
 
-        divider_1: Divider
+        port_settings: Label
 
-        port_mode: str = ReadOnlyField(port.port_mode)
-        auto_negotiation: bool = ReadOnlyField(port.auto_negotiation)
-        lldp: bool = ReadOnlyField(port.lldp)
-        ims_id: int = ReadOnlyField(port.ims_id)
-        nrm_id: int = ReadOnlyField(port.nrm_id)
-        port_name: str = port.port_name
+        node_name: str = ReadOnlyField(port.node.node_name)
+        port_name: str = ReadOnlyField(port.port_name)
+        port_type: str = ReadOnlyField(port.port_type)
         port_description: str = port.port_description
+        port_mode: port_mode_selector() = port.port_mode  # type: ignore
+        auto_negotiation: bool = port.auto_negotiation
+        lldp: bool = port.lldp
 
     user_input = yield ModifyPortForm
     user_input_dict = user_input.dict()
@@ -52,14 +42,10 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
 
 def create_summary_form(user_input: dict, subscription: Port) -> Generator:
     product_summary_fields = [
-        "port_name",
         "port_description",
         "port_mode",
         "auto_negotiation",
         "lldp",
-        "node",
-        "ims_id",
-        "nrm_id",
     ]
 
     before = [str(getattr(subscription.port, nm)) for nm in product_summary_fields]
@@ -77,9 +63,6 @@ def create_summary_form(user_input: dict, subscription: Port) -> Generator:
             title = f"{subscription.product.name} Summary"
 
         product_summary: ProductSummary
-        divider_1: Divider
-
-    # TODO fill in additional details if needed
 
     yield SummaryForm
 
@@ -87,31 +70,26 @@ def create_summary_form(user_input: dict, subscription: Port) -> Generator:
 @step("Update subscription")
 def update_subscription(
     subscription: PortProvisioning,
-    port_name: str,
+    port_mode: PortMode,
     port_description: str,
+    auto_negotiation: bool,
+    lldp: bool,
 ) -> State:
-    # TODO: get all modified fields
-    subscription.port.port_name = port_name
     subscription.port.port_description = port_description
+    subscription.port.port_mode = port_mode
+    subscription.port.auto_negotiation = auto_negotiation
+    subscription.port.lldp = lldp
+    subscription.description = description(subscription)
+
     return {"subscription": subscription}
 
 
-@step("Update subscription description")
-def update_subscription_description(subscription: Port) -> State:
-    subscription.description = subscription_description(subscription)
-    return {"subscription": subscription}
-
-
-additional_steps = begin
-
-
-@modify_workflow("Modify port", initial_input_form=initial_input_form_generator, additional_steps=additional_steps)
+@modify_workflow("Modify port", initial_input_form=initial_input_form_generator)
 def modify_port() -> StepList:
     return (
         begin
         >> set_status(SubscriptionLifecycle.PROVISIONING)
         >> update_subscription
-        >> update_subscription_description
-        # TODO add additional steps if needed
+        >> update_port_in_ims
         >> set_status(SubscriptionLifecycle.ACTIVE)
     )

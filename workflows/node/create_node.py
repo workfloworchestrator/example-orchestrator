@@ -4,7 +4,7 @@ from random import randrange
 from typing import Optional
 
 from orchestrator.forms import FormPage
-from orchestrator.forms.validators import Divider, Label, MigrationSummary
+from orchestrator.forms.validators import Label, MigrationSummary
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
 from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
@@ -35,8 +35,7 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
 
         # organisation: OrganisationId
 
-        label_node_settings: Label
-        divider_1: Divider
+        node_settings: Label
 
         role_id: node_role_selector()  # type:ignore
         type_id: node_type_selector(node_type)  # type:ignore
@@ -80,9 +79,6 @@ def create_summary_form(
             title = f"{product_name} Summary"
 
         product_summary: ProductSummary
-        divider_1: Divider
-
-        # TODO fill in additional details if needed
 
     yield SummaryForm
 

@@ -15,12 +15,10 @@ def node_selector() -> list:
 
 def port_selector(node_subscription_id: UUIDstr, speed: int) -> list:
     node = Node.from_subscription(node_subscription_id)
-    print(node)
     interfaces = {
         str(interface.id): interface.name
         for interface in get_interfaces(device=get_device(id=node.node.ims_id), speed=speed * 1000, enabled=False)
     }
-    print(interfaces)
     return choice_list(
         Choice("InterfacesEnum", zip(interfaces.keys(), interfaces.items())), min_items=1, max_items=1  # type:ignore
     )

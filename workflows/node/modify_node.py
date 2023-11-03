@@ -3,7 +3,7 @@ from typing import Optional
 
 import structlog
 from orchestrator.forms import FormPage
-from orchestrator.forms.validators import Divider, MigrationSummary
+from orchestrator.forms.validators import Label, MigrationSummary
 from orchestrator.services.products import get_product_by_id
 from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
@@ -31,7 +31,7 @@ def initial_input_form_generator(subscription_id: UUIDstr, product: UUIDstr) -> 
     class ModifyNodeForm(FormPage):
         # organisation: OrganisationId = subscription.customer_id  # type: ignore
 
-        divider_1: Divider
+        node_settings: Label
 
         role_id: node_role_selector() = [str(node.role_id)]  # type:ignore
         type_id: node_type_selector(node_type) = [str(node.type_id)]  # type:ignore
@@ -77,9 +77,6 @@ def create_summary_form(user_input: dict, subscription: Node) -> Generator:
             title = f"{subscription.product.name} Summary"
 
         product_summary: ProductSummary
-        divider_1: Divider
-
-    # TODO fill in additional details if needed
 
     yield SummaryForm
 
@@ -101,12 +98,8 @@ def update_subscription(
     subscription.node.node_status = node_status
     subscription.node.node_name = node_name
     subscription.node.node_description = node_description
-    return {"subscription": subscription}
-
-
-@step("Update subscription description")
-def update_subscription_description(subscription: Node) -> State:
     subscription.description = description(subscription)
+
     return {"subscription": subscription}
 
 
@@ -116,7 +109,6 @@ def modify_node() -> StepList:
         begin
         >> set_status(SubscriptionLifecycle.PROVISIONING)
         >> update_subscription
-        >> update_subscription_description
         >> update_node_in_ims
         >> set_status(SubscriptionLifecycle.ACTIVE)
     )

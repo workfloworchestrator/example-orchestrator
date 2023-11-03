@@ -117,6 +117,7 @@ class InterfacePayload(NetboxPayload):
     device: int
     name: str
     type: str
+    description: str = ""
     enabled: bool = False
     speed: Optional[int] = None
 

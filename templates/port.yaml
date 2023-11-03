@@ -43,10 +43,12 @@ product_blocks:
         type: bool
         description: "is Ethernet auto negotiation enabled or not"
         required: inactive
+        modifiable:
       - name: lldp
         type: bool
         description: "is Link Llayer Discovery Protocol enabled or not"
         required: inactive
+        modifiable:
       - name: enabled
         type: bool
         description: "is port enabled in inventory management system?"

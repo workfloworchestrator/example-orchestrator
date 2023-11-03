@@ -4,7 +4,7 @@ from random import randrange
 from typing import Optional
 
 from orchestrator.forms import FormPage
-from orchestrator.forms.validators import Divider, MigrationSummary
+from orchestrator.forms.validators import Label, MigrationSummary
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
 from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
@@ -13,6 +13,7 @@ from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
 
 from products import Node
+from products.product_blocks.port import PortMode
 from products.product_types.port import PortInactive, PortProvisioning
 from products.services.description import description
 from services.netbox import get_interface
@@ -21,8 +22,6 @@ from workflows.port.shared.steps import update_port_in_ims
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
-    # TODO add additional fields to form if needed
-
     class SelectNodeForm(FormPage):
         class Config:
             title = product_name
@@ -35,15 +34,17 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
 
     user_input_dict = user_input.dict()
     node_subscription_id = user_input_dict["node_subscription_id"].pop(0)
-    print(node_subscription_id)
 
     _product = get_product_by_id(product)
     speed = int(_product.fixed_input_value("speed"))
-    print(speed)
 
     class CreatePortForm(FormPage):
         class Config:
             title = product_name
+
+        # organisation: OrganisationId
+
+        port_settings: Label
 
         ims_id: port_selector(node_subscription_id, speed)  # type:ignore
         port_description: Optional[str]
@@ -56,7 +57,6 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
     user_input_dict = user_input.dict()
     user_input_dict["ims_id"] = user_input_dict["ims_id"].pop(0)
     user_input_dict["node_subscription_id"] = node_subscription_id
-    print(user_input_dict)
 
     yield from create_summary_form(user_input_dict, product_name)
 
@@ -86,9 +86,6 @@ def create_summary_form(
             title = f"{product_name} Summary"
 
         product_summary: ProductSummary
-        divider_1: Divider
-
-        # TODO fill in additional details if needed
 
     yield SummaryForm
 
@@ -99,7 +96,7 @@ def construct_port_model(
     node_subscription_id: UUIDstr,
     ims_id: int,
     port_description: Optional[str],
-    port_mode: str,
+    port_mode: PortMode,
     auto_negotiation: bool,
     lldp: bool,
 ) -> State:
@@ -129,9 +126,6 @@ def construct_port_model(
         "subscription_id": subscription.subscription_id,  # necessary to be able to use older generic step functions
         "subscription_description": subscription.description,
     }
-
-
-additional_steps = begin
 
 
 @step("enable port")

@@ -4,15 +4,7 @@ from orchestrator.types import InputForm, State, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import terminate_workflow
 
-from products.product_types.node import Node
 from services.netbox import delete_device
-
-
-@step("Load initial state")
-def load_initial_state(subscription: Node) -> State:
-    return {
-        "ims_id": subscription.node.ims_id,
-    }
 
 
 def terminate_initial_input_form_generator(subscription_id: UUIDstr, organisation: UUIDstr) -> InputForm:
@@ -36,4 +28,4 @@ def delete_node_from_ims(ims_id: int) -> State:
 
 @terminate_workflow("Terminate node", initial_input_form=terminate_initial_input_form_generator)
 def terminate_node() -> StepList:
-    return begin >> load_initial_state >> delete_node_from_ims
+    return begin >> delete_node_from_ims
