@@ -1,20 +1,38 @@
-import structlog
+from pprint import pformat
+
+from deepdiff import DeepDiff
 from orchestrator.types import State
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import validate_workflow
 
 from products.product_types.node import Node
+from products.services.netbox.netbox import build_payload
+from services import netbox
 
-logger = structlog.get_logger(__name__)
+
+def pretty_print_deepdiff(diff: DeepDiff) -> str:
+    return pformat(diff.to_dict(), indent=2, compact=False)
 
 
-@step("Load initial state")
-def load_initial_state_node(subscription: Node) -> State:
-    return {
-        "subscription": subscription,
-    }
+@step("validate node in IMS")
+def validate_node_in_ims(subscription: Node) -> State:
+    device = netbox.get_device(id=subscription.node.ims_id)
+    actual = netbox.DevicePayload(
+        site=device.site.id,
+        device_type=device.device_type.id,
+        device_role=device.device_role.id,
+        name=device.name,
+        status=device.status.value,
+        primary_ip4=device.primary_ip4.id,
+        primary_ip6=device.primary_ip6.id,
+    )
+    expected = build_payload(subscription.node, subscription)
+    if ims_diff := DeepDiff(actual, expected, ignore_order=False):
+        raise AssertionError("Found difference in IMS:\nActual => Expected\n" + pretty_print_deepdiff(ims_diff))
+
+    return {"node_in_sync_with_ims": True}
 
 
 @validate_workflow("Validate node")
 def validate_node() -> StepList:
-    return begin >> load_initial_state_node
+    return begin >> validate_node_in_ims
