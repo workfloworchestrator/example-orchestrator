@@ -24,6 +24,7 @@ class ListOfPorts(SubscriptionInstanceList[T]):
 class CoreLinkBlockInactive(ProductBlockModel, product_block_name="CoreLink"):
     ports: ListOfPorts[CorePortBlockInactive]
     ims_id: Optional[int] = None
+    ipv6_prefix_ipam_id: Optional[int] = None
     nrm_id: Optional[int] = None
     under_maintenance: Optional[bool] = None
 
@@ -31,6 +32,7 @@ class CoreLinkBlockInactive(ProductBlockModel, product_block_name="CoreLink"):
 class CoreLinkBlockProvisioning(CoreLinkBlockInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]):
     ports: ListOfPorts[CorePortBlockProvisioning]
     ims_id: Optional[int] = None
+    ipv6_prefix_ipam_id: Optional[int] = None
     nrm_id: Optional[int] = None
     under_maintenance: bool
 
@@ -43,5 +45,6 @@ class CoreLinkBlockProvisioning(CoreLinkBlockInactive, lifecycle=[SubscriptionLi
 class CoreLinkBlock(CoreLinkBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
     ports: ListOfPorts[CorePortBlock]
     ims_id: int
+    ipv6_prefix_ipam_id: int
     nrm_id: int
     under_maintenance: bool

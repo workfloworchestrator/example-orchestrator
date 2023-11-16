@@ -196,12 +196,32 @@ def delete_interface(**kwargs) -> None:
     delete_from_netbox(netbox.dcim.interfaces, **kwargs)
 
 
+def delete_cable(**kwargs) -> None:
+    delete_from_netbox(netbox.dcim.cables, **kwargs)
+
+
+def delete_prefix(**kwargs) -> None:
+    delete_from_netbox(netbox.ipam.prefixes, **kwargs)
+
+
+def delete_ip_address(**kwargs) -> None:
+    delete_from_netbox(netbox.ipam.ip_addresses, **kwargs)
+
+
 def get_prefixes(**kwargs) -> List:
     return netbox.ipam.prefixes.filter(**kwargs)
 
 
 def get_prefix(**kwargs):
     return netbox.ipam.prefixes.get(**kwargs)
+
+
+def get_ip_address(**kwargs):
+    return netbox.ipam.ip_addresses.get(**kwargs)
+
+
+def get_ip_addresses(**kwargs):
+    return netbox.ipam.ip_addresses.filter(**kwargs)
 
 
 def reserve_loopback_addresses(device_id: int) -> Tuple:
@@ -263,11 +283,11 @@ def get_interface_by_device_and_name(device: str, name: str) -> Interfaces:
     return next(netbox.dcim.interfaces.filter(device=device, name=name))
 
 
-def get_ip_address(address: str) -> IpAddresses:
-    """
-    Get IpAddresses object from Netbox identified by address.
-    """
-    return netbox.ipam.ip_addresses.get(address=address)
+# def get_ip_address(address: str) -> IpAddresses:
+#     """
+#     Get IpAddresses object from Netbox identified by address.
+#     """
+#     return netbox.ipam.ip_addresses.get(address=address)
 
 
 def get_ip_prefix_by_id(id: int) -> Prefixes:

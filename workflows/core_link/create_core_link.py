@@ -1,7 +1,6 @@
 import uuid
 from random import randrange
 
-from orchestrator.domain import SubscriptionModel
 from orchestrator.forms import FormPage
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
@@ -18,13 +17,6 @@ from products.services.netbox.netbox import build_payload
 from services import netbox
 from services.netbox import IPv6_CORE_LINK_PREFIX, get_interface, get_prefix
 from workflows.shared import node_selector, pop_first, port_selector
-
-
-def subscription_description(subscription: SubscriptionModel) -> str:
-    """The suggested pattern is to implement a subscription service that generates a subscription specific
-    description, in case that is not present the description will just be set to the product name.
-    """
-    return f"{subscription.product.name} subscription"
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
@@ -124,7 +116,11 @@ def assign_ip_addresses(subscription: CoreLinkProvisioning) -> State:
         parent_id=parent_prefix_ipv6.id,
         payload=netbox.AvailablePrefixPayload(
             prefix_length=127,
-            description=description(subscription),
+            description=(
+                f"{subscription.core_link.ports[0].node.node_name} {subscription.core_link.ports[0].port_name}"
+                " <-> "
+                f"{subscription.core_link.ports[1].port_name} {subscription.core_link.ports[1].node.node_name}"
+            ),
         ),
     )
     # Create the IP Addresses for each side of the core link.
@@ -151,7 +147,8 @@ def assign_ip_addresses(subscription: CoreLinkProvisioning) -> State:
         ),
     )
 
-    # Add IPv6 Addresses to the domain model.
+    # Add IPv6 prefix and addresses to the domain model.
+    subscription.core_link.ipv6_prefix_ipam_id = prefix_ipv6.id
     subscription.core_link.ports[0].ipv6_ipam_id = a_side_ipv6.id
     subscription.core_link.ports[1].ipv6_ipam_id = b_side_ipv6.id
 

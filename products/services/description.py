@@ -56,9 +56,11 @@ def port_product_description(port: PortProvisioning) -> str:
 
 @description.register
 def core_link_product_description(core_link: CoreLinkProvisioning) -> str:
+    maintenance = " (MAINTENANCE)" if core_link.core_link.under_maintenance else ""
     return (
         f"{core_link.product.name} "
         f"{core_link.core_link.ports[0].node.node_name} {core_link.core_link.ports[0].port_name}"
         " <-> "
         f"{core_link.core_link.ports[1].port_name} {core_link.core_link.ports[1].node.node_name}"
+        f"{maintenance}"
     )

@@ -10,7 +10,7 @@ SUBSCRIPTION_MODEL_REGISTRY.update(
         "node Nokia": Node,
         "port 10G": Port,
         "port 100G": Port,
-        "Core Link 10G": CoreLink,
-        "Core Link 100G": CoreLink,
+        "core link 10G": CoreLink,
+        "core link 100G": CoreLink,
     }
 )

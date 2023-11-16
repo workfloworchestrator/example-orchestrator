@@ -1,8 +1,8 @@
 """Add core_link product.
 
-Revision ID: 41feff9486e6
+Revision ID: 1faddadd7aae
 Revises: c044b0da4126
-Create Date: 2023-11-14 16:25:29.728150
+Create Date: 2023-11-16 16:40:52.193565
 
 """
 from uuid import uuid4
@@ -20,14 +20,14 @@ from orchestrator.targets import Target
 from products.product_types.core_link import CoreLinkSpeed
 
 # revision identifiers, used by Alembic.
-revision = "41feff9486e6"
+revision = "1faddadd7aae"
 down_revision = "c044b0da4126"
 branch_labels = None
 depends_on = None
 
 new_products = {
     "products": {
-        "Core Link 10G": {
+        "core link 10G": {
             "product_id": uuid4(),
             "product_type": "CoreLink",
             "description": "Core link",
@@ -41,7 +41,7 @@ new_products = {
                 "speed": CoreLinkSpeed._10000.value,
             },
         },
-        "Core Link 100G": {
+        "core link 100G": {
             "product_id": uuid4(),
             "product_type": "CoreLink",
             "description": "Core link",
@@ -65,6 +65,7 @@ new_products = {
             "resources": {
                 "ports": "core ports",
                 "ims_id": "ID of the core link in the inventory management system",
+                "ipv6_prefix_ipam_id": "IPAM ID of IP prefix used to number ports of this core link",
                 "nrm_id": "ID of the core link in the network resource manager",
                 "under_maintenance": "core link under maintenance?",
             },
@@ -77,6 +78,7 @@ new_products = {
             "status": "active",
             "resources": {
                 "port_name": "Unique name of the port on the device",
+                "enabled": "is port enabled in inventory management system?",
                 "ims_id": "ID of the port in the inventory management system",
                 "nrm_id": "ID of the port in the network resource manager",
                 "node": "link to the Node product block the port is residing on",

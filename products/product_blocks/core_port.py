@@ -12,6 +12,7 @@ from products.product_blocks.node import (
 
 class CorePortBlockInactive(ProductBlockModel, product_block_name="CorePort"):
     port_name: Optional[str] = None
+    enabled: Optional[bool] = True
     ims_id: Optional[int] = None
     nrm_id: Optional[int] = None
     node: Optional[NodeBlockInactive] = None
@@ -20,6 +21,7 @@ class CorePortBlockInactive(ProductBlockModel, product_block_name="CorePort"):
 
 class CorePortBlockProvisioning(CorePortBlockInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]):
     port_name: Optional[str] = None
+    enabled: bool
     ims_id: Optional[int] = None
     nrm_id: Optional[int] = None
     node: NodeBlockProvisioning
@@ -33,6 +35,7 @@ class CorePortBlockProvisioning(CorePortBlockInactive, lifecycle=[SubscriptionLi
 
 class CorePortBlock(CorePortBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
     port_name: Optional[str] = None
+    enabled: bool
     ims_id: int
     nrm_id: int
     node: NodeBlock

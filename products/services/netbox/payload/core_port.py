@@ -51,6 +51,6 @@ def build_core_port_payload(
         name=model.port_name,
         type=interface.type.value,
         description=f"{subscription.product.name} to {opposite_node}",
-        enabled=True,
+        enabled=model.enabled,
         speed=interface.speed,
     )

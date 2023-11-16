@@ -30,6 +30,10 @@ product_blocks:
         description: "ID of the core link in the inventory management system"
         type: int
         required: active
+      - name: ipv6_prefix_ipam_id
+        description: "IPAM ID of IP prefix used to number ports of this core link"
+        type: int
+        required: active
       - name: nrm_id
         type: int
         description: "ID of the core link in the network resource manager"
@@ -46,6 +50,10 @@ product_blocks:
       - name: port_name
         description: "Unique name of the port on the device"
         type: str
+      - name: enabled
+        type: bool
+        description: "is port enabled in inventory management system?"
+        required: inactive
       - name: ims_id
         description: "ID of the port in the inventory management system"
         type: int
