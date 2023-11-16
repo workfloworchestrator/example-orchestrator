@@ -34,6 +34,8 @@ netbox = api(
 
 IPv4_LOOPBACK_PREFIX = "10.0.127.0/24"
 IPv6_LOOPBACK_PREFIX = "fc00:0:0:127::/64"
+IPv4_CORE_LINK_PREFIX = "10.0.10.0/24"
+IPv6_CORE_LINK_PREFIX = "fc00:0:0:10::/64"
 
 
 @dataclass
@@ -99,6 +101,7 @@ class CableTerminationPayload:
 @dataclass
 class CablePayload(NetboxPayload):
     status: str
+    type: str
     description: Optional[str]
     a_terminations: List[CableTerminationPayload]
     b_terminations: List[CableTerminationPayload]
@@ -304,7 +307,7 @@ def create(payload: NetboxPayload, **kwargs: Any) -> int:
     return single_dispatch_base(create, payload)
 
 
-def _create_object(payload: NetboxPayload, endpoint: Endpoint) -> bool:
+def _create_object(payload: NetboxPayload, endpoint: Endpoint) -> int:
     """
     Create an object in Netbox.
 
@@ -328,42 +331,42 @@ def _create_object(payload: NetboxPayload, endpoint: Endpoint) -> bool:
 
 
 @create.register
-def _(payload: DevicePayload, **kwargs: Any) -> bool:
+def _(payload: DevicePayload, **kwargs: Any) -> int:
     return _create_object(payload, endpoint=netbox.dcim.devices)
 
 
 @create.register
-def _(payload: DeviceRolePayload, **kwargs: Any) -> bool:
+def _(payload: DeviceRolePayload, **kwargs: Any) -> int:
     return _create_object(payload, endpoint=netbox.dcim.device_roles)
 
 
 @create.register
-def _(payload: ManufacturerPayload, **kwargs: Any) -> bool:
+def _(payload: ManufacturerPayload, **kwargs: Any) -> int:
     return _create_object(payload, endpoint=netbox.dcim.manufacturers)
 
 
 @create.register
-def _(payload: DeviceTypePayload, **kwargs: Any) -> bool:
+def _(payload: DeviceTypePayload, **kwargs: Any) -> int:
     return _create_object(payload, endpoint=netbox.dcim.device_types)
 
 
 @create.register
-def _(payload: CablePayload, **kwargs: Any) -> bool:
+def _(payload: CablePayload, **kwargs: Any) -> int:
     return _create_object(payload, endpoint=netbox.dcim.cables)
 
 
 @create.register
-def _(payload: IpPrefixPayload, **kwargs: Any) -> bool:
+def _(payload: IpPrefixPayload, **kwargs: Any) -> int:
     return _create_object(payload, endpoint=netbox.ipam.prefixes)
 
 
 @create.register
-def _(payload: InterfacePayload, **kwargs: Any) -> bool:
+def _(payload: InterfacePayload, **kwargs: Any) -> int:
     return _create_object(payload, endpoint=netbox.dcim.interfaces)
 
 
 @create.register
-def _(payload: SitePayload, **kwargs: Any) -> bool:
+def _(payload: SitePayload, **kwargs: Any) -> int:
     return _create_object(payload, endpoint=netbox.dcim.sites)
 
 

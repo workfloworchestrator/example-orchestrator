@@ -1,0 +1,64 @@
+#
+# This file describes the "Core Link" product
+#
+config:
+  create_summary_forms: true
+name: core_link
+type: CoreLink
+tag: CORE_LINK
+description: "Core link"
+fixed_inputs:
+  - name: speed
+    type: enum
+    enum_type: int
+      - 10000
+      - 100000
+    description: "speed of the core link im Mbit/s"
+product_blocks:
+  - name: core_link
+    type: CoreLink
+    tag: CORE_LINK
+    description: "core link product block"
+    fields:
+      - name: ports
+        type: list
+        description: "core ports"
+        list_type: CorePort
+        min_items: 2
+        max_items: 2
+      - name: ims_id
+        description: "ID of the core link in the inventory management system"
+        type: int
+        required: active
+      - name: nrm_id
+        type: int
+        description: "ID of the core link in the network resource manager"
+        required: active
+      - name: under_maintenance
+        type: bool
+        description: "core link under maintenance?"
+        required: provisioning
+  - name: core_port
+    type: CorePort
+    tag: CORE_PORT
+    description: "core port product block"
+    fields:
+      - name: port_name
+        description: "Unique name of the port on the device"
+        type: str
+      - name: ims_id
+        description: "ID of the port in the inventory management system"
+        type: int
+        required: active
+      - name: nrm_id
+        type: int
+        description: "ID of the port in the network resource manager"
+        required: active
+      - name: node
+        type: Node
+        description: "link to the Node product block the port is residing on"
+        required: inactive
+      - name: ipv6_ipam_id
+        type: int
+        description: "ID of the port's IPv6 address in IPAM"
+        required: active

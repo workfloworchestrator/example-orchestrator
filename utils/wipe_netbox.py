@@ -11,6 +11,9 @@ endpoints = [
     netbox.dcim.manufacturers,
     netbox.dcim.device_roles,
     netbox.dcim.sites,
+    netbox.dcim.cables,
+    netbox.ipam.prefixes,
+    netbox.ipam.ip_addresses,
 ]
 
 

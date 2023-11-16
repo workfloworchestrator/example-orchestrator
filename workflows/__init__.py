@@ -11,3 +11,9 @@ LazyWorkflowInstance("workflows.port.create_port", "create_port")
 LazyWorkflowInstance("workflows.port.modify_port", "modify_port")
 LazyWorkflowInstance("workflows.port.terminate_port", "terminate_port")
 LazyWorkflowInstance("workflows.port.validate_port", "validate_port")
+
+
+LazyWorkflowInstance("workflows.core_link.create_core_link", "create_core_link")
+LazyWorkflowInstance("workflows.core_link.modify_core_link", "modify_core_link")
+LazyWorkflowInstance("workflows.core_link.terminate_core_link", "terminate_core_link")
+LazyWorkflowInstance("workflows.core_link.validate_core_link", "validate_core_link")

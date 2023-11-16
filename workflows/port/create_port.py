@@ -17,8 +17,9 @@ from products.product_blocks.port import PortMode
 from products.product_types.port import PortInactive, PortProvisioning
 from products.services.description import description
 from services.netbox import get_interface
-from workflows.port.shared.forms import node_selector, port_mode_selector, port_selector
+from workflows.port.shared.forms import port_mode_selector
 from workflows.port.shared.steps import update_port_in_ims
+from workflows.shared import node_selector, port_selector
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:

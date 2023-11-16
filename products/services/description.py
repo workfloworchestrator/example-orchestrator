@@ -16,6 +16,7 @@ from typing import Union
 
 from orchestrator.domain.base import ProductBlockModel, ProductModel, SubscriptionModel
 
+from products.product_types.core_link import CoreLinkProvisioning
 from products.product_types.node import NodeProvisioning
 from products.product_types.port import PortProvisioning
 from utils.singledispatch import single_dispatch_base
@@ -51,3 +52,13 @@ def node_product_description(node: NodeProvisioning) -> str:
 @description.register
 def port_product_description(port: PortProvisioning) -> str:
     return f"{port.product.name} {port.port.node.node_name} {port.port.port_name} {port.port.port_description}"
+
+
+@description.register
+def core_link_product_description(core_link: CoreLinkProvisioning) -> str:
+    return (
+        f"{core_link.product.name} "
+        f"{core_link.core_link.ports[0].node.node_name} {core_link.core_link.ports[0].port_name}"
+        " <-> "
+        f"{core_link.core_link.ports[1].port_name} {core_link.core_link.ports[1].node.node_name}"
+    )

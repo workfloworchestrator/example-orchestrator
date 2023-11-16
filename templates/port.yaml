@@ -1,5 +1,5 @@
 #
-# This file describes the "Node" product
+# This file describes the "Port" product
 #
 config:
   create_summary_forms: true

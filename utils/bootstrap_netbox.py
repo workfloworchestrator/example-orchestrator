@@ -1,7 +1,12 @@
 import structlog
 
 from services import netbox
-from services.netbox import IPv4_LOOPBACK_PREFIX, IPv6_LOOPBACK_PREFIX
+from services.netbox import (
+    IPv4_CORE_LINK_PREFIX,
+    IPv4_LOOPBACK_PREFIX,
+    IPv6_CORE_LINK_PREFIX,
+    IPv6_LOOPBACK_PREFIX,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -29,9 +34,14 @@ if __name__ == "__main__":
             # pynetbox already emits a log message
             pass
 
-    for prefix in (IPv4_LOOPBACK_PREFIX, IPv6_LOOPBACK_PREFIX):
+    for prefix, description in (
+        (IPv4_LOOPBACK_PREFIX, "IPv4 loopback prefix"),
+        (IPv6_LOOPBACK_PREFIX, "IPv6 loopback prefix"),
+        (IPv4_CORE_LINK_PREFIX, "IPv4 core link prefix"),
+        (IPv6_CORE_LINK_PREFIX, "IPv6 core link prefix"),
+    ):
         if netbox.netbox.ipam.prefixes.get(prefix=prefix):
             logger.warning("prefix already exists", prefix=prefix)
         else:
             logger.info("add prefix to netbox", prefix=prefix)
-            netbox.netbox.ipam.prefixes.create({"prefix": prefix, "description": "loopback addresses"})
+            netbox.netbox.ipam.prefixes.create({"prefix": prefix, "description": description})

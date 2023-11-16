@@ -15,8 +15,12 @@ from typing import Any
 
 from orchestrator.domain.base import ProductBlockModel, SubscriptionModel
 
+from products.product_blocks.core_link import CoreLinkBlockProvisioning
+from products.product_blocks.core_port import CorePortBlockProvisioning
 from products.product_blocks.node import NodeBlockProvisioning
 from products.product_blocks.port import PortBlockProvisioning
+from products.services.netbox.payload.core_link import build_core_link_payload
+from products.services.netbox.payload.core_port import build_core_port_payload
 from products.services.netbox.payload.node import build_node_payload
 from products.services.netbox.payload.port import build_port_payload
 from services import netbox
@@ -54,3 +58,13 @@ def _(model: NodeBlockProvisioning, subscription: SubscriptionModel, **kwargs: A
 @build_payload.register
 def _(model: PortBlockProvisioning, subscription: SubscriptionModel, **kwargs: Any) -> netbox.InterfacePayload:
     return build_port_payload(model, subscription)
+
+
+@build_payload.register
+def _(model: CorePortBlockProvisioning, subscription: SubscriptionModel, **kwargs: Any) -> netbox.InterfacePayload:
+    return build_core_port_payload(model, subscription)
+
+
+@build_payload.register
+def _(model: CoreLinkBlockProvisioning, subscription: SubscriptionModel, **kwargs: Any) -> netbox.CablePayload:
+    return build_core_link_payload(model, subscription)
