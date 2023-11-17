@@ -16,7 +16,7 @@ from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
 from services.netbox import IPv6_CORE_LINK_PREFIX, get_interface, get_prefix
-from workflows.shared import node_selector, pop_first, port_selector
+from workflows.shared import free_port_selector, node_selector, pop_first
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
@@ -45,10 +45,10 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
         class Config:
             title = f"{product_name} - port A and B"
 
-        port_ims_id_a: port_selector(
+        port_ims_id_a: free_port_selector(
             user_input_dict["node_subscription_id_a"], speed, "PortsEnumA"  # type:ignore # noqa: F821
         )
-        port_ims_id_b: port_selector(
+        port_ims_id_b: free_port_selector(
             user_input_dict["node_subscription_id_b"], speed, "PortsEnumB"  # type:ignore # noqa: F821
         )
         under_maintenance: bool = False

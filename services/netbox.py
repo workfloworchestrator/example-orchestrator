@@ -140,6 +140,27 @@ class AvailableIpPayload:
     status: Optional[str] = "active"
 
 
+@dataclass
+class VlanPayload(NetboxPayload):
+    vid: int
+    name: str
+    status: Optional[str] = "active"
+
+
+@dataclass
+class L2vpnPayload(NetboxPayload):
+    name: str
+    slug: str
+    type: Optional[str] = "mpls-evpn"
+
+
+@dataclass
+class L2vpnTerminationPayload(NetboxPayload):
+    l2vpn: int
+    assigned_object_id: int
+    assigned_object_type: Optional[str] = "ipam.vlan"
+
+
 def get_sites(**kwargs) -> List:
     return list(netbox.dcim.sites.filter(**kwargs))
 
@@ -180,6 +201,14 @@ def get_interface(**kwargs):
     return netbox.dcim.interfaces.get(**kwargs)
 
 
+def get_l2vpn(**kwargs):
+    return netbox.ipam.l2vpns.get(**kwargs)
+
+
+def get_vlan(**kwargs):
+    return netbox.ipam.vlans.get(**kwargs)
+
+
 def delete_from_netbox(endpoint, **kwargs) -> None:
     """Try to delete object with given kwargs from endpoint, raise an exception when object was not found."""
     if object := endpoint.get(**kwargs):
@@ -206,6 +235,14 @@ def delete_prefix(**kwargs) -> None:
 
 def delete_ip_address(**kwargs) -> None:
     delete_from_netbox(netbox.ipam.ip_addresses, **kwargs)
+
+
+def delete_l2vpn(**kwargs) -> None:
+    delete_from_netbox(netbox.ipam.l2vpns, **kwargs)
+
+
+def delete_vlan(**kwargs) -> None:
+    delete_from_netbox(netbox.ipam.vlans, **kwargs)
 
 
 def get_prefixes(**kwargs) -> List:
@@ -388,6 +425,21 @@ def _(payload: InterfacePayload, **kwargs: Any) -> int:
 @create.register
 def _(payload: SitePayload, **kwargs: Any) -> int:
     return _create_object(payload, endpoint=netbox.dcim.sites)
+
+
+@create.register
+def _(payload: VlanPayload, **kwargs: Any) -> int:
+    return _create_object(payload, endpoint=netbox.ipam.vlans)
+
+
+@create.register
+def _(payload: L2vpnPayload, **kwargs: Any) -> int:
+    return _create_object(payload, endpoint=netbox.ipam.l2vpns)
+
+
+@create.register
+def _(payload: L2vpnTerminationPayload, **kwargs: Any) -> int:
+    return _create_object(payload, endpoint=netbox.ipam.l2vpn_terminations)
 
 
 @singledispatch

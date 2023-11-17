@@ -17,3 +17,9 @@ LazyWorkflowInstance("workflows.core_link.create_core_link", "create_core_link")
 LazyWorkflowInstance("workflows.core_link.modify_core_link", "modify_core_link")
 LazyWorkflowInstance("workflows.core_link.terminate_core_link", "terminate_core_link")
 LazyWorkflowInstance("workflows.core_link.validate_core_link", "validate_core_link")
+
+
+LazyWorkflowInstance("workflows.l2vpn.create_l2vpn", "create_l2vpn")
+LazyWorkflowInstance("workflows.l2vpn.modify_l2vpn", "modify_l2vpn")
+LazyWorkflowInstance("workflows.l2vpn.terminate_l2vpn", "terminate_l2vpn")
+LazyWorkflowInstance("workflows.l2vpn.validate_l2vpn", "validate_l2vpn")

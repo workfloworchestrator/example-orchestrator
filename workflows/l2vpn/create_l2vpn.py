@@ -1,0 +1,148 @@
+import uuid
+from random import randrange
+from typing import Optional
+
+from orchestrator.domain import SubscriptionModel
+from orchestrator.forms import FormPage
+from orchestrator.targets import Target
+from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
+from orchestrator.workflow import StepList, begin, step
+from orchestrator.workflows.steps import store_process_subscription
+from orchestrator.workflows.utils import create_workflow
+from pydantic import validator
+
+from products import Port
+from products.product_blocks.sap import SAPBlockInactive
+from products.product_types.l2vpn import L2vpnInactive, L2vpnProvisioning
+from products.services.description import description
+from products.services.netbox.netbox import build_payload
+from services import netbox
+from workflows.l2vpn.shared.forms import ports_selector
+
+
+def subscription_description(subscription: SubscriptionModel) -> str:
+    """The suggested pattern is to implement a subscription service that generates a subscription specific
+    description, in case that is not present the description will just be set to the product name.
+    """
+    return f"{subscription.product.name} subscription"
+
+
+def initial_input_form_generator(product_name: str) -> FormGenerator:
+    class CreateL2vpnForm(FormPage):
+        class Config:
+            title = product_name
+
+        number_of_ports: int
+        speed: int
+        speed_policer: Optional[bool] = False
+
+        @validator("number_of_ports", allow_reuse=True)
+        def max_number_of_ports(cls, v: str):
+            if int(v) < 2 or int(v) > 8:
+                raise AssertionError("number of ports must be not less than 2 and not greater than 8")
+            return v
+
+    user_input = yield CreateL2vpnForm
+
+    user_input_dict = user_input.dict()
+
+    class SelectPortsForm(FormPage):
+        class Config:
+            title = product_name
+
+        ports: ports_selector(int(user_input_dict["number_of_ports"]))
+        vlan: int
+
+        @validator("vlan", allow_reuse=True)
+        def valid_vlan(cls, v: str):
+            if int(v) < 2 or int(v) > 4094:
+                raise AssertionError("VLAN ID must be not less than 2 and not greater than 4094")
+            return v
+
+    user_input = yield SelectPortsForm
+
+    user_input_dict.update(user_input.dict())
+    user_input_dict["ports"] = [str(item) for item in user_input_dict["ports"]]
+
+    return user_input_dict
+
+
+@step("Construct Subscription model")
+def construct_l2vpn_model(
+    product: UUIDstr,
+    # organisation: UUIDstr,
+    ports: list[UUIDstr],
+    speed: int,
+    speed_policer: bool,
+    vlan: int,
+) -> State:
+    subscription = L2vpnInactive.from_product_id(
+        product_id=product,
+        customer_id=str(uuid.uuid4()),
+        status=SubscriptionLifecycle.INITIAL,
+    )
+    subscription.virtual_circuit.speed = speed
+    subscription.virtual_circuit.speed_policer = speed_policer
+    subscription.virtual_circuit.nrm_id = randrange(2**16)  # TODO: move to separate step that provisions l2vpn in NRM
+
+    def to_sap(port: UUIDstr) -> SAPBlockInactive:
+        port_subscription = Port.from_subscription(port)
+        sap = SAPBlockInactive.new(subscription_id=subscription.subscription_id)
+        sap.port = port_subscription.port
+        sap.vlan = vlan
+        return sap
+
+    subscription.virtual_circuit.saps = [to_sap(port) for port in ports]
+
+    subscription = L2vpnProvisioning.from_other_lifecycle(subscription, SubscriptionLifecycle.PROVISIONING)
+    subscription.description = description(subscription)
+
+    return {
+        "subscription": subscription,
+        "subscription_id": subscription.subscription_id,  # necessary to be able to use older generic step functions
+        "subscription_description": subscription.description,
+    }
+
+
+@step("Create VLANs in IMS")
+def ims_create_vlans(subscription: L2vpnProvisioning) -> State:
+    payloads = []
+    for sap in subscription.virtual_circuit.saps:
+        payload = build_payload(sap, subscription)
+        sap.ims_id = netbox.create(payload)
+        payloads.append(payload)
+
+    return {"subscription": subscription, "payloads": payloads}
+
+
+@step("Create L2VPN in IMS")
+def ims_create_l2vpn(subscription: L2vpnProvisioning) -> State:
+    payload = build_payload(subscription.virtual_circuit, subscription)
+    subscription.virtual_circuit.ims_id = netbox.create(payload)
+
+    return {"subscription": subscription, "payload": payload}
+
+
+@step("Create L2VPN terminations in IMS")
+def ims_create_l2vpn_terminations(subscription: L2vpnProvisioning) -> State:
+    payloads = []
+    l2vpn = netbox.get_l2vpn(id=subscription.virtual_circuit.ims_id)
+    for sap in subscription.virtual_circuit.saps:
+        vlan = netbox.get_vlan(id=sap.ims_id)
+        payload = netbox.L2vpnTerminationPayload(l2vpn=l2vpn.id, assigned_object_id=vlan.id)
+        netbox.create(payload)
+        payloads.append(payload)
+
+    return {"payloads": payloads}
+
+
+@create_workflow("Create l2vpn", initial_input_form=initial_input_form_generator)
+def create_l2vpn() -> StepList:
+    return (
+        begin
+        >> construct_l2vpn_model
+        >> store_process_subscription(Target.CREATE)
+        >> ims_create_vlans
+        >> ims_create_l2vpn
+        >> ims_create_l2vpn_terminations
+    )

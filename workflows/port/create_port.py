@@ -19,7 +19,7 @@ from products.services.description import description
 from services.netbox import get_interface
 from workflows.port.shared.forms import port_mode_selector
 from workflows.port.shared.steps import update_port_in_ims
-from workflows.shared import node_selector, port_selector
+from workflows.shared import free_port_selector, node_selector
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
@@ -47,7 +47,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
 
         port_settings: Label
 
-        ims_id: port_selector(node_subscription_id, speed)  # type:ignore
+        ims_id: free_port_selector(node_subscription_id, speed)  # type:ignore
         port_description: Optional[str]
         port_mode: port_mode_selector()  # type:ignore
         auto_negotiation: Optional[bool] = False

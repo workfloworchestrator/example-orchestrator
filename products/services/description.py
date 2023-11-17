@@ -17,6 +17,7 @@ from typing import Union
 from orchestrator.domain.base import ProductBlockModel, ProductModel, SubscriptionModel
 
 from products.product_types.core_link import CoreLinkProvisioning
+from products.product_types.l2vpn import L2vpnProvisioning
 from products.product_types.node import NodeProvisioning
 from products.product_types.port import PortProvisioning
 from utils.singledispatch import single_dispatch_base
@@ -63,4 +64,13 @@ def core_link_product_description(core_link: CoreLinkProvisioning) -> str:
         " <-> "
         f"{core_link.core_link.ports[1].port_name} {core_link.core_link.ports[1].node.node_name}"
         f"{maintenance}"
+    )
+
+
+@description.register
+def l2vpn_product_description(l2vpn: L2vpnProvisioning) -> str:
+    return (
+        f"{l2vpn.product.tag} "
+        f"{l2vpn.virtual_circuit.speed} Mbit/s "
+        f"({'-'.join(sorted(list(set([sap.port.node.node_name for sap in l2vpn.virtual_circuit.saps]))))})"
     )

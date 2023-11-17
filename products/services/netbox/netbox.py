@@ -19,10 +19,14 @@ from products.product_blocks.core_link import CoreLinkBlockProvisioning
 from products.product_blocks.core_port import CorePortBlockProvisioning
 from products.product_blocks.node import NodeBlockProvisioning
 from products.product_blocks.port import PortBlockProvisioning
+from products.product_blocks.sap import SAPBlockProvisioning
+from products.product_blocks.virtual_circuit import VirtualCircuitBlockProvisioning
 from products.services.netbox.payload.core_link import build_core_link_payload
 from products.services.netbox.payload.core_port import build_core_port_payload
+from products.services.netbox.payload.l2vpn import build_l2vpn_payload
 from products.services.netbox.payload.node import build_node_payload
 from products.services.netbox.payload.port import build_port_payload
+from products.services.netbox.payload.sap import build_sap_payload
 from services import netbox
 from utils.singledispatch import single_dispatch_base
 
@@ -68,3 +72,13 @@ def _(model: CorePortBlockProvisioning, subscription: SubscriptionModel, **kwarg
 @build_payload.register
 def _(model: CoreLinkBlockProvisioning, subscription: SubscriptionModel, **kwargs: Any) -> netbox.CablePayload:
     return build_core_link_payload(model, subscription)
+
+
+@build_payload.register
+def _(model: SAPBlockProvisioning, subscription: SubscriptionModel, **kwargs: Any) -> netbox.VlanPayload:
+    return build_sap_payload(model, subscription)
+
+
+@build_payload.register
+def _(model: VirtualCircuitBlockProvisioning, subscription: SubscriptionModel, **kwargs: Any) -> netbox.L2vpnPayload:
+    return build_l2vpn_payload(model, subscription)

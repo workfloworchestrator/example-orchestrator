@@ -1,0 +1,55 @@
+#
+# This file describes the "L2VPN" product
+#
+config:
+  create_summary_forms: true
+name: l2vpn
+type: L2vpn
+tag: L2VPN
+description: "L2VPN"
+product_blocks:
+  - name: virtual_circuit
+    type: VirtualCircuit
+    tag: VC
+    description: "virtual circuit product block"
+    fields:
+      - name: saps
+        type: list
+        description: "Virtual circuit service access points"
+        list_type: SAP
+        min_items: 2
+        max_items: 8
+        required: provisioning
+      - name: speed
+        description: "speed of the L2VPN im Mbit/s"
+        type: int
+        required: provisioning
+      - name: speed_policer
+        description: "speed policer active?"
+        type: bool
+        required: provisioning
+      - name: ims_id
+        description: "ID of the L2VPN in the inventory management system"
+        type: int
+        required: active
+      - name: nrm_id
+        type: int
+        description: "ID of the L2VPN in the network resource manager"
+        required: active
+  - name: sap
+    type: SAP
+    tag: SAP
+    description: "service access point"
+    fields:
+      - name: port
+        description: "Link to Port product block"
+        type: Port
+        required: provisioning
+      - name: vlan
+        description: "VLAN ID on port"
+        type: str
+        required: provisioning
+      - name: ims_id
+        description: "ID of the SAP in the inventory management system"
+        type: int
+        required: active

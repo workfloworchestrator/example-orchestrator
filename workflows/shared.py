@@ -48,7 +48,7 @@ def node_selector(enum: str = "NodesEnum") -> list:
     return choice_list(Choice(enum, zip(nodes.keys(), nodes.items())), min_items=1, max_items=1)  # type:ignore
 
 
-def port_selector(node_subscription_id: UUIDstr, speed: int, enum: str = "PortsEnum") -> list:
+def free_port_selector(node_subscription_id: UUIDstr, speed: int, enum: str = "PortsEnum") -> list:
     node = Node.from_subscription(node_subscription_id)
     interfaces = {
         str(interface.id): interface.name
