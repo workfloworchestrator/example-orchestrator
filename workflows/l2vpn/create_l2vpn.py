@@ -7,13 +7,13 @@ from orchestrator.forms import FormPage
 from orchestrator.targets import Target
 from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.steps import store_process_subscription
+from orchestrator.workflows.steps import set_status, store_process_subscription
 from orchestrator.workflows.utils import create_workflow
 from pydantic import validator
 
 from products import Port
 from products.product_blocks.sap import SAPBlockInactive
-from products.product_types.l2vpn import L2vpnInactive, L2vpnProvisioning
+from products.product_types.l2vpn import L2vpn, L2vpnInactive, L2vpnProvisioning
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
@@ -54,8 +54,8 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
         vlan: int
 
         @validator("vlan", allow_reuse=True)
-        def valid_vlan(cls, v: str):
-            if int(v) < 2 or int(v) > 4094:
+        def valid_vlan(cls, v: int):
+            if v < 2 or v > 4094:
                 raise AssertionError("VLAN ID must be not less than 2 and not greater than 4094")
             return v
 
@@ -136,6 +136,21 @@ def ims_create_l2vpn_terminations(subscription: L2vpnProvisioning) -> State:
     return {"payloads": payloads}
 
 
+@step("Update VLANs on connected ports in IMS")
+def update_vlans_on_ports(subscription: L2vpn) -> State:
+    """By re-provisioning the connected ports,
+    the VLANs from active SAPs will be provisioned in IMS or removed otherwise.
+    """
+    payloads = []
+    for sap in subscription.virtual_circuit.saps:
+        port_subscription = Port.from_subscription(sap.port.owner_subscription_id)
+        payload = build_payload(port_subscription.port, port_subscription)
+        netbox.update(payload, id=port_subscription.port.ims_id)
+        payloads.append(payload)
+
+    return {"payloads": payloads}
+
+
 @create_workflow("Create l2vpn", initial_input_form=initial_input_form_generator)
 def create_l2vpn() -> StepList:
     return (
@@ -145,4 +160,6 @@ def create_l2vpn() -> StepList:
         >> ims_create_vlans
         >> ims_create_l2vpn
         >> ims_create_l2vpn_terminations
+        >> set_status(SubscriptionLifecycle.ACTIVE)
+        >> update_vlans_on_ports
     )

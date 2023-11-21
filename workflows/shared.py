@@ -1,10 +1,19 @@
 from typing import List
 
-from orchestrator.db import ProductTable, SubscriptionTable
+from orchestrator.db import (
+    ProductTable,
+    ResourceTypeTable,
+    SubscriptionInstanceTable,
+    SubscriptionInstanceValueTable,
+    SubscriptionTable,
+)
 from orchestrator.forms.validators import Choice, choice_list
 from orchestrator.types import SubscriptionLifecycle, UUIDstr
 
 from products import Node
+
+# from products.product_blocks.port import PortBlock, PortBlockInactive
+# from products.product_blocks.sap import SAPBlock, SAPBlockInactive, SAPBlockProvisioning
 from services.netbox import get_device, get_interfaces
 
 
@@ -12,13 +21,13 @@ def pop_first(dictionary: dict, key: str) -> None:
     dictionary[key] = dictionary[key].pop(0)
 
 
-def subscriptions_by_product_type(product_type: str, status: List[str]) -> List[SubscriptionTable]:
+def subscriptions_by_product_type(product_type: str, status: List[SubscriptionLifecycle]) -> List[SubscriptionTable]:
     """
     retrieve_subscription_list_by_product This function lets you retreive a
     list of all subscriptions of a given product type. For example, you could
     call this like so:
 
-    >>> retrieve_subscription_list_by_product("Node", [SubscriptionLifecycle.ACTIVE])
+    >>> subscriptions_by_product_type("Node", [SubscriptionLifecycle.ACTIVE, SubscriptionLifecycle.PROVISIONING])
     [SubscriptionTable(su...note=None), SubscriptionTable(su...note=None)]
 
     You now have a list of all active Node subscription instances and can then
@@ -26,7 +35,7 @@ def subscriptions_by_product_type(product_type: str, status: List[str]) -> List[
 
     Args:
         product_type (str): The prouduct type in the DB (i.e. Node, User, etc.)
-        status (List[str]): The lifecycle states you want returned (i.e.
+        status (List[SubscriptionLifecycle]): The lifecycle states you want returned (i.e.
         SubscriptionLifecycle.ACTIVE)
 
     Returns:
@@ -40,6 +49,33 @@ def subscriptions_by_product_type(product_type: str, status: List[str]) -> List[
         .all()
     )
     return subscriptions
+
+
+def subscriptions_by_product_type_and_instance_value(
+    product_type: str, resource_type: str, value: str, status: List[SubscriptionLifecycle]
+) -> List[SubscriptionTable]:
+    """Retrieve a list of Subscriptions by product_type, resource_type and value.
+
+    Args:
+        product_type: type of subscriptions
+        resource_type: name of the resource type
+        value: value of the resource type
+        status: lifecycle status of the subscriptions
+
+    Returns: Subscription or None
+
+    """
+    return (
+        SubscriptionTable.query.join(ProductTable)
+        .join(SubscriptionInstanceTable)
+        .join(SubscriptionInstanceValueTable)
+        .join(ResourceTypeTable)
+        .filter(ProductTable.product_type == product_type)
+        .filter(SubscriptionInstanceValueTable.value == value)
+        .filter(ResourceTypeTable.resource_type == resource_type)
+        .filter(SubscriptionTable.status.in_(status))
+        .all()
+    )
 
 
 def node_selector(enum: str = "NodesEnum") -> list:

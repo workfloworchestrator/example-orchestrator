@@ -14,7 +14,7 @@
 
 from orchestrator.domain import SubscriptionModel
 
-from products.product_blocks.port import PortBlockProvisioning
+from products.product_blocks.port import PortBlockProvisioning, PortMode
 from services import netbox
 
 
@@ -42,6 +42,8 @@ def build_port_payload(model: PortBlockProvisioning, subscription: SubscriptionM
         device=model.node.ims_id,
         name=model.port_name,
         type=model.port_type,
+        tagged_vlans=model.vlan_ims_ids,
+        mode="tagged" if model.port_mode == PortMode.TAGGED else "",
         description=model.port_description,
         enabled=model.enabled,
         speed=subscription.speed * 1000,  # type: ignore[attr-defined]

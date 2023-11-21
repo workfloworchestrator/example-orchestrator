@@ -47,7 +47,7 @@ product_blocks:
         required: provisioning
       - name: vlan
         description: "VLAN ID on port"
-        type: str
+        type: int
         required: provisioning
       - name: ims_id
         description: "ID of the SAP in the inventory management system"

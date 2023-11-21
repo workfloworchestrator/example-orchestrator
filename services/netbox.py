@@ -10,7 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from functools import singledispatch
 from os import environ
 from typing import Any, List, Optional, Tuple
@@ -120,6 +120,8 @@ class InterfacePayload(NetboxPayload):
     device: int
     name: str
     type: str
+    tagged_vlans: List[int] = field(default_factory=lambda: [])
+    mode: str = ""
     description: str = ""
     enabled: bool = False
     speed: Optional[int] = None

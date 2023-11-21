@@ -14,6 +14,9 @@ endpoints = [
     netbox.dcim.cables,
     netbox.ipam.prefixes,
     netbox.ipam.ip_addresses,
+    netbox.ipam.vlans,
+    netbox.ipam.l2vpns,
+    netbox.ipam.l2vpn_terminations,
 ]
 
 

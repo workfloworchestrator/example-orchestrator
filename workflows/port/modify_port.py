@@ -8,10 +8,8 @@ from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import modify_workflow
 from pydantic_forms.core import ReadOnlyField
 
-from products.product_blocks.port import PortMode
 from products.product_types.port import Port, PortProvisioning
 from products.services.description import description
-from workflows.port.shared.forms import port_mode_selector
 from workflows.port.shared.steps import update_port_in_ims
 
 
@@ -27,8 +25,8 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
         node_name: str = ReadOnlyField(port.node.node_name)
         port_name: str = ReadOnlyField(port.port_name)
         port_type: str = ReadOnlyField(port.port_type)
+        port_mode: str = ReadOnlyField(port.port_mode)
         port_description: str = port.port_description
-        port_mode: port_mode_selector() = port.port_mode  # type: ignore
         auto_negotiation: bool = port.auto_negotiation
         lldp: bool = port.lldp
 
@@ -43,7 +41,6 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
 def create_summary_form(user_input: dict, subscription: Port) -> Generator:
     product_summary_fields = [
         "port_description",
-        "port_mode",
         "auto_negotiation",
         "lldp",
     ]
@@ -70,13 +67,11 @@ def create_summary_form(user_input: dict, subscription: Port) -> Generator:
 @step("Update subscription")
 def update_subscription(
     subscription: PortProvisioning,
-    port_mode: PortMode,
     port_description: str,
     auto_negotiation: bool,
     lldp: bool,
 ) -> State:
     subscription.port.port_description = port_description
-    subscription.port.port_mode = port_mode
     subscription.port.auto_negotiation = auto_negotiation
     subscription.port.lldp = lldp
     subscription.description = description(subscription)

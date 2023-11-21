@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from orchestrator.domain.base import ProductBlockModel, serializable_property
 from orchestrator.types import SubscriptionLifecycle
@@ -43,6 +43,26 @@ class PortBlockProvisioning(PortBlockInactive, lifecycle=[SubscriptionLifecycle.
     node: NodeBlockProvisioning
     ims_id: int
     nrm_id: Optional[int] = None
+
+    def _active_sap_blocks(self) -> List:
+        from products.product_blocks.sap import SAPBlock
+
+        return [
+            SAPBlock.from_db(subscription_instance.subscription_instance_id)
+            for subscription_instance in self.in_use_by
+            if subscription_instance.product_block.tag == "SAP"
+            and subscription_instance.subscription.status == SubscriptionLifecycle.ACTIVE
+        ]
+
+    @serializable_property
+    def vlans(self) -> List[int]:
+        """Get list of active VLANs by looking at SAPBlock's that use this PortBlock."""
+        return [sap_block.vlan for sap_block in self._active_sap_blocks()]
+
+    @serializable_property
+    def vlan_ims_ids(self) -> List[int]:
+        """Get list of active VLAN IMS IDs by looking at SAPBlock's that use this PortBlock."""
+        return [sap_block.ims_id for sap_block in self._active_sap_blocks()]
 
     @serializable_property
     def title(self) -> str:
