@@ -37,6 +37,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
         speed_policer: Optional[bool] = False
 
         @validator("number_of_ports", allow_reuse=True)
+        # why is v defined as a str instead of an int?
         def max_number_of_ports(cls, v: str):
             if int(v) < 2 or int(v) > 8:
                 raise AssertionError("number of ports must be not less than 2 and not greater than 8")
