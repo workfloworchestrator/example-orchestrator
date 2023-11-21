@@ -60,7 +60,9 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
             return v
 
     user_input = yield SelectPortsForm
+    # reusing variable names quickly becomes confusing
 
+    # probably beter to have separate dicts and return the union like 'return user_input_dict | select_port_dict | {"ports": ports}
     user_input_dict.update(user_input.dict())
     user_input_dict["ports"] = [str(item) for item in user_input_dict["ports"]]
 
@@ -106,6 +108,7 @@ def construct_l2vpn_model(
 
 @step("Create VLANs in IMS")
 def ims_create_vlans(subscription: L2vpnProvisioning) -> State:
+    # We are trying to get rid of appends in our codebase by using list comprehension.
     payloads = []
     for sap in subscription.virtual_circuit.saps:
         payload = build_payload(sap, subscription)
@@ -127,6 +130,7 @@ def ims_create_l2vpn(subscription: L2vpnProvisioning) -> State:
 def ims_create_l2vpn_terminations(subscription: L2vpnProvisioning) -> State:
     payloads = []
     l2vpn = netbox.get_l2vpn(id=subscription.virtual_circuit.ims_id)
+    # use list comprehension
     for sap in subscription.virtual_circuit.saps:
         vlan = netbox.get_vlan(id=sap.ims_id)
         payload = netbox.L2vpnTerminationPayload(l2vpn=l2vpn.id, assigned_object_id=vlan.id)
