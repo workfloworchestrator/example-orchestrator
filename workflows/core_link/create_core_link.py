@@ -10,8 +10,8 @@ from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
 from pydantic import validator
 
-from products import Node
 from products.product_types.core_link import CoreLinkInactive, CoreLinkProvisioning
+from products.product_types.node import Node
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
@@ -33,10 +33,10 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
                 raise AssertionError("node B cannot be the same as node A")
             return v
 
-    user_input = yield SelectNodes
-    user_input_dict = user_input.dict()
-    pop_first(user_input_dict, "node_subscription_id_a")
-    pop_first(user_input_dict, "node_subscription_id_b")
+    select_nodes = yield SelectNodes
+    select_nodes_dict = select_nodes.dict()
+    pop_first(select_nodes_dict, "node_subscription_id_a")
+    pop_first(select_nodes_dict, "node_subscription_id_b")
 
     _product = get_product_by_id(product)
     speed = int(_product.fixed_input_value("speed"))
@@ -46,19 +46,19 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
             title = f"{product_name} - port A and B"
 
         port_ims_id_a: free_port_selector(
-            user_input_dict["node_subscription_id_a"], speed, "PortsEnumA"  # type:ignore # noqa: F821
+            select_nodes_dict["node_subscription_id_a"], speed, "PortsEnumA"  # type:ignore # noqa: F821
         )
         port_ims_id_b: free_port_selector(
-            user_input_dict["node_subscription_id_b"], speed, "PortsEnumB"  # type:ignore # noqa: F821
+            select_nodes_dict["node_subscription_id_b"], speed, "PortsEnumB"  # type:ignore # noqa: F821
         )
         under_maintenance: bool = False
 
-    user_input = yield SelectPorts
-    user_input_dict.update(user_input.dict())
-    pop_first(user_input_dict, "port_ims_id_a")
-    pop_first(user_input_dict, "port_ims_id_b")
+    select_ports = yield SelectPorts
+    select_ports_dict = select_ports.dict()
+    pop_first(select_ports_dict, "port_ims_id_a")
+    pop_first(select_ports_dict, "port_ims_id_b")
 
-    return user_input_dict
+    return select_nodes_dict | select_ports_dict
 
 
 @step("Construct Subscription model")

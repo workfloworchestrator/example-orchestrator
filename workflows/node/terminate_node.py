@@ -4,7 +4,7 @@ from orchestrator.types import InputForm, State, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import terminate_workflow
 
-from products import Node
+from products.product_types.node import Node
 from services.netbox import delete_device
 
 

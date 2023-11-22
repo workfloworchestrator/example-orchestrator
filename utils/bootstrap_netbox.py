@@ -14,6 +14,8 @@ initial_objects = [
     netbox.SitePayload(name="Amsterdam", slug="amsterdam", status="active"),
     netbox.SitePayload(name="Paris", slug="paris", status="active"),
     netbox.SitePayload(name="London", slug="london", status="active"),
+    netbox.SitePayload(name="Madrid", slug="madrid", status="active"),
+    netbox.SitePayload(name="Rome", slug="rome", status="active"),
     netbox.DeviceRolePayload(name="Provider", slug="provider", color="9e9e9e"),
     netbox.DeviceRolePayload(name="Provider Edge", slug="provider-edge", color="ff9800"),
     cisco := netbox.ManufacturerPayload(name="Cisco", slug="cisco"),

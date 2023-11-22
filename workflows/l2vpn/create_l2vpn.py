@@ -11,9 +11,9 @@ from orchestrator.workflows.steps import set_status, store_process_subscription
 from orchestrator.workflows.utils import create_workflow
 from pydantic import validator
 
-from products import Port
 from products.product_blocks.sap import SAPBlockInactive
 from products.product_types.l2vpn import L2vpn, L2vpnInactive, L2vpnProvisioning
+from products.product_types.port import Port
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
@@ -37,14 +37,12 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
         speed_policer: Optional[bool] = False
 
         @validator("number_of_ports", allow_reuse=True)
-        # why is v defined as a str instead of an int?
-        def max_number_of_ports(cls, v: str):
-            if int(v) < 2 or int(v) > 8:
+        def max_number_of_ports(cls, v: int):
+            if v < 2 or v > 8:
                 raise AssertionError("number of ports must be not less than 2 and not greater than 8")
             return v
 
     user_input = yield CreateL2vpnForm
-
     user_input_dict = user_input.dict()
 
     class SelectPortsForm(FormPage):
@@ -60,14 +58,11 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
                 raise AssertionError("VLAN ID must be not less than 2 and not greater than 4094")
             return v
 
-    user_input = yield SelectPortsForm
-    # reusing variable names quickly becomes confusing
+    select_ports = yield SelectPortsForm
+    select_ports_dict = select_ports.dict()
+    ports = [str(item) for item in select_ports_dict["ports"]]
 
-    # probably beter to have separate dicts and return the union like 'return user_input_dict | select_port_dict | {"ports": ports}
-    user_input_dict.update(user_input.dict())
-    user_input_dict["ports"] = [str(item) for item in user_input_dict["ports"]]
-
-    return user_input_dict
+    return user_input_dict | select_ports_dict | {"ports": ports}
 
 
 @step("Construct Subscription model")
@@ -109,7 +104,6 @@ def construct_l2vpn_model(
 
 @step("Create VLANs in IMS")
 def ims_create_vlans(subscription: L2vpnProvisioning) -> State:
-    # We are trying to get rid of appends in our codebase by using list comprehension.
     payloads = []
     for sap in subscription.virtual_circuit.saps:
         payload = build_payload(sap, subscription)
@@ -131,7 +125,6 @@ def ims_create_l2vpn(subscription: L2vpnProvisioning) -> State:
 def ims_create_l2vpn_terminations(subscription: L2vpnProvisioning) -> State:
     payloads = []
     l2vpn = netbox.get_l2vpn(id=subscription.virtual_circuit.ims_id)
-    # use list comprehension
     for sap in subscription.virtual_circuit.saps:
         vlan = netbox.get_vlan(id=sap.ims_id)
         payload = netbox.L2vpnTerminationPayload(l2vpn=l2vpn.id, assigned_object_id=vlan.id)

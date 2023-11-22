@@ -19,6 +19,7 @@ from workflows.node.shared.forms import (
     site_selector,
 )
 from workflows.node.shared.steps import update_node_in_ims
+from workflows.shared import pop_first
 
 logger = structlog.get_logger(__name__)
 
@@ -43,9 +44,9 @@ def initial_input_form_generator(subscription_id: UUIDstr, product: UUIDstr) -> 
     user_input = yield ModifyNodeForm
 
     user_input_dict = user_input.dict()
-    user_input_dict["role_id"] = user_input_dict["role_id"].pop(0)
-    user_input_dict["type_id"] = user_input_dict["type_id"].pop(0)
-    user_input_dict["site_id"] = user_input_dict["site_id"].pop(0)
+    pop_first(user_input_dict, "role_id")
+    pop_first(user_input_dict, "type_id")
+    pop_first(user_input_dict, "site_id")
 
     yield from create_summary_form(user_input_dict, subscription)
 

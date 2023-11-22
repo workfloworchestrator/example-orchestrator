@@ -10,10 +10,7 @@ from orchestrator.db import (
 from orchestrator.forms.validators import Choice, choice_list
 from orchestrator.types import SubscriptionLifecycle, UUIDstr
 
-from products import Node
-
-# from products.product_blocks.port import PortBlock, PortBlockInactive
-# from products.product_blocks.sap import SAPBlock, SAPBlockInactive, SAPBlockProvisioning
+from products.product_types.node import Node
 from services.netbox import get_device, get_interfaces
 
 

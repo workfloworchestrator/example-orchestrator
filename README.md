@@ -1,4 +1,4 @@
-# Example Workflow Orchestrator Review
+# Example Workflow Orchestrator
 
 Example workflow orchestrator
 (https://workfloworchestrator.org/orchestrator-core/) implementation.
