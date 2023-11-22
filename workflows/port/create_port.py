@@ -1,10 +1,9 @@
 import uuid
-from collections.abc import Generator
 from random import randrange
 from typing import Optional
 
 from orchestrator.forms import FormPage
-from orchestrator.forms.validators import Label, MigrationSummary
+from orchestrator.forms.validators import Label
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
 from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
@@ -16,10 +15,15 @@ from products.product_blocks.port import PortMode
 from products.product_types.node import Node
 from products.product_types.port import PortInactive, PortProvisioning
 from products.services.description import description
-from services.netbox import get_interface
+from services import netbox
 from workflows.port.shared.forms import port_mode_selector
 from workflows.port.shared.steps import update_port_in_ims
-from workflows.shared import free_port_selector, node_selector, pop_first
+from workflows.shared import (
+    create_summary_form,
+    free_port_selector,
+    node_selector,
+    pop_first,
+)
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
@@ -56,36 +60,10 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
     user_input_dict = user_input.dict()
     pop_first(user_input_dict, "ims_id")
 
-    yield from create_summary_form(user_input_dict, product_name)
+    summary_fields = ["ims_id", "port_description", "port_mode", "auto_negotiation", "lldp"]
+    yield from create_summary_form(user_input_dict, product_name, summary_fields)
 
     return user_input_dict | {"node_subscription_id": node_subscription_id}
-
-
-def create_summary_form(
-    user_input: dict,
-    product_name: str,
-) -> Generator:
-    product_summary_fields = [
-        "ims_id",
-        "port_description",
-        "port_mode",
-        "auto_negotiation",
-        "lldp",
-    ]
-
-    class ProductSummary(MigrationSummary):
-        data = {
-            "labels": product_summary_fields,
-            "columns": [[str(user_input[nm]) for nm in product_summary_fields]],
-        }
-
-    class SummaryForm(FormPage):
-        class Config:
-            title = f"{product_name} Summary"
-
-        product_summary: ProductSummary
-
-    yield SummaryForm
 
 
 @step("Construct Subscription model")
@@ -104,7 +82,7 @@ def construct_port_model(
         status=SubscriptionLifecycle.INITIAL,
     )
     node = Node.from_subscription(node_subscription_id)
-    interface = get_interface(id=ims_id)
+    interface = netbox.get_interface(id=ims_id)
     subscription.port.node = node.node
     subscription.port.port_name = interface.name
     subscription.port.port_type = interface.type.value

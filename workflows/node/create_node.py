@@ -1,10 +1,9 @@
 import uuid
-from collections.abc import Generator
 from random import randrange
 from typing import Optional
 
 from orchestrator.forms import FormPage
-from orchestrator.forms.validators import Label, MigrationSummary
+from orchestrator.forms.validators import Label
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
 from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
@@ -24,7 +23,7 @@ from workflows.node.shared.forms import (
     site_selector,
 )
 from workflows.node.shared.steps import update_node_in_ims
-from workflows.shared import pop_first
+from workflows.shared import create_summary_form, pop_first
 
 
 def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGenerator:
@@ -52,37 +51,10 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
     pop_first(user_input_dict, "type_id")
     pop_first(user_input_dict, "site_id")
 
-    yield from create_summary_form(user_input_dict, product_name)
+    summary_fields = ["role_id", "type_id", "site_id", "node_status", "node_name", "node_description"]
+    yield from create_summary_form(user_input_dict, product_name, summary_fields)
 
     return user_input_dict
-
-
-def create_summary_form(
-    user_input: dict,
-    product_name: str,
-) -> Generator:
-    product_summary_fields = [
-        "role_id",
-        "type_id",
-        "site_id",
-        "node_status",
-        "node_name",
-        "node_description",
-    ]
-
-    class ProductSummary(MigrationSummary):
-        data = {
-            "labels": product_summary_fields,
-            "columns": [[str(user_input[nm]) for nm in product_summary_fields]],
-        }
-
-    class SummaryForm(FormPage):
-        class Config:
-            title = f"{product_name} Summary"
-
-        product_summary: ProductSummary
-
-    yield SummaryForm
 
 
 @step("Construct Subscription model")

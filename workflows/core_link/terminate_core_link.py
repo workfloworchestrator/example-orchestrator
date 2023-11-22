@@ -23,11 +23,19 @@ def disconnect_ports(subscription: CoreLink) -> None:
     netbox.delete_cable(id=subscription.core_link.ims_id)
 
 
-@step("Unassign IPv6 addresses")
-def unassign_ip_addresses(subscription: CoreLink) -> None:
-    netbox.delete_prefix(id=subscription.core_link.ipv6_prefix_ipam_id)
-    netbox.delete_ip_address(id=subscription.core_link.ports[0].ipv6_ipam_id)
+@step("Unassign side B IPv6 address")
+def unassign_side_b_ipv6_prefix(subscription: CoreLink) -> None:
     netbox.delete_ip_address(id=subscription.core_link.ports[1].ipv6_ipam_id)
+
+
+@step("Unassign side A IPv6 address")
+def unassign_side_a_ipv6_prefix(subscription: CoreLink) -> None:
+    netbox.delete_ip_address(id=subscription.core_link.ports[0].ipv6_ipam_id)
+
+
+@step("Unassign IPv6 prefix")
+def unassign_ipv6_prefix(subscription: CoreLink) -> None:
+    netbox.delete_prefix(id=subscription.core_link.ipv6_prefix_ipam_id)
 
 
 @step("disable ports in IMS")
@@ -45,4 +53,11 @@ def disable_ports(subscription: CoreLink) -> State:
 
 @terminate_workflow("Terminate core_link", initial_input_form=terminate_initial_input_form_generator)
 def terminate_core_link() -> StepList:
-    return begin >> disconnect_ports >> unassign_ip_addresses >> disable_ports
+    return (
+        begin
+        >> disconnect_ports
+        >> unassign_side_b_ipv6_prefix
+        >> unassign_side_a_ipv6_prefix
+        >> unassign_ipv6_prefix
+        >> disable_ports
+    )

@@ -1,7 +1,5 @@
-from collections.abc import Generator
-
 from orchestrator.forms import FormPage
-from orchestrator.forms.validators import Label, MigrationSummary
+from orchestrator.forms.validators import Label
 from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
@@ -11,6 +9,7 @@ from pydantic_forms.core import ReadOnlyField
 from products.product_types.port import Port, PortProvisioning
 from products.services.description import description
 from workflows.port.shared.steps import update_port_in_ims
+from workflows.shared import modify_summary_form
 
 
 def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
@@ -33,35 +32,10 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
     user_input = yield ModifyPortForm
     user_input_dict = user_input.dict()
 
-    yield from create_summary_form(user_input_dict, subscription)
+    summary_fields = ["port_description", "auto_negotiation", "lldp"]
+    yield from modify_summary_form(user_input_dict, subscription, summary_fields)
 
     return user_input_dict | {"subscription": subscription}
-
-
-def create_summary_form(user_input: dict, subscription: Port) -> Generator:
-    product_summary_fields = [
-        "port_description",
-        "auto_negotiation",
-        "lldp",
-    ]
-
-    before = [str(getattr(subscription.port, nm)) for nm in product_summary_fields]
-    after = [str(user_input[nm]) for nm in product_summary_fields]
-
-    class ProductSummary(MigrationSummary):
-        data = {
-            "labels": product_summary_fields,
-            "headers": ["Before", "After"],
-            "columns": [before, after],
-        }
-
-    class SummaryForm(FormPage):
-        class Config:
-            title = f"{subscription.product.name} Summary"
-
-        product_summary: ProductSummary
-
-    yield SummaryForm
 
 
 @step("Update subscription")

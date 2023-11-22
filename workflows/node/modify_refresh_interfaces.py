@@ -10,13 +10,7 @@ from orchestrator.workflows.utils import (
 )
 
 from products.product_types.node import NodeProvisioning
-from services.netbox import (
-    InterfacePayload,
-    create,
-    delete_interface,
-    get_device,
-    get_interfaces,
-)
+from services import netbox
 
 logger = structlog.get_logger(__name__)
 
@@ -40,23 +34,25 @@ def update_interfaces(
     subscription: NodeProvisioning,
 ) -> State:
     node_interfaces = set(get_node_interface_list(subscription.node.node_name))
-    device = get_device(name=subscription.node.node_name)
+    device = netbox.get_device(name=subscription.node.node_name)
     netbox_interfaces = set(
         (interface.name, interface.type.value, interface.speed)
-        for interface in get_interfaces(device=device)
+        for interface in netbox.get_interfaces(device=device)
         if "Loopback" not in interface.name
     )
     interfaces_added = sorted(node_interfaces - netbox_interfaces)
     interfaces_deleted = sorted(netbox_interfaces - node_interfaces)
     for interface_name, interface_type, interface_speed in interfaces_added:
-        create(InterfacePayload(device=device.id, name=interface_name, type=interface_type, speed=interface_speed))
+        netbox.create(
+            netbox.InterfacePayload(device=device.id, name=interface_name, type=interface_type, speed=interface_speed)
+        )
     for interface_name, _, _ in interfaces_deleted:
-        delete_interface(device=device, name=interface_name)
+        netbox.delete_interface(device=device, name=interface_name)
     return {"interfaces_added": interfaces_added, "interfaces_deleted": interfaces_deleted}
 
 
 @modify_workflow("Update node interfaces", initial_input_form=modify_initial_input_form_generator)
-def update_node_interfaces() -> StepList:
+def modify_refresh_interfaces() -> StepList:
     return (
         begin
         >> set_status(SubscriptionLifecycle.PROVISIONING)

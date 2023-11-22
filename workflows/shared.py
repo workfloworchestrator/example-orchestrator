@@ -1,4 +1,4 @@
-from typing import List
+from typing import Generator, List
 
 from orchestrator.db import (
     ProductTable,
@@ -7,11 +7,15 @@ from orchestrator.db import (
     SubscriptionInstanceValueTable,
     SubscriptionTable,
 )
+from orchestrator.domain import SubscriptionModel
 from orchestrator.forms.validators import Choice, choice_list
 from orchestrator.types import SubscriptionLifecycle, UUIDstr
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import SummaryData
+from pydantic_forms.validators import MigrationSummary
 
 from products.product_types.node import Node
-from services.netbox import get_device, get_interfaces
+from services import netbox
 
 
 def pop_first(dictionary: dict, key: str) -> None:
@@ -85,8 +89,41 @@ def free_port_selector(node_subscription_id: UUIDstr, speed: int, enum: str = "P
     node = Node.from_subscription(node_subscription_id)
     interfaces = {
         str(interface.id): interface.name
-        for interface in get_interfaces(device=get_device(id=node.node.ims_id), speed=speed * 1000, enabled=False)
+        for interface in netbox.get_interfaces(
+            device=netbox.get_device(id=node.node.ims_id), speed=speed * 1000, enabled=False
+        )
     }
     return choice_list(
         Choice(enum, zip(interfaces.keys(), interfaces.items())), min_items=1, max_items=1  # type:ignore
+    )
+
+
+def summary_form(product_name: str, summary_data: dict) -> Generator:
+    class ProductSummary(MigrationSummary):
+        data = SummaryData(**summary_data)
+
+    class SummaryForm(FormPage):
+        class Config:
+            title = f"{product_name} Summary"
+
+        product_summary: ProductSummary
+
+    yield SummaryForm
+
+
+def create_summary_form(user_input: dict, product_name: str, fields: List[str]) -> Generator:
+    columns = [[str(user_input[nm]) for nm in fields]]
+    yield from summary_form(product_name, {"labels": fields, "columns": columns})
+
+
+def modify_summary_form(user_input: dict, subscription: SubscriptionModel, fields: List[str]) -> Generator:
+    before = [str(getattr(subscription.port, nm)) for nm in fields]
+    after = [str(user_input[nm]) for nm in fields]
+    yield from summary_form(
+        subscription.product.name,
+        {
+            "labels": fields,
+            "headers": ["Before", "After"],
+            "columns": [before, after],
+        },
     )

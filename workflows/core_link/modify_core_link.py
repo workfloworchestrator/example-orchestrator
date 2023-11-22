@@ -1,7 +1,4 @@
-from collections.abc import Generator
-
 from orchestrator.forms import FormPage
-from orchestrator.forms.validators import MigrationSummary
 from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
@@ -9,6 +6,7 @@ from orchestrator.workflows.utils import modify_workflow
 
 from products.product_types.core_link import CoreLink, CoreLinkProvisioning
 from products.services.description import description
+from workflows.shared import modify_summary_form
 
 
 def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
@@ -23,33 +21,10 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
     user_input = yield ModifyCoreLinkForm
     user_input_dict = user_input.dict()
 
-    yield from create_summary_form(user_input_dict, subscription)
+    summary_fields = ["under_maintenance"]
+    yield from modify_summary_form(user_input_dict, subscription, summary_fields)
 
     return user_input_dict | {"subscription": subscription}
-
-
-def create_summary_form(user_input: dict, subscription: CoreLink) -> Generator:
-    product_summary_fields = [
-        "under_maintenance",
-    ]
-
-    before = [str(getattr(subscription.core_link, nm)) for nm in product_summary_fields]
-    after = [str(user_input[nm]) for nm in product_summary_fields]
-
-    class ProductSummary(MigrationSummary):
-        data = {
-            "labels": product_summary_fields,
-            "headers": ["Before", "After"],
-            "columns": [before, after],
-        }
-
-    class SummaryForm(FormPage):
-        class Config:
-            title = f"{subscription.product.name} Summary"
-
-        product_summary: ProductSummary
-
-    yield SummaryForm
 
 
 @step("Update subscription")

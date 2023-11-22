@@ -1,22 +1,22 @@
 import structlog
 
-from services.netbox import netbox
+from services import netbox
 
 logger = structlog.get_logger(__name__)
 
 
 endpoints = [
-    netbox.dcim.devices,
-    netbox.dcim.device_types,
-    netbox.dcim.manufacturers,
-    netbox.dcim.device_roles,
-    netbox.dcim.sites,
-    netbox.dcim.cables,
-    netbox.ipam.prefixes,
-    netbox.ipam.ip_addresses,
-    netbox.ipam.vlans,
-    netbox.ipam.l2vpns,
-    netbox.ipam.l2vpn_terminations,
+    netbox.api.dcim.devices,
+    netbox.api.dcim.device_types,
+    netbox.api.dcim.manufacturers,
+    netbox.api.dcim.device_roles,
+    netbox.api.dcim.sites,
+    netbox.api.dcim.cables,
+    netbox.api.ipam.prefixes,
+    netbox.api.ipam.ip_addresses,
+    netbox.api.ipam.vlans,
+    netbox.api.ipam.l2vpns,
+    netbox.api.ipam.l2vpn_terminations,
 ]
 
 

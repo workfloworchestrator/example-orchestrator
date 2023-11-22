@@ -1,9 +1,8 @@
-from collections.abc import Generator
 from typing import Optional
 
 import structlog
 from orchestrator.forms import FormPage
-from orchestrator.forms.validators import Label, MigrationSummary
+from orchestrator.forms.validators import Label
 from orchestrator.services.products import get_product_by_id
 from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
@@ -19,7 +18,7 @@ from workflows.node.shared.forms import (
     site_selector,
 )
 from workflows.node.shared.steps import update_node_in_ims
-from workflows.shared import pop_first
+from workflows.shared import modify_summary_form, pop_first
 
 logger = structlog.get_logger(__name__)
 
@@ -48,38 +47,10 @@ def initial_input_form_generator(subscription_id: UUIDstr, product: UUIDstr) -> 
     pop_first(user_input_dict, "type_id")
     pop_first(user_input_dict, "site_id")
 
-    yield from create_summary_form(user_input_dict, subscription)
+    summary_fields = ["role_id", "type_id", "site_id", "node_status", "node_name", "node_description"]
+    yield from modify_summary_form(user_input_dict, subscription, summary_fields)
 
     return user_input_dict | {"subscription": subscription}
-
-
-def create_summary_form(user_input: dict, subscription: Node) -> Generator:
-    product_summary_fields = [
-        "role_id",
-        "type_id",
-        "site_id",
-        "node_status",
-        "node_name",
-        "node_description",
-    ]
-
-    before = [str(getattr(subscription.node, nm)) for nm in product_summary_fields]
-    after = [str(user_input[nm]) for nm in product_summary_fields]
-
-    class ProductSummary(MigrationSummary):
-        data = {
-            "labels": product_summary_fields,
-            "headers": ["Before", "After"],
-            "columns": [before, after],
-        }
-
-    class SummaryForm(FormPage):
-        class Config:
-            title = f"{subscription.product.name} Summary"
-
-        product_summary: ProductSummary
-
-    yield SummaryForm
 
 
 @step("Update subscription")

@@ -15,7 +15,6 @@ from products.product_types.node import Node
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
-from services.netbox import IPv6_CORE_LINK_PREFIX, get_interface, get_prefix
 from workflows.shared import free_port_selector, node_selector, pop_first
 
 
@@ -77,7 +76,7 @@ def construct_core_link_model(
     )
     # side A
     node_a = Node.from_subscription(node_subscription_id_a)
-    interface_a = get_interface(id=port_ims_id_a)
+    interface_a = netbox.get_interface(id=port_ims_id_a)
     subscription.core_link.ports[0].ims_id = port_ims_id_a
     subscription.core_link.ports[0].nrm_id = randrange(
         2**16
@@ -86,7 +85,7 @@ def construct_core_link_model(
     subscription.core_link.ports[0].node = node_a.node
     # side B
     node_b = Node.from_subscription(node_subscription_id_b)
-    interface_b = get_interface(id=port_ims_id_b)
+    interface_b = netbox.get_interface(id=port_ims_id_b)
     subscription.core_link.ports[1].ims_id = port_ims_id_b
     subscription.core_link.ports[1].nrm_id = randrange(
         2**16
@@ -107,52 +106,47 @@ def construct_core_link_model(
     }
 
 
-@step("Assign IPv6 addresses")
-def assign_ip_addresses(subscription: CoreLinkProvisioning) -> State:
-    # Fetch parent prefixes.
-    parent_prefix_ipv6 = get_prefix(prefix=IPv6_CORE_LINK_PREFIX)
-    # Reserve IPv6 point-to-point subnet for the core link.
+@step("Assign IPv6 prefix")
+def assign_ipv6_prefix(subscription: CoreLinkProvisioning) -> State:
+    parent_prefix_ipv6 = netbox.get_prefix(prefix=netbox.IPv6_CORE_LINK_PREFIX)
     prefix_ipv6 = netbox.create_available_prefix(
         parent_id=parent_prefix_ipv6.id,
         payload=netbox.AvailablePrefixPayload(
             prefix_length=127,
-            description=(
-                f"{subscription.core_link.ports[0].node.node_name} {subscription.core_link.ports[0].port_name}"
-                " <-> "
-                f"{subscription.core_link.ports[1].port_name} {subscription.core_link.ports[1].node.node_name}"
-            ),
+            description=description(subscription),
         ),
     )
-    # Create the IP Addresses for each side of the core link.
+    subscription.core_link.ipv6_prefix_ipam_id = prefix_ipv6.id
+
+    return {"subscription": subscription, "prefix_ipv6": prefix_ipv6.prefix}
+
+
+@step("Assign side A IPv6 address")
+def assign_side_a_ipv6_prefix(subscription: CoreLinkProvisioning) -> State:
     a_side_ipv6 = netbox.create_available_ip(
-        parent_id=prefix_ipv6.id,
+        parent_id=subscription.core_link.ipv6_prefix_ipam_id,
         payload=netbox.AvailableIpPayload(
             assigned_object_id=subscription.core_link.ports[0].ims_id,
-            description=(
-                f"{subscription.product.name} "
-                f"{subscription.core_link.ports[0].node.node_name} "
-                f"{subscription.core_link.ports[0].port_name}"
-            ),
+            description=description(subscription.core_link.ports[0]),
         ),
     )
+    subscription.core_link.ports[0].ipv6_ipam_id = a_side_ipv6.id
+
+    return {"subscription": subscription, "a_side_ipv6": a_side_ipv6.address}
+
+
+@step("Assign side B IPv6 address")
+def assign_side_b_ipv6_prefix(subscription: CoreLinkProvisioning) -> State:
     b_side_ipv6 = netbox.create_available_ip(
-        parent_id=prefix_ipv6.id,
+        parent_id=subscription.core_link.ipv6_prefix_ipam_id,
         payload=netbox.AvailableIpPayload(
             assigned_object_id=subscription.core_link.ports[1].ims_id,
-            description=(
-                f"{subscription.product.name} "
-                f"{subscription.core_link.ports[1].node.node_name} "
-                f"{subscription.core_link.ports[1].port_name}"
-            ),
+            description=description(subscription.core_link.ports[1]),
         ),
     )
-
-    # Add IPv6 prefix and addresses to the domain model.
-    subscription.core_link.ipv6_prefix_ipam_id = prefix_ipv6.id
-    subscription.core_link.ports[0].ipv6_ipam_id = a_side_ipv6.id
     subscription.core_link.ports[1].ipv6_ipam_id = b_side_ipv6.id
 
-    return {"subscription": subscription, "a_side_ipv6": a_side_ipv6.address, "b_side_ipv6": b_side_ipv6.address}
+    return {"subscription": subscription, "b_side_ipv6": b_side_ipv6.address}
 
 
 @step("Connect ports in IMS")
@@ -180,7 +174,9 @@ def create_core_link() -> StepList:
         begin
         >> construct_core_link_model
         >> store_process_subscription(Target.CREATE)
-        >> assign_ip_addresses
+        >> assign_ipv6_prefix
+        >> assign_side_a_ipv6_prefix
+        >> assign_side_b_ipv6_prefix
         >> connect_ports
         >> enable_ports
     )

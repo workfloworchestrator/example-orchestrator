@@ -5,7 +5,7 @@ from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import terminate_workflow
 
 from products.product_types.node import Node
-from services.netbox import delete_device
+from services import netbox
 
 
 def terminate_initial_input_form_generator(subscription_id: UUIDstr, organisation: UUIDstr) -> InputForm:
@@ -27,7 +27,7 @@ def delete_node_from_ims(ims_id: int) -> State:
     """Delete node from IMS."""
 
     # This relies on Netbox to delete the loopback interface and associated IP addresses as well.
-    delete_device(id=ims_id)
+    netbox.delete_device(id=ims_id)
 
     return {}
 
