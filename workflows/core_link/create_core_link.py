@@ -119,7 +119,7 @@ def construct_core_link_model(
 
 @step("Assign IPv6 prefix")
 def assign_ipv6_prefix(subscription: CoreLinkProvisioning) -> State:
-    parent_prefix_ipv6 = netbox.get_prefix(prefix=settings.IPv6_CORE_LINK_PREFIX)
+    parent_prefix_ipv6 = netbox.get_ip_prefix(prefix=settings.IPv6_CORE_LINK_PREFIX)
     prefix_ipv6 = netbox.create_available_prefix(
         parent_id=parent_prefix_ipv6.id,
         payload=netbox.AvailablePrefixPayload(

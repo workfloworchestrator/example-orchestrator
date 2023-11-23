@@ -20,8 +20,6 @@ import structlog
 from pynetbox import api as pynetbox_api
 from pynetbox.core.endpoint import Endpoint
 from pynetbox.core.query import RequestError
-from pynetbox.models.dcim import Interfaces
-from pynetbox.models.dcim import Interfaces as PynetboxInterfaces
 from pynetbox.models.ipam import IpAddresses, Prefixes
 
 from settings import settings
@@ -34,16 +32,13 @@ api = pynetbox_api(url=settings.NETBOX_URL, token=settings.NETBOX_TOKEN)
 
 @dataclass
 class NetboxPayload:
-    # id: int  # unique id of object on Netbox endpoint
-
-    # return payload as a dict that is suitable to be used on pynetbox .create() or .updates().
     def dict(self):
+        # return payload as a dict that is suitable to be used on pynetbox .create() or .updates().
         return asdict(self)
 
 
 @dataclass
 class SitePayload(NetboxPayload):
-    # mandatory fields to create a Sites object in Netbox
     name: str
     slug: str
     status: str
@@ -51,7 +46,6 @@ class SitePayload(NetboxPayload):
 
 @dataclass
 class DeviceRolePayload(NetboxPayload):
-    # mandatory fields to create a DeviceRole object in Netbox
     name: str
     slug: str
     color: str  # RGB encoded string
@@ -59,14 +53,12 @@ class DeviceRolePayload(NetboxPayload):
 
 @dataclass
 class ManufacturerPayload(NetboxPayload):
-    # mandatory fields to create a DeviceRole object in Netbox
     name: str
     slug: str
 
 
 @dataclass
 class DeviceTypePayload(NetboxPayload):
-    # mandatory fields to create a DeviceRole object in Netbox
     manufacturer: ManufacturerPayload
     model: str
     slug: str
@@ -75,11 +67,9 @@ class DeviceTypePayload(NetboxPayload):
 
 @dataclass
 class DevicePayload(NetboxPayload):
-    # mandatory fields to create Devices object in Netbox:
     site: int
     device_type: int
     device_role: int
-    # optional fields:
     name: Optional[str]
     status: Optional[str]
     primary_ip4: Optional[int] = None
@@ -197,12 +187,36 @@ def get_interface(**kwargs):
     return api.dcim.interfaces.get(**kwargs)
 
 
+def get_l2vpns(**kwargs):
+    return api.ipam.l2vpns.filter(**kwargs)
+
+
 def get_l2vpn(**kwargs):
     return api.ipam.l2vpns.get(**kwargs)
 
 
+def get_vlans(**kwargs):
+    return api.ipam.vlans.filter(**kwargs)
+
+
 def get_vlan(**kwargs):
     return api.ipam.vlans.get(**kwargs)
+
+
+def get_ip_prefixes(**kwargs) -> List:
+    return api.ipam.prefixes.filter(**kwargs)
+
+
+def get_ip_prefix(**kwargs):
+    return api.ipam.prefixes.get(**kwargs)
+
+
+def get_ip_addresses(**kwargs):
+    return api.ipam.ip_addresses.filter(**kwargs)
+
+
+def get_ip_address(**kwargs):
+    return api.ipam.ip_addresses.get(**kwargs)
 
 
 def delete_from_netbox(endpoint, **kwargs) -> None:
@@ -241,28 +255,12 @@ def delete_vlan(**kwargs) -> None:
     delete_from_netbox(api.ipam.vlans, **kwargs)
 
 
-def get_prefixes(**kwargs) -> List:
-    return api.ipam.prefixes.filter(**kwargs)
-
-
-def get_prefix(**kwargs):
-    return api.ipam.prefixes.get(**kwargs)
-
-
-def get_ip_address(**kwargs):
-    return api.ipam.ip_addresses.get(**kwargs)
-
-
-def get_ip_addresses(**kwargs):
-    return api.ipam.ip_addresses.filter(**kwargs)
-
-
 def reserve_loopback_addresses(device_id: int) -> Tuple:
     """Reserve IP IPv4/IPv6 loopback addresses, assign to Loopback0, and return address id."""
     device = get_device(id=device_id)
     interface_id = create(InterfacePayload(device=device_id, name="Loopback0", type="virtual", enabled=True))
     return tuple(
-        get_prefix(prefix=prefix)
+        get_ip_prefix(prefix=prefix)
         .available_ips.create(
             asdict(
                 AvailableIpPayload(
@@ -276,67 +274,13 @@ def reserve_loopback_addresses(device_id: int) -> Tuple:
     )
 
 
-# def get_devices(status: Optional[str] = None) -> List[Devices]:
-#     """
-#     Get list of Devices objects from netbox, optionally filtered by status.
-#     """
-#     logger.debug("Connecting to Netbox to get list of devices")
-#     if status:
-#         node_list = list(netbox.dcim.devices.filter(status=status))
-#     else:
-#         node_list = list(netbox.dcim.devices.all())
-#     logger.debug("Found nodes in Netbox", amount=len(node_list))
-#     return node_list
-
-
-# TODO: make this a more generic function
-def get_available_router_ports_by_name(router_name: str) -> List[PynetboxInterfaces]:
-    """
-    get_available_router_ports_by_name fetches a list of available ports from netbox
-        when given the name of a router. To be considered available, the port must be:
-            1) A 400G interface (any media type)
-            2) On the router specified.
-            3) Not "occupied" from netbox's perspective.
-
-    Args:
-        router_name (str): the router that you need to find an open port from, i.e. "loc1-core".
-
-    Returns:
-        List[PynetboxInterfaces]: a list of valid interfaces from netbox.
-    """
-    valid_ports = list(api.dcim.interfaces.filter(device=router_name, occupied=False, speed=400000000))
-    logger.debug("Found ports in Netbox", amount=len(valid_ports))
-    return valid_ports
-
-
-def get_interface_by_device_and_name(device: str, name: str) -> Interfaces:
-    """
-    Get Interfaces object from Netbox identified by device and name.
-    """
-    return next(api.dcim.interfaces.filter(device=device, name=name))
-
-
-# def get_ip_address(address: str) -> IpAddresses:
-#     """
-#     Get IpAddresses object from Netbox identified by address.
-#     """
-#     return netbox.ipam.ip_addresses.get(address=address)
-
-
-def get_ip_prefix_by_id(id: int) -> Prefixes:
-    """
-    Get Prefixes object from Netbox identified by id.
-    """
-    return api.ipam.prefixes.get(id)
-
-
 def create_available_prefix(parent_id: int, payload: AvailablePrefixPayload) -> Prefixes:
-    parent_prefix = get_ip_prefix_by_id(parent_id)
+    parent_prefix = get_ip_prefix(id=parent_id)
     return parent_prefix.available_prefixes.create(asdict(payload))
 
 
 def create_available_ip(parent_id: int, payload: AvailableIpPayload) -> IpAddresses:
-    parent_prefix = get_ip_prefix_by_id(parent_id)
+    parent_prefix = get_ip_prefix(id=parent_id)
     return parent_prefix.available_ips.create(asdict(payload))
 
 
