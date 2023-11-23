@@ -43,8 +43,8 @@ def build_core_port_payload(
 
     """
     interface = netbox.get_interface(id=model.ims_id)
-    node_a = subscription.core_link.ports[0].node
-    node_b = subscription.core_link.ports[1].node
+    node_a = subscription.core_link.ports[0].node  # type: ignore[attr-defined]
+    node_b = subscription.core_link.ports[1].node  # type: ignore[attr-defined]
     opposite_node = node_a.node_name if model.node.ims_id == node_b.ims_id else node_b.node_name
     return netbox.InterfacePayload(
         device=model.node.ims_id,

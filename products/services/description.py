@@ -47,17 +47,17 @@ def description(model: Union[ProductModel, ProductBlockModel, SubscriptionModel]
 
 
 @description.register
-def node_product_description(node: NodeProvisioning) -> str:
+def _(node: NodeProvisioning) -> str:
     return f"node {node.node.node_name} ({node.node.node_status})"
 
 
 @description.register
-def port_product_description(port: PortProvisioning) -> str:
+def _(port: PortProvisioning) -> str:
     return f"{port.product.name} {port.port.node.node_name} {port.port.port_name} {port.port.port_description}"
 
 
 @description.register
-def core_link_product_description(core_link: CoreLinkProvisioning) -> str:
+def _(core_link: CoreLinkProvisioning) -> str:
     return (
         f"{core_link.product.name} "
         f"{core_link.core_link.ports[0].node.node_name} {core_link.core_link.ports[0].port_name}"
@@ -67,12 +67,12 @@ def core_link_product_description(core_link: CoreLinkProvisioning) -> str:
 
 
 @description.register
-def core_port_block_description(core_port: CorePortBlockProvisioning) -> str:
+def _(core_port: CorePortBlockProvisioning) -> str:
     return f"{core_port.name} {core_port.node.node_name} {core_port.port_name}"
 
 
 @description.register
-def l2vpn_product_description(l2vpn: L2vpnProvisioning) -> str:
+def _(l2vpn: L2vpnProvisioning) -> str:
     return (
         f"{l2vpn.product.tag} "
         f"{l2vpn.virtual_circuit.speed} Mbit/s "

@@ -12,7 +12,6 @@
 # limitations under the License.
 from dataclasses import asdict, dataclass, field
 from functools import singledispatch
-from os import environ
 from typing import Any, List, Optional, Tuple
 
 import structlog
@@ -23,19 +22,12 @@ from pynetbox.models.dcim import Interfaces
 from pynetbox.models.dcim import Interfaces as PynetboxInterfaces
 from pynetbox.models.ipam import IpAddresses, Prefixes
 
+from settings import settings
 from utils.singledispatch import single_dispatch_base
 
 logger = structlog.get_logger(__name__)
 
-api = pynetbox_api(
-    url=environ.get("NETBOX_URL", "http://netbox:8080"),
-    token=environ.get("NETBOX_TOKEN", "e744057d755255a31818bf74df2350c26eeabe54"),
-)
-
-IPv4_LOOPBACK_PREFIX = "10.0.127.0/24"
-IPv6_LOOPBACK_PREFIX = "fc00:0:0:127::/64"
-IPv4_CORE_LINK_PREFIX = "10.0.10.0/24"
-IPv6_CORE_LINK_PREFIX = "fc00:0:0:10::/64"
+api = pynetbox_api(url=settings.NETBOX_URL, token=settings.NETBOX_TOKEN)
 
 
 @dataclass
@@ -278,7 +270,7 @@ def reserve_loopback_addresses(device_id: int) -> Tuple:
             )
         )
         .id
-        for ip_version, prefix in (("IPv4", IPv4_LOOPBACK_PREFIX), ("IPv6", IPv6_LOOPBACK_PREFIX))
+        for ip_version, prefix in (("IPv4", settings.IPv4_LOOPBACK_PREFIX), ("IPv6", settings.IPv6_LOOPBACK_PREFIX))
     )
 
 

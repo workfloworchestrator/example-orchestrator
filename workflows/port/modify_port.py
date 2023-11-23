@@ -33,7 +33,7 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
     user_input_dict = user_input.dict()
 
     summary_fields = ["port_description", "auto_negotiation", "lldp"]
-    yield from modify_summary_form(user_input_dict, subscription, summary_fields)
+    yield from modify_summary_form(user_input_dict, subscription.port, summary_fields)
 
     return user_input_dict | {"subscription": subscription}
 

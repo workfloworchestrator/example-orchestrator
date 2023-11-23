@@ -2,7 +2,6 @@ import uuid
 from random import randrange
 from typing import Optional
 
-from orchestrator.domain import SubscriptionModel
 from orchestrator.forms import FormPage
 from orchestrator.targets import Target
 from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
@@ -18,13 +17,6 @@ from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
 from workflows.l2vpn.shared.forms import ports_selector
-
-
-def subscription_description(subscription: SubscriptionModel) -> str:
-    """The suggested pattern is to implement a subscription service that generates a subscription specific
-    description, in case that is not present the description will just be set to the product name.
-    """
-    return f"{subscription.product.name} subscription"
 
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:

@@ -7,8 +7,8 @@ from orchestrator.db import (
     SubscriptionInstanceValueTable,
     SubscriptionTable,
 )
-from orchestrator.domain import SubscriptionModel
-from orchestrator.forms.validators import Choice, choice_list
+from orchestrator.domain.base import ProductBlockModel
+from orchestrator.forms.validators import Choice
 from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import SummaryData
@@ -16,10 +16,6 @@ from pydantic_forms.validators import MigrationSummary
 
 from products.product_types.node import Node
 from services import netbox
-
-
-def pop_first(dictionary: dict, key: str) -> None:
-    dictionary[key] = dictionary[key].pop(0)
 
 
 def subscriptions_by_product_type(product_type: str, status: List[SubscriptionLifecycle]) -> List[SubscriptionTable]:
@@ -79,13 +75,16 @@ def subscriptions_by_product_type_and_instance_value(
     )
 
 
-def node_selector(enum: str = "NodesEnum") -> list:
+def node_selector(enum: str = "NodesEnum") -> Choice:
     node_subscriptions = subscriptions_by_product_type("Node", [SubscriptionLifecycle.ACTIVE])
-    nodes = {str(subscription.subscription_id): subscription.description for subscription in node_subscriptions}
-    return choice_list(Choice(enum, zip(nodes.keys(), nodes.items())), min_items=1, max_items=1)  # type:ignore
+    nodes = {
+        str(subscription.subscription_id): subscription.description
+        for subscription in sorted(node_subscriptions, key=lambda node: node.description)
+    }
+    return Choice(enum, zip(nodes.keys(), nodes.items()))  # type:ignore
 
 
-def free_port_selector(node_subscription_id: UUIDstr, speed: int, enum: str = "PortsEnum") -> list:
+def free_port_selector(node_subscription_id: UUIDstr, speed: int, enum: str = "PortsEnum") -> Choice:
     node = Node.from_subscription(node_subscription_id)
     interfaces = {
         str(interface.id): interface.name
@@ -93,9 +92,7 @@ def free_port_selector(node_subscription_id: UUIDstr, speed: int, enum: str = "P
             device=netbox.get_device(id=node.node.ims_id), speed=speed * 1000, enabled=False
         )
     }
-    return choice_list(
-        Choice(enum, zip(interfaces.keys(), interfaces.items())), min_items=1, max_items=1  # type:ignore
-    )
+    return Choice(enum, zip(interfaces.keys(), interfaces.items()))  # type:ignore
 
 
 def summary_form(product_name: str, summary_data: dict) -> Generator:
@@ -104,7 +101,7 @@ def summary_form(product_name: str, summary_data: dict) -> Generator:
 
     class SummaryForm(FormPage):
         class Config:
-            title = f"{product_name} Summary"
+            title = f"{product_name} summary"
 
         product_summary: ProductSummary
 
@@ -116,11 +113,11 @@ def create_summary_form(user_input: dict, product_name: str, fields: List[str]) 
     yield from summary_form(product_name, {"labels": fields, "columns": columns})
 
 
-def modify_summary_form(user_input: dict, subscription: SubscriptionModel, fields: List[str]) -> Generator:
-    before = [str(getattr(subscription.port, nm)) for nm in fields]
+def modify_summary_form(user_input: dict, block: ProductBlockModel, fields: List[str]) -> Generator:
+    before = [str(getattr(block, nm)) for nm in fields]  # type: ignore[attr-defined]
     after = [str(user_input[nm]) for nm in fields]
     yield from summary_form(
-        subscription.product.name,
+        block.subscription.product.name,
         {
             "labels": fields,
             "headers": ["Before", "After"],

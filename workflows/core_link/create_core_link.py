@@ -15,7 +15,8 @@ from products.product_types.node import Node
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
-from workflows.shared import free_port_selector, node_selector, pop_first
+from settings import settings
+from workflows.shared import free_port_selector, node_selector
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
@@ -34,8 +35,6 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
 
     select_nodes = yield SelectNodes
     select_nodes_dict = select_nodes.dict()
-    pop_first(select_nodes_dict, "node_subscription_id_a")
-    pop_first(select_nodes_dict, "node_subscription_id_b")
 
     _product = get_product_by_id(product)
     speed = int(_product.fixed_input_value("speed"))
@@ -54,8 +53,6 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
 
     select_ports = yield SelectPorts
     select_ports_dict = select_ports.dict()
-    pop_first(select_ports_dict, "port_ims_id_a")
-    pop_first(select_ports_dict, "port_ims_id_b")
 
     return select_nodes_dict | select_ports_dict
 
@@ -108,7 +105,7 @@ def construct_core_link_model(
 
 @step("Assign IPv6 prefix")
 def assign_ipv6_prefix(subscription: CoreLinkProvisioning) -> State:
-    parent_prefix_ipv6 = netbox.get_prefix(prefix=netbox.IPv6_CORE_LINK_PREFIX)
+    parent_prefix_ipv6 = netbox.get_prefix(prefix=settings.IPv6_CORE_LINK_PREFIX)
     prefix_ipv6 = netbox.create_available_prefix(
         parent_id=parent_prefix_ipv6.id,
         payload=netbox.AvailablePrefixPayload(

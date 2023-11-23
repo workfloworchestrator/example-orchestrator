@@ -90,7 +90,7 @@ new_workflows = [
         "product_type": "Node",
     },
     {
-        "name": "modify_refresh_interfaces",
+        "name": "modify_sync_ports",
         "target": Target.MODIFY,
         "description": "Update node interfaces",
         "product_type": "Node",

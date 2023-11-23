@@ -21,7 +21,7 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
     user_input_dict = user_input.dict()
 
     summary_fields = ["speed", "speed_policer"]
-    yield from modify_summary_form(user_input_dict, subscription, summary_fields)
+    yield from modify_summary_form(user_input_dict, subscription.virtual_circuit, summary_fields)
 
     return user_input_dict | {"subscription": subscription}
 

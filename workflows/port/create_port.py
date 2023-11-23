@@ -18,12 +18,7 @@ from products.services.description import description
 from services import netbox
 from workflows.port.shared.forms import port_mode_selector
 from workflows.port.shared.steps import update_port_in_ims
-from workflows.shared import (
-    create_summary_form,
-    free_port_selector,
-    node_selector,
-    pop_first,
-)
+from workflows.shared import create_summary_form, free_port_selector, node_selector
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
@@ -37,7 +32,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
 
     select_node = yield SelectNodeForm
     select_node_dict = select_node.dict()
-    node_subscription_id = select_node_dict["node_subscription_id"].pop(0)
+    node_subscription_id = select_node_dict["node_subscription_id"]
 
     _product = get_product_by_id(product)
     speed = int(_product.fixed_input_value("speed"))
@@ -50,7 +45,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
 
         port_settings: Label
 
-        ims_id: free_port_selector(node_subscription_id, speed)  # type:ignore
+        port_ims_id: free_port_selector(node_subscription_id, speed)  # type:ignore
         port_description: Optional[str]
         port_mode: port_mode_selector()  # type:ignore
         auto_negotiation: Optional[bool] = False
@@ -58,9 +53,8 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
 
     user_input = yield CreatePortForm
     user_input_dict = user_input.dict()
-    pop_first(user_input_dict, "ims_id")
 
-    summary_fields = ["ims_id", "port_description", "port_mode", "auto_negotiation", "lldp"]
+    summary_fields = ["port_ims_id", "port_description", "port_mode", "auto_negotiation", "lldp"]
     yield from create_summary_form(user_input_dict, product_name, summary_fields)
 
     return user_input_dict | {"node_subscription_id": node_subscription_id}
@@ -70,7 +64,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
 def construct_port_model(
     product: UUIDstr,
     node_subscription_id: UUIDstr,
-    ims_id: int,
+    port_ims_id: int,
     port_description: Optional[str],
     port_mode: PortMode,
     auto_negotiation: bool,
@@ -82,7 +76,7 @@ def construct_port_model(
         status=SubscriptionLifecycle.INITIAL,
     )
     node = Node.from_subscription(node_subscription_id)
-    interface = netbox.get_interface(id=ims_id)
+    interface = netbox.get_interface(id=port_ims_id)
     subscription.port.node = node.node
     subscription.port.port_name = interface.name
     subscription.port.port_type = interface.type.value
@@ -91,7 +85,7 @@ def construct_port_model(
     subscription.port.auto_negotiation = auto_negotiation
     subscription.port.lldp = lldp
     subscription.port.enabled = False
-    subscription.port.ims_id = ims_id
+    subscription.port.ims_id = port_ims_id
     subscription.port.nrm_id = randrange(2**16)  # TODO: move to separate step that provisions port in NRM
 
     subscription = PortProvisioning.from_other_lifecycle(subscription, SubscriptionLifecycle.PROVISIONING)

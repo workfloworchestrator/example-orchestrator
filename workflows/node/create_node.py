@@ -23,7 +23,7 @@ from workflows.node.shared.forms import (
     site_selector,
 )
 from workflows.node.shared.steps import update_node_in_ims
-from workflows.shared import create_summary_form, pop_first
+from workflows.shared import create_summary_form
 
 
 def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGenerator:
@@ -45,11 +45,7 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
         node_description: Optional[str]
 
     user_input = yield CreateNodeForm
-
     user_input_dict = user_input.dict()
-    pop_first(user_input_dict, "role_id")
-    pop_first(user_input_dict, "type_id")
-    pop_first(user_input_dict, "site_id")
 
     summary_fields = ["role_id", "type_id", "site_id", "node_status", "node_name", "node_description"]
     yield from create_summary_form(user_input_dict, product_name, summary_fields)

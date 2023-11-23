@@ -52,7 +52,7 @@ def update_interfaces(
 
 
 @modify_workflow("Update node interfaces", initial_input_form=modify_initial_input_form_generator)
-def modify_refresh_interfaces() -> StepList:
+def modify_sync_ports() -> StepList:
     return (
         begin
         >> set_status(SubscriptionLifecycle.PROVISIONING)

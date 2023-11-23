@@ -22,7 +22,7 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
     user_input_dict = user_input.dict()
 
     summary_fields = ["under_maintenance"]
-    yield from modify_summary_form(user_input_dict, subscription, summary_fields)
+    yield from modify_summary_form(user_input_dict, subscription.core_link, summary_fields)
 
     return user_input_dict | {"subscription": subscription}
 
