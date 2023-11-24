@@ -14,7 +14,6 @@
 
 import uuid
 from random import randrange
-from typing import Optional
 
 from orchestrator.forms import FormPage
 from orchestrator.forms.validators import Label
@@ -60,10 +59,10 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
         port_settings: Label
 
         port_ims_id: free_port_selector(node_subscription_id, speed)  # type:ignore
-        port_description: Optional[str]
+        port_description: str | None
         port_mode: port_mode_selector()  # type:ignore
-        auto_negotiation: Optional[bool] = False
-        lldp: Optional[bool] = False
+        auto_negotiation: bool | None = False
+        lldp: bool | None = False
 
     user_input = yield CreatePortForm
     user_input_dict = user_input.dict()
@@ -79,7 +78,7 @@ def construct_port_model(
     product: UUIDstr,
     node_subscription_id: UUIDstr,
     port_ims_id: int,
-    port_description: Optional[str],
+    port_description: str | None,
     port_mode: PortMode,
     auto_negotiation: bool,
     lldp: bool,

@@ -1,3 +1,4 @@
 orchestrator-core
 deepdiff
 rich
+pynetbox

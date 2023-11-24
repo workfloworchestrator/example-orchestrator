@@ -14,7 +14,6 @@
 
 import uuid
 from random import randrange
-from typing import Optional
 
 from orchestrator.forms import FormPage
 from orchestrator.targets import Target
@@ -40,7 +39,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 
         number_of_ports: int
         speed: int
-        speed_policer: Optional[bool] = False
+        speed_policer: bool | None = False
 
         @validator("number_of_ports", allow_reuse=True)
         def max_number_of_ports(cls, v: int):

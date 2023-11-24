@@ -12,8 +12,6 @@
 # limitations under the License.
 
 
-from typing import Optional
-
 import structlog
 from orchestrator.forms import FormPage
 from orchestrator.forms.validators import Label
@@ -51,8 +49,8 @@ def initial_input_form_generator(subscription_id: UUIDstr, product: UUIDstr) -> 
         type_id: node_type_selector(node_type) = str(node.type_id)  # type:ignore
         site_id: site_selector() = str(node.site_id)  # type:ignore
         node_status: node_status_selector() = node.node_status  # type:ignore
-        node_name: Optional[str] = node.node_name
-        node_description: Optional[str] = node.node_description
+        node_name: str | None = node.node_name
+        node_description: str | None = node.node_description
 
     user_input = yield ModifyNodeForm
     user_input_dict = user_input.dict()

@@ -14,7 +14,7 @@
 
 from dataclasses import asdict, dataclass, field
 from functools import singledispatch
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Tuple
 
 import structlog
 from pynetbox import api as pynetbox_api
@@ -70,10 +70,10 @@ class DevicePayload(NetboxPayload):
     site: int
     device_type: int
     device_role: int
-    name: Optional[str]
-    status: Optional[str]
-    primary_ip4: Optional[int] = None
-    primary_ip6: Optional[int] = None
+    name: str | None
+    status: str | None
+    primary_ip4: int | None = None
+    primary_ip6: int | None = None
 
 
 @dataclass
@@ -86,7 +86,7 @@ class CableTerminationPayload:
 class CablePayload(NetboxPayload):
     status: str
     type: str
-    description: Optional[str]
+    description: str | None
     a_terminations: List[CableTerminationPayload]
     b_terminations: List[CableTerminationPayload]
 
@@ -95,8 +95,8 @@ class CablePayload(NetboxPayload):
 class IpPrefixPayload(NetboxPayload):
     description: str
     prefix: str
-    status: Optional[str] = "active"
-    is_pool: Optional[bool] = True
+    status: str | None = "active"
+    is_pool: bool | None = True
 
 
 @dataclass
@@ -108,43 +108,43 @@ class InterfacePayload(NetboxPayload):
     mode: str = ""
     description: str = ""
     enabled: bool = False
-    speed: Optional[int] = None
+    speed: int | None = None
 
 
 @dataclass
 class AvailablePrefixPayload:
     prefix_length: int
     description: str
-    is_pool: Optional[bool] = False
+    is_pool: bool | None = False
 
 
 @dataclass
 class AvailableIpPayload:
     description: str
     assigned_object_id: int
-    assigned_object_type: Optional[str] = "dcim.interface"
-    status: Optional[str] = "active"
+    assigned_object_type: str | None = "dcim.interface"
+    status: str | None = "active"
 
 
 @dataclass
 class VlanPayload(NetboxPayload):
     vid: int
     name: str
-    status: Optional[str] = "active"
+    status: str | None = "active"
 
 
 @dataclass
 class L2vpnPayload(NetboxPayload):
     name: str
     slug: str
-    type: Optional[str] = "mpls-evpn"
+    type: str | None = "mpls-evpn"
 
 
 @dataclass
 class L2vpnTerminationPayload(NetboxPayload):
     l2vpn: int
     assigned_object_id: int
-    assigned_object_type: Optional[str] = "ipam.vlan"
+    assigned_object_type: str | None = "ipam.vlan"
 
 
 def get_sites(**kwargs) -> List:

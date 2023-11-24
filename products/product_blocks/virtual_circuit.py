@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-from typing import Optional, TypeVar
+from typing import TypeVar
 
 from orchestrator.domain.base import (
     ProductBlockModel,
@@ -33,18 +33,18 @@ class ListOfSaps(SubscriptionInstanceList[T]):
 
 class VirtualCircuitBlockInactive(ProductBlockModel, product_block_name="VirtualCircuit"):
     saps: ListOfSaps[SAPBlockInactive]
-    speed: Optional[int] = None
-    speed_policer: Optional[bool] = None
-    ims_id: Optional[int] = None
-    nrm_id: Optional[int] = None
+    speed: int | None = None
+    speed_policer: bool | None = None
+    ims_id: int | None = None
+    nrm_id: int | None = None
 
 
 class VirtualCircuitBlockProvisioning(VirtualCircuitBlockInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]):
     saps: ListOfSaps[SAPBlockProvisioning]
     speed: int
     speed_policer: bool
-    ims_id: Optional[int] = None
-    nrm_id: Optional[int] = None
+    ims_id: int | None = None
+    nrm_id: int | None = None
 
     @serializable_property
     def title(self) -> str:

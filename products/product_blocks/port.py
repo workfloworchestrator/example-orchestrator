@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-from typing import List, Optional
+from typing import List
 
 from orchestrator.domain.base import ProductBlockModel, serializable_property
 from orchestrator.types import SubscriptionLifecycle
@@ -34,29 +34,29 @@ class PortMode(strEnum):
 
 
 class PortBlockInactive(ProductBlockModel, product_block_name="Port"):
-    port_name: Optional[str] = None
-    port_type: Optional[str] = None
-    port_description: Optional[str] = None
-    port_mode: Optional[str] = None
-    auto_negotiation: Optional[bool] = None
-    lldp: Optional[bool] = None
-    enabled: Optional[bool] = None
-    node: Optional[NodeBlockInactive] = None
-    ims_id: Optional[int] = None
-    nrm_id: Optional[int] = None
+    port_name: str | None = None
+    port_type: str | None = None
+    port_description: str | None = None
+    port_mode: str | None = None
+    auto_negotiation: bool | None = None
+    lldp: bool | None = None
+    enabled: bool | None = None
+    node: NodeBlockInactive | None = None
+    ims_id: int | None = None
+    nrm_id: int | None = None
 
 
 class PortBlockProvisioning(PortBlockInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]):
     port_name: str
     port_type: str
-    port_description: Optional[str] = None
+    port_description: str | None = None
     port_mode: str
     auto_negotiation: bool
     lldp: bool
     enabled: bool
     node: NodeBlockProvisioning
     ims_id: int
-    nrm_id: Optional[int] = None
+    nrm_id: int | None = None
 
     def _active_sap_blocks(self) -> List:
         from products.product_blocks.sap import SAPBlock
@@ -87,7 +87,7 @@ class PortBlockProvisioning(PortBlockInactive, lifecycle=[SubscriptionLifecycle.
 class PortBlock(PortBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
     port_name: str
     port_type: str
-    port_description: Optional[str] = None
+    port_description: str | None = None
     port_mode: str
     auto_negotiation: bool
     lldp: bool
