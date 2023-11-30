@@ -54,7 +54,7 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
         type_id: node_type_selector(node_type)  # type:ignore
         site_id: site_selector()  # type:ignore
         node_status: node_status_selector()  # type:ignore
-        node_name: str | None
+        node_name: str
         node_description: str | None
 
     user_input = yield CreateNodeForm
@@ -74,7 +74,7 @@ def construct_node_model(
     type_id: int,
     site_id: int,
     node_status: NodeStatus,
-    node_name: str | None,
+    node_name: str,
     node_description: str | None,
 ) -> State:
     subscription = NodeInactive.from_product_id(

@@ -15,14 +15,12 @@
 from orchestrator.domain.base import ProductBlockModel, serializable_property
 from orchestrator.types import SubscriptionLifecycle
 
-from products.product_blocks.shared.types import NodeStatus
-
 
 class NodeBlockInactive(ProductBlockModel, product_block_name="Node"):
     role_id: int | None = None
     type_id: int | None = None
     site_id: int | None = None
-    node_status: NodeStatus | None = None
+    node_status: str | None = None  # should be NodeStatus, but strEnum is not supported (yet?)
     node_name: str | None = None
     node_description: str | None = None
     ims_id: int | None = None
@@ -35,8 +33,8 @@ class NodeBlockProvisioning(NodeBlockInactive, lifecycle=[SubscriptionLifecycle.
     role_id: int
     type_id: int
     site_id: int
-    node_status: NodeStatus
-    node_name: str | None = None
+    node_status: str  # should be NodeStatus, but strEnum is not supported (yet?)
+    node_name: str
     node_description: str | None = None
     ims_id: int | None = None
     nrm_id: int | None = None
@@ -53,8 +51,8 @@ class NodeBlock(NodeBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE])
     role_id: int
     type_id: int
     site_id: int
-    node_status: NodeStatus
-    node_name: str | None = None
+    node_status: str  # should be NodeStatus, but strEnum is not supported (yet?)
+    node_name: str
     node_description: str | None = None
     ims_id: int
     nrm_id: int

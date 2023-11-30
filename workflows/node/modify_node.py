@@ -21,6 +21,7 @@ from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import modify_workflow
 
+from products.product_blocks.shared.types import NodeStatus
 from products.product_types.node import Node, NodeProvisioning
 from products.services.description import description
 from workflows.node.shared.forms import (
@@ -49,7 +50,7 @@ def initial_input_form_generator(subscription_id: UUIDstr, product: UUIDstr) -> 
         type_id: node_type_selector(node_type) = str(node.type_id)  # type:ignore
         site_id: site_selector() = str(node.site_id)  # type:ignore
         node_status: node_status_selector() = node.node_status  # type:ignore
-        node_name: str | None = node.node_name
+        node_name: str = node.node_name
         node_description: str | None = node.node_description
 
     user_input = yield ModifyNodeForm
@@ -67,9 +68,9 @@ def update_subscription(
     role_id: int,
     type_id: int,
     site_id: int,
-    node_status: str,
+    node_status: NodeStatus,
     node_name: str,
-    node_description: str,
+    node_description: str | None,
 ) -> State:
     # TODO: get all modified fields
     subscription.node.role_id = role_id

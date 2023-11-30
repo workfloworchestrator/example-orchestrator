@@ -58,6 +58,7 @@ product_blocks:
       - name: node_name
         description: "Unique name of the node"
         type: str
+        required: provisioning
         # required: inactive  # not needed by NetBox
         modifiable:
       - name: node_description
