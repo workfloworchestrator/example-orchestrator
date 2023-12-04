@@ -84,6 +84,12 @@ def update_subscription(
     return {"subscription": subscription}
 
 
+@step("Update node in NRM")
+def update_node_in_nrm(subscription: NodeProvisioning) -> State:
+    """Dummy step, replace with actual call to NRM."""
+    return {"subscription": subscription}
+
+
 @modify_workflow("Modify node", initial_input_form=initial_input_form_generator)
 def modify_node() -> StepList:
     return (
@@ -91,5 +97,6 @@ def modify_node() -> StepList:
         >> set_status(SubscriptionLifecycle.PROVISIONING)
         >> update_subscription
         >> update_node_in_ims
+        >> update_node_in_nrm
         >> set_status(SubscriptionLifecycle.ACTIVE)
     )

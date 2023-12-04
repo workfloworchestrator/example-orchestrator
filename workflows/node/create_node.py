@@ -90,7 +90,6 @@ def construct_node_model(
     subscription.node.node_status = node_status
     subscription.node.node_name = node_name
     subscription.node.node_description = node_description
-    subscription.node.nrm_id = randrange(2**16)  # TODO: move to separate step that provisions node in NRM
 
     subscription = NodeProvisioning.from_other_lifecycle(subscription, SubscriptionLifecycle.PROVISIONING)
     subscription.description = description(subscription)
@@ -104,7 +103,6 @@ def construct_node_model(
 
 @step("Create node in IMS")
 def create_node_in_ims(subscription: NodeProvisioning) -> State:
-    """Create node in IMS"""
     payload = build_payload(subscription.node, subscription)
     subscription.node.ims_id = netbox.create(payload)
     return {"subscription": subscription, "payload": payload.dict()}
@@ -112,10 +110,16 @@ def create_node_in_ims(subscription: NodeProvisioning) -> State:
 
 @step("Reserve loopback addresses")
 def reserve_loopback_addresses(subscription: NodeProvisioning) -> State:
-    """Reserve IPv4 and IPv6 loopback addresses"""
     subscription.node.ipv4_ipam_id, subscription.node.ipv6_ipam_id = netbox.reserve_loopback_addresses(
         subscription.node.ims_id
     )
+    return {"subscription": subscription}
+
+
+@step("Provision node in NRM")
+def provision_node_in_nrm(subscription: NodeProvisioning) -> State:
+    """Dummy step that only creates a random NRM ID, replace with actual call to NRM."""
+    subscription.node.nrm_id = randrange(2**16)
     return {"subscription": subscription}
 
 
@@ -128,4 +132,5 @@ def create_node() -> StepList:
         >> create_node_in_ims
         >> reserve_loopback_addresses
         >> update_node_in_ims
+        >> provision_node_in_nrm
     )

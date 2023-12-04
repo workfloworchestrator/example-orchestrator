@@ -58,6 +58,12 @@ def update_subscription_description(subscription: L2vpn) -> State:
     return {"subscription": subscription}
 
 
+@step("Update L2VPN in NRM")
+def update_l2vpn_in_nrm(subscription: L2vpnProvisioning) -> State:
+    """Dummy step, replace with actual call to NRM."""
+    return {"subscription": subscription}
+
+
 @modify_workflow("Modify l2vpn", initial_input_form=initial_input_form_generator)
 def modify_l2vpn() -> StepList:
     return (
@@ -65,6 +71,6 @@ def modify_l2vpn() -> StepList:
         >> set_status(SubscriptionLifecycle.PROVISIONING)
         >> update_subscription
         >> update_subscription_description
-        # TODO add step to update description in IMS
+        >> update_l2vpn_in_nrm
         >> set_status(SubscriptionLifecycle.ACTIVE)
     )

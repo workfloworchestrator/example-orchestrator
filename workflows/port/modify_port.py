@@ -67,6 +67,12 @@ def update_subscription(
     return {"subscription": subscription}
 
 
+@step("Update port in NRM")
+def update_port_in_nrm(subscription: PortProvisioning) -> State:
+    """Dummy step, replace with actual call to NRM."""
+    return {"subscription": subscription}
+
+
 @modify_workflow("Modify port", initial_input_form=initial_input_form_generator)
 def modify_port() -> StepList:
     return (
@@ -74,5 +80,6 @@ def modify_port() -> StepList:
         >> set_status(SubscriptionLifecycle.PROVISIONING)
         >> update_subscription
         >> update_port_in_ims
+        >> update_port_in_nrm
         >> set_status(SubscriptionLifecycle.ACTIVE)
     )

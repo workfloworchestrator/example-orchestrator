@@ -99,7 +99,6 @@ def construct_port_model(
     subscription.port.lldp = lldp
     subscription.port.enabled = False
     subscription.port.ims_id = port_ims_id
-    subscription.port.nrm_id = randrange(2**16)  # TODO: move to separate step that provisions port in NRM
 
     subscription = PortProvisioning.from_other_lifecycle(subscription, SubscriptionLifecycle.PROVISIONING)
     subscription.description = description(subscription)
@@ -111,15 +110,26 @@ def construct_port_model(
     }
 
 
-@step("enable port")
+@step("enable port in IMS")
 def enable_port(subscription: PortProvisioning) -> State:
-    """Enable port in IMS"""
     subscription.port.enabled = True
+    return {"subscription": subscription}
+
+
+@step("Provision port in NRM")
+def provision_port_in_nrm(subscription: PortProvisioning) -> State:
+    """Dummy step that only creates a random NRM ID, replace with actual call to NRM."""
+    subscription.port.nrm_id = randrange(2**16)
     return {"subscription": subscription}
 
 
 @create_workflow("Create port", initial_input_form=initial_input_form_generator)
 def create_port() -> StepList:
     return (
-        begin >> construct_port_model >> store_process_subscription(Target.CREATE) >> enable_port >> update_port_in_ims
+        begin
+        >> construct_port_model
+        >> store_process_subscription(Target.CREATE)
+        >> enable_port
+        >> update_port_in_ims
+        >> provision_port_in_nrm
     )
