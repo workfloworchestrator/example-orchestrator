@@ -41,8 +41,7 @@ class CorePortBlockProvisioning(CorePortBlockInactive, lifecycle=[SubscriptionLi
 
     @serializable_property
     def title(self) -> str:
-        # TODO: format correct title string
-        return f"{self.name}"
+        return f"core port {self.port_name} on {self.node.node_name}"
 
 
 class CorePortBlock(CorePortBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):

@@ -72,7 +72,6 @@ def update_subscription(
     node_name: str,
     node_description: str | None,
 ) -> State:
-    # TODO: get all modified fields
     subscription.node.role_id = role_id
     subscription.node.type_id = type_id
     subscription.node.site_id = site_id

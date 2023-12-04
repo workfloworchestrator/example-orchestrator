@@ -52,8 +52,7 @@ class CoreLinkBlockProvisioning(CoreLinkBlockInactive, lifecycle=[SubscriptionLi
 
     @serializable_property
     def title(self) -> str:
-        # TODO: format correct title string
-        return f"{self.name}"
+        return f"core link between {self.ports[0].node.node_name} and {self.ports[1].node.node_name}"
 
 
 class CoreLinkBlock(CoreLinkBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):

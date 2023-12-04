@@ -48,8 +48,11 @@ class VirtualCircuitBlockProvisioning(VirtualCircuitBlockInactive, lifecycle=[Su
 
     @serializable_property
     def title(self) -> str:
-        # TODO: format correct title string
-        return f"{self.name}"
+        return (
+            f"{self.speed} Mbit/s circuit between"
+            f"{self.saps[0].port.node.node_name} and "
+            f"{self.saps[1].port.node.node_name}"
+        )
 
 
 class VirtualCircuitBlock(VirtualCircuitBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):

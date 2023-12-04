@@ -35,8 +35,7 @@ class SAPBlockProvisioning(SAPBlockInactive, lifecycle=[SubscriptionLifecycle.PR
 
     @serializable_property
     def title(self) -> str:
-        # TODO: format correct title string
-        return f"{self.name}"
+        return f"VLAN {self.vlan} on port {self.port.port_name} of {self.port.node.node_name}"
 
 
 class SAPBlock(SAPBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):

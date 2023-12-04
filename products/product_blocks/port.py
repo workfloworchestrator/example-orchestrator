@@ -80,8 +80,7 @@ class PortBlockProvisioning(PortBlockInactive, lifecycle=[SubscriptionLifecycle.
 
     @serializable_property
     def title(self) -> str:
-        # TODO: format correct title string
-        return f"{self.name}"
+        return f"port {self.port_name} on {self.node.node_name}"
 
 
 class PortBlock(PortBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):

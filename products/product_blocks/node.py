@@ -43,8 +43,7 @@ class NodeBlockProvisioning(NodeBlockInactive, lifecycle=[SubscriptionLifecycle.
 
     @serializable_property
     def title(self) -> str:
-        # TODO: format correct title string
-        return f"{self.name}"
+        return f"{self.node_name} status {self.node_status}"
 
 
 class NodeBlock(NodeBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
