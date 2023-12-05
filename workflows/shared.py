@@ -22,11 +22,9 @@ from orchestrator.db import (
     SubscriptionTable,
 )
 from orchestrator.domain.base import ProductBlockModel
-from orchestrator.forms.validators import Choice
-from orchestrator.types import SubscriptionLifecycle, UUIDstr
-from pydantic_forms.core import FormPage
-from pydantic_forms.types import SummaryData
-from pydantic_forms.validators import MigrationSummary
+from orchestrator.forms import FormPage
+from orchestrator.forms.validators import Choice, MigrationSummary
+from orchestrator.types import SubscriptionLifecycle, SummaryData, UUIDstr
 
 from products.product_types.node import Node
 from services import netbox

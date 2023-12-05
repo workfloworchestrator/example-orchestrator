@@ -15,8 +15,8 @@
 import structlog
 from orchestrator import workflow
 from orchestrator.targets import Target
+from orchestrator.types import State
 from orchestrator.workflow import StepList, init, step
-from pydantic_forms.types import State
 
 from services import netbox
 from settings import settings

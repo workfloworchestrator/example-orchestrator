@@ -12,13 +12,12 @@
 # limitations under the License.
 
 
-from orchestrator.forms import FormPage
+from orchestrator.forms import FormPage, ReadOnlyField
 from orchestrator.forms.validators import Label
 from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import modify_workflow
-from pydantic_forms.core import ReadOnlyField
 
 from products.product_types.port import Port, PortProvisioning
 from products.services.description import description

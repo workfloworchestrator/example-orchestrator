@@ -15,8 +15,7 @@
 from typing import List
 
 from orchestrator.domain.base import ProductBlockModel, serializable_property
-from orchestrator.types import SubscriptionLifecycle
-from pydantic_forms.types import strEnum
+from orchestrator.types import SubscriptionLifecycle, strEnum
 
 from products.product_blocks.node import (
     NodeBlock,
