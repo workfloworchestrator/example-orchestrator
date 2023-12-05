@@ -36,7 +36,9 @@
          "port_ims_id_a" : "A side port",
          "port_ims_id_b" : "b side port",
          "under_maintenance" : "Maintenance",
-         "under_maintenance_info" : "Enable maintenance mode?"
+         "under_maintenance_info" : "Enable maintenance mode?",
+         "annihilate": "Are you sure you want to wipe the complete administration from Netbox?",
+         "annihilate_info": "To continue, you have to check this box"
       }
    },
    "workflow" : {

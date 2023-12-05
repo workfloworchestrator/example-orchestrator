@@ -13,6 +13,10 @@
 
 
 import structlog
+from orchestrator import workflow
+from orchestrator.targets import Target
+from orchestrator.workflow import StepList, init, step
+from pydantic_forms.types import State
 
 from services import netbox
 from settings import settings
@@ -36,15 +40,24 @@ initial_objects = [
 ]
 
 
-if __name__ == "__main__":
+@step("Create initial set of objects")
+def create_initial_set_of_objects() -> State:
+    objects_created = []
     for initial_object in initial_objects:
         logger.info("add object to Netbox", object=initial_object)
         try:
             netbox.create(initial_object)
+            objects_created.append(initial_object.dict())
         except ValueError:
             # pynetbox already emits a log message
             pass
 
+    return {"objects_created": objects_created}
+
+
+@step("Create prefixes")
+def create_prefixes() -> State:
+    prefixes_created = []
     for prefix, description in (
         (settings.IPv4_LOOPBACK_PREFIX, "IPv4 loopback prefix"),
         (settings.IPv6_LOOPBACK_PREFIX, "IPv6 loopback prefix"),
@@ -55,4 +68,13 @@ if __name__ == "__main__":
             logger.warning("prefix already exists", prefix=prefix)
         else:
             logger.info("add prefix to netbox", prefix=prefix)
-            netbox.api.ipam.prefixes.create(netbox.IpPrefixPayload(prefix=prefix, description=description))
+            prefix_payload = netbox.IpPrefixPayload(prefix=prefix, description=description).dict()
+            netbox.api.ipam.prefixes.create(prefix_payload)
+            prefixes_created.append(prefix_payload)
+
+    return {"prefixes_created": prefixes_created}
+
+
+@workflow("Bootstrap Netbox", target=Target.SYSTEM)
+def task_bootstrap_netbox() -> StepList:
+    return init >> create_initial_set_of_objects >> create_prefixes
