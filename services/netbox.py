@@ -187,12 +187,28 @@ def get_interface(**kwargs):
     return api.dcim.interfaces.get(**kwargs)
 
 
+def get_cables(**kwargs) -> List:
+    return api.dcim.cables.filter(**kwargs)
+
+
+def get_cable(**kwargs):
+    return api.dcim.cables.get(**kwargs)
+
+
 def get_l2vpns(**kwargs):
     return api.ipam.l2vpns.filter(**kwargs)
 
 
 def get_l2vpn(**kwargs):
     return api.ipam.l2vpns.get(**kwargs)
+
+
+def get_l2vpn_terminations(**kwargs):
+    return api.ipam.l2vpn_terminations.filter(**kwargs)
+
+
+def get_l2vpn_termination(**kwargs):
+    return api.ipam.l2vpn_terminations.get(**kwargs)
 
 
 def get_vlans(**kwargs):

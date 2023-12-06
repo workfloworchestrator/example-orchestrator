@@ -12,23 +12,28 @@
 # limitations under the License.
 
 
-import structlog
 from orchestrator.types import State
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import validate_workflow
 
 from products.product_types.core_link import CoreLink
 
-logger = structlog.get_logger(__name__)
+
+@step("validate core link in IMS")
+def validate_core_link_in_ims(subscription: CoreLink) -> State:
+    # cable = netbox.get_cable(id=subscription.core_link.ims_id)
+    # ...
+    raise AssertionError("Not implemented yet")
 
 
-@step("Load initial state")
-def load_initial_state_core_link(subscription: CoreLink) -> State:
-    return {
-        "subscription": subscription,
-    }
+@step("validate core ports in IMS")
+def validate_core_ports_in_ims(subscription: CoreLink) -> State:
+    # interface_a = netbox.get_interface(id=subscription.core_link.ports[0].ims_id)
+    # interface_b = netbox.get_interface(id=subscription.core_link.ports[1].ims_id)
+    # ...
+    raise AssertionError("Not implemented yet")
 
 
 @validate_workflow("Validate core_link")
 def validate_core_link() -> StepList:
-    return begin >> load_initial_state_core_link
+    return begin >> validate_core_link_in_ims >> validate_core_ports_in_ims

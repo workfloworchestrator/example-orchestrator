@@ -163,6 +163,7 @@ def connect_ports(subscription: CoreLinkProvisioning):
 
 @step("enable ports in IMS")
 def enable_ports(subscription: CoreLinkProvisioning) -> State:
+    # Note that the enabled field on the CorePortBlock is set to True by default, only need to send payload to IMS
     payload_port_a = build_payload(subscription.core_link.ports[0], subscription)
     netbox.update(payload_port_a, id=subscription.core_link.ports[0].ims_id)
     payload_port_b = build_payload(subscription.core_link.ports[1], subscription)
