@@ -35,6 +35,8 @@ def validate_port_in_ims(subscription: Port) -> State:
         device=interface.device.id,
         name=interface.name,
         type=interface.type.value,
+        tagged_vlans=sorted([vlan.id for vlan in interface.tagged_vlans]),
+        mode=interface.mode.value,
         description=interface.description,
         enabled=interface.enabled,
         speed=interface.speed,
@@ -43,7 +45,7 @@ def validate_port_in_ims(subscription: Port) -> State:
     if ims_diff := DeepDiff(actual, expected, ignore_order=False):
         raise AssertionError("Found difference in IMS:\nActual => Expected\n" + pretty_print_deepdiff(ims_diff))
 
-    return {"port_in_sync_with_ims": True}
+    return {"payload": expected.dict()}
 
 
 @validate_workflow("Validate port")
