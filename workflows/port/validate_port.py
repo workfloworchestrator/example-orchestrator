@@ -12,8 +12,6 @@
 # limitations under the License.
 
 
-from pprint import pformat
-
 from deepdiff import DeepDiff
 from orchestrator.types import State
 from orchestrator.workflow import StepList, begin, step
@@ -22,10 +20,7 @@ from orchestrator.workflows.utils import validate_workflow
 from products.product_types.port import Port
 from products.services.netbox.netbox import build_payload
 from services import netbox
-
-
-def pretty_print_deepdiff(diff: DeepDiff) -> str:
-    return pformat(diff.to_dict(), indent=2, compact=False)
+from workflows.shared import pretty_print_deepdiff
 
 
 @step("validate port in IMS")

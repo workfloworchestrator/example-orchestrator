@@ -10,10 +10,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
+from pprint import pformat
 from typing import Generator, List
 
+from deepdiff import DeepDiff
 from orchestrator.db import (
     ProductTable,
     ResourceTypeTable,
@@ -136,3 +136,7 @@ def modify_summary_form(user_input: dict, block: ProductBlockModel, fields: List
             "columns": [before, after],
         },
     )
+
+
+def pretty_print_deepdiff(diff: DeepDiff) -> str:
+    return pformat(diff.to_dict(), indent=2, compact=False)
