@@ -44,7 +44,7 @@ def validate_node_in_ims(subscription: Node) -> State:
     if ims_diff := DeepDiff(actual, expected, ignore_order=False):
         raise AssertionError("Found difference in IMS:\nActual => Expected\n" + pretty_print_deepdiff(ims_diff))
 
-    return {"node_in_sync_with_ims": True}
+    return {"payload": expected.dict()}
 
 
 @validate_workflow("Validate node")
