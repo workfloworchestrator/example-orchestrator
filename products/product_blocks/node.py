@@ -12,50 +12,47 @@
 # limitations under the License.
 
 
-from typing import Optional
-
 from orchestrator.domain.base import ProductBlockModel, serializable_property
 from orchestrator.types import SubscriptionLifecycle
 
 
 class NodeBlockInactive(ProductBlockModel, product_block_name="Node"):
-    role_id: Optional[int] = None
-    type_id: Optional[int] = None
-    site_id: Optional[int] = None
-    node_status: Optional[str] = None  # TODO: should be NodeStatus
-    node_name: Optional[str] = None
-    node_description: Optional[str] = None
-    ims_id: Optional[int] = None
-    nrm_id: Optional[int] = None
-    ipv4_ipam_id: Optional[int] = None
-    ipv6_ipam_id: Optional[int] = None
+    role_id: int | None = None
+    type_id: int | None = None
+    site_id: int | None = None
+    node_status: str | None = None  # should be NodeStatus, but strEnum is not supported (yet?)
+    node_name: str | None = None
+    node_description: str | None = None
+    ims_id: int | None = None
+    nrm_id: int | None = None
+    ipv4_ipam_id: int | None = None
+    ipv6_ipam_id: int | None = None
 
 
 class NodeBlockProvisioning(NodeBlockInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]):
     role_id: int
     type_id: int
     site_id: int
-    node_status: str  # TODO: should be NodeStatus
-    node_name: Optional[str] = None
-    node_description: Optional[str] = None
-    ims_id: Optional[int] = None
-    nrm_id: Optional[int] = None
-    ipv4_ipam_id: Optional[int] = None
-    ipv6_ipam_id: Optional[int] = None
+    node_status: str  # should be NodeStatus, but strEnum is not supported (yet?)
+    node_name: str
+    node_description: str | None = None
+    ims_id: int | None = None
+    nrm_id: int | None = None
+    ipv4_ipam_id: int | None = None
+    ipv6_ipam_id: int | None = None
 
     @serializable_property
     def title(self) -> str:
-        # TODO: format correct title string
-        return f"{self.name}"
+        return f"{self.node_name} status {self.node_status}"
 
 
 class NodeBlock(NodeBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
     role_id: int
     type_id: int
     site_id: int
-    node_status: str  # TODO: should be NodeStatus
-    node_name: Optional[str] = None
-    node_description: Optional[str] = None
+    node_status: str  # should be NodeStatus, but strEnum is not supported (yet?)
+    node_name: str
+    node_description: str | None = None
     ims_id: int
     nrm_id: int
     ipv4_ipam_id: int

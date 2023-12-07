@@ -37,3 +37,6 @@ LazyWorkflowInstance("workflows.l2vpn.create_l2vpn", "create_l2vpn")
 LazyWorkflowInstance("workflows.l2vpn.modify_l2vpn", "modify_l2vpn")
 LazyWorkflowInstance("workflows.l2vpn.terminate_l2vpn", "terminate_l2vpn")
 LazyWorkflowInstance("workflows.l2vpn.validate_l2vpn", "validate_l2vpn")
+
+LazyWorkflowInstance("workflows.tasks.bootstrap_netbox", "task_bootstrap_netbox")
+LazyWorkflowInstance("workflows.tasks.wipe_netbox", "task_wipe_netbox")

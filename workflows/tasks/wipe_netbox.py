@@ -13,6 +13,12 @@
 
 
 import structlog
+from orchestrator import workflow
+from orchestrator.forms import FormPage
+from orchestrator.targets import Target
+from orchestrator.types import FormGenerator, State
+from orchestrator.workflow import StepList, init, step
+from pydantic import validator
 
 from services import netbox
 
@@ -34,8 +40,36 @@ endpoints = [
 ]
 
 
-if __name__ == "__main__":
+def initial_input_form_generator() -> FormGenerator:
+    class AreYouSure(FormPage):
+        class Config:
+            title = "Wipe Netbox"
+
+        annihilate: bool | None
+
+        @validator("annihilate", allow_reuse=True)
+        def must_be_true(cls, v: str, values: dict, **kwargs):
+            if not v:
+                raise AssertionError("Will not continue unless you check this box")
+            return v
+
+    yield AreYouSure
+
+    return {}
+
+
+@step("Wipe all objects")
+def wipe_all_objects() -> State:
+    objects_deleted = []
     for endpoint in endpoints:
         for object in endpoint.all():
             object.delete()
             logger.info("delete object from Netbox", object=object, endpoint=object.endpoint.name)
+            objects_deleted.append({"object": str(object), "endpoint": object.endpoint.name})
+
+    return {"objects_deleted": objects_deleted}
+
+
+@workflow("Wipe Netbox", initial_input_form=initial_input_form_generator, target=Target.SYSTEM)
+def task_wipe_netbox() -> StepList:
+    return init >> wipe_all_objects

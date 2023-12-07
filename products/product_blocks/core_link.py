@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-from typing import Optional, TypeVar
+from typing import TypeVar
 
 from orchestrator.domain.base import (
     ProductBlockModel,
@@ -37,23 +37,22 @@ class ListOfPorts(SubscriptionInstanceList[T]):
 
 class CoreLinkBlockInactive(ProductBlockModel, product_block_name="CoreLink"):
     ports: ListOfPorts[CorePortBlockInactive]
-    ims_id: Optional[int] = None
-    ipv6_prefix_ipam_id: Optional[int] = None
-    nrm_id: Optional[int] = None
-    under_maintenance: Optional[bool] = None
+    ims_id: int | None = None
+    ipv6_prefix_ipam_id: int | None = None
+    nrm_id: int | None = None
+    under_maintenance: bool | None = None
 
 
 class CoreLinkBlockProvisioning(CoreLinkBlockInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]):
     ports: ListOfPorts[CorePortBlockProvisioning]
-    ims_id: Optional[int] = None
-    ipv6_prefix_ipam_id: Optional[int] = None
-    nrm_id: Optional[int] = None
+    ims_id: int | None = None
+    ipv6_prefix_ipam_id: int | None = None
+    nrm_id: int | None = None
     under_maintenance: bool
 
     @serializable_property
     def title(self) -> str:
-        # TODO: format correct title string
-        return f"{self.name}"
+        return f"core link between {self.ports[0].node.node_name} and {self.ports[1].node.node_name}"
 
 
 class CoreLinkBlock(CoreLinkBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):

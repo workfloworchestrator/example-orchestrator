@@ -54,12 +54,10 @@ def update_subscription_description(subscription: CoreLink) -> State:
     return {"subscription": subscription}
 
 
-@step("Core link under maintenance?")
-def core_link_under_maintenance(subscription: CoreLinkProvisioning) -> State:
-    # TODO: implement interface to NRM
-    # update_core_link_in_nrm(subscription.core_link.nrm_id, maintenance=subscription.core_link.under_maintenance)
-
-    return {"maintenance": subscription.core_link.under_maintenance}
+@step("Update core link in NRM")
+def update_core_link_in_nrm(subscription: CoreLinkProvisioning) -> State:
+    """Dummy step, replace with actual call to NRM."""
+    return {"subscription": subscription}
 
 
 @modify_workflow("Modify core_link", initial_input_form=initial_input_form_generator)
@@ -69,6 +67,6 @@ def modify_core_link() -> StepList:
         >> set_status(SubscriptionLifecycle.PROVISIONING)
         >> update_subscription
         >> update_subscription_description
-        >> core_link_under_maintenance
+        >> update_core_link_in_nrm
         >> set_status(SubscriptionLifecycle.ACTIVE)
     )

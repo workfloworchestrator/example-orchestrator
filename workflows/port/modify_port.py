@@ -12,13 +12,12 @@
 # limitations under the License.
 
 
-from orchestrator.forms import FormPage
+from orchestrator.forms import FormPage, ReadOnlyField
 from orchestrator.forms.validators import Label
 from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import modify_workflow
-from pydantic_forms.core import ReadOnlyField
 
 from products.product_types.port import Port, PortProvisioning
 from products.services.description import description
@@ -67,6 +66,12 @@ def update_subscription(
     return {"subscription": subscription}
 
 
+@step("Update port in NRM")
+def update_port_in_nrm(subscription: PortProvisioning) -> State:
+    """Dummy step, replace with actual call to NRM."""
+    return {"subscription": subscription}
+
+
 @modify_workflow("Modify port", initial_input_form=initial_input_form_generator)
 def modify_port() -> StepList:
     return (
@@ -74,5 +79,6 @@ def modify_port() -> StepList:
         >> set_status(SubscriptionLifecycle.PROVISIONING)
         >> update_subscription
         >> update_port_in_ims
+        >> update_port_in_nrm
         >> set_status(SubscriptionLifecycle.ACTIVE)
     )

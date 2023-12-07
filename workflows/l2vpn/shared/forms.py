@@ -12,8 +12,8 @@
 # limitations under the License.
 
 
+from orchestrator.forms.validators import Choice, choice_list
 from orchestrator.types import SubscriptionLifecycle
-from pydantic_forms.validators import Choice, choice_list
 
 from products.product_blocks.port import PortMode
 from workflows.shared import subscriptions_by_product_type_and_instance_value

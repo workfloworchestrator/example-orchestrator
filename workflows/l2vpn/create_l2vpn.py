@@ -14,7 +14,6 @@
 
 import uuid
 from random import randrange
-from typing import Optional
 
 from orchestrator.forms import FormPage
 from orchestrator.targets import Target
@@ -40,7 +39,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 
         number_of_ports: int
         speed: int
-        speed_policer: Optional[bool] = False
+        speed_policer: bool | None = False
 
         @validator("number_of_ports", allow_reuse=True)
         def max_number_of_ports(cls, v: int):
@@ -87,7 +86,6 @@ def construct_l2vpn_model(
     )
     subscription.virtual_circuit.speed = speed
     subscription.virtual_circuit.speed_policer = speed_policer
-    subscription.virtual_circuit.nrm_id = randrange(2**16)  # TODO: move to separate step that provisions l2vpn in NRM
 
     def to_sap(port: UUIDstr) -> SAPBlockInactive:
         port_subscription = Port.from_subscription(port)
@@ -155,6 +153,13 @@ def update_vlans_on_ports(subscription: L2vpn) -> State:
     return {"payloads": payloads}
 
 
+@step("Provision L2VPN in NRM")
+def provision_l2vpn_in_nrm(subscription: L2vpnProvisioning) -> State:
+    """Dummy step that only creates a random NRM ID, replace with actual call to NRM."""
+    subscription.virtual_circuit.nrm_id = randrange(2**16)
+    return {"subscription": subscription}
+
+
 @create_workflow("Create l2vpn", initial_input_form=initial_input_form_generator)
 def create_l2vpn() -> StepList:
     return (
@@ -164,6 +169,7 @@ def create_l2vpn() -> StepList:
         >> ims_create_vlans
         >> ims_create_l2vpn
         >> ims_create_l2vpn_terminations
+        >> provision_l2vpn_in_nrm
         >> set_status(SubscriptionLifecycle.ACTIVE)
         >> update_vlans_on_ports
     )

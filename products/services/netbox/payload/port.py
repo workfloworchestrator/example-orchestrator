@@ -23,13 +23,19 @@ def build_port_payload(model: PortBlockProvisioning, subscription: SubscriptionM
 
     Example payload::
 
-        {
-           "name": "0/1/0",
-           "type": "100gbase-x-cfp",
-           "speed": 100000000,
-           "device": 27,
-           "enabled": true
-        }
+       {
+          "mode": "tagged",
+          "name": "0/0/4",
+          "type": "10gbase-x-xfp",
+          "speed": 10000000,
+          "device": 51,
+          "enabled": true,
+          "description": "UvA",
+          "tagged_vlans": [
+             80,
+             78
+          ]
+       }
 
     Args:
         model: PortBlockProvisioning
@@ -42,7 +48,7 @@ def build_port_payload(model: PortBlockProvisioning, subscription: SubscriptionM
         device=model.node.ims_id,
         name=model.port_name,
         type=model.port_type,
-        tagged_vlans=model.vlan_ims_ids,
+        tagged_vlans=sorted(model.vlan_ims_ids),
         mode="tagged" if model.port_mode == PortMode.TAGGED else "",
         description=model.port_description,
         enabled=model.enabled,

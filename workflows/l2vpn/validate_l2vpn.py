@@ -11,24 +11,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-import structlog
 from orchestrator.types import State
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import validate_workflow
 
 from products.product_types.l2vpn import L2vpn
 
-logger = structlog.get_logger(__name__)
+
+@step("validate L2VPN in IMS")
+def validate_l2vpn_in_ims(subscription: L2vpn) -> State:
+    # l2vpn = netbox.get_l2vpn(id=subscription.virtual_circuit.ims_id)
+    # ...
+    raise AssertionError("Not implemented yet")
 
 
-@step("Load initial state")
-def load_initial_state_l2vpn(subscription: L2vpn) -> State:
-    return {
-        "subscription": subscription,
-    }
+@step("validate L2VPN terminations in IMS")
+def validate_l2vpn_terminations_in_ims(subscription: L2vpn) -> State:
+    # for sap in subscription.virtual_circuit.saps:
+    #     l2vpn_termination = netbox.get_l2vpn_termination(id=sap.ims_id)
+    #     ...
+    raise AssertionError("Not implemented yet")
+
+
+@step("validate VLANs on connected ports in IMS")
+def validate_vlans_on_ports_in_ims(subscription: L2vpn) -> State:
+    # for sap in subscription.virtual_circuit.saps:
+    #     ...
+    raise AssertionError("Not implemented yet")
 
 
 @validate_workflow("Validate l2vpn")
 def validate_l2vpn() -> StepList:
-    return begin >> load_initial_state_l2vpn
+    return begin >> validate_l2vpn_in_ims >> validate_l2vpn_terminations_in_ims >> validate_vlans_on_ports_in_ims

@@ -12,8 +12,6 @@
 # limitations under the License.
 
 
-from typing import Optional
-
 from orchestrator.domain.base import ProductBlockModel, serializable_property
 from orchestrator.types import SubscriptionLifecycle
 
@@ -25,30 +23,29 @@ from products.product_blocks.node import (
 
 
 class CorePortBlockInactive(ProductBlockModel, product_block_name="CorePort"):
-    port_name: Optional[str] = None
-    enabled: Optional[bool] = True
-    ims_id: Optional[int] = None
-    nrm_id: Optional[int] = None
-    node: Optional[NodeBlockInactive] = None
-    ipv6_ipam_id: Optional[int] = None
+    port_name: str | None = None
+    enabled: bool | None = True
+    ims_id: int | None = None
+    nrm_id: int | None = None
+    node: NodeBlockInactive | None = None
+    ipv6_ipam_id: int | None = None
 
 
 class CorePortBlockProvisioning(CorePortBlockInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]):
-    port_name: Optional[str] = None
+    port_name: str | None = None
     enabled: bool
-    ims_id: Optional[int] = None
-    nrm_id: Optional[int] = None
+    ims_id: int | None = None
+    nrm_id: int | None = None
     node: NodeBlockProvisioning
-    ipv6_ipam_id: Optional[int] = None
+    ipv6_ipam_id: int | None = None
 
     @serializable_property
     def title(self) -> str:
-        # TODO: format correct title string
-        return f"{self.name}"
+        return f"core port {self.port_name} on {self.node.node_name}"
 
 
 class CorePortBlock(CorePortBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
-    port_name: Optional[str] = None
+    port_name: str | None = None
     enabled: bool
     ims_id: int
     nrm_id: int

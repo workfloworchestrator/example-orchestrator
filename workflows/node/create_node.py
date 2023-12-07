@@ -14,7 +14,6 @@
 
 import uuid
 from random import randrange
-from typing import Optional
 
 from orchestrator.forms import FormPage
 from orchestrator.forms.validators import Label
@@ -55,8 +54,8 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
         type_id: node_type_selector(node_type)  # type:ignore
         site_id: site_selector()  # type:ignore
         node_status: node_status_selector()  # type:ignore
-        node_name: Optional[str]
-        node_description: Optional[str]
+        node_name: str
+        node_description: str | None
 
     user_input = yield CreateNodeForm
     user_input_dict = user_input.dict()
@@ -75,8 +74,8 @@ def construct_node_model(
     type_id: int,
     site_id: int,
     node_status: NodeStatus,
-    node_name: Optional[str],
-    node_description: Optional[str],
+    node_name: str,
+    node_description: str | None,
 ) -> State:
     subscription = NodeInactive.from_product_id(
         product_id=product,
@@ -91,7 +90,6 @@ def construct_node_model(
     subscription.node.node_status = node_status
     subscription.node.node_name = node_name
     subscription.node.node_description = node_description
-    subscription.node.nrm_id = randrange(2**16)  # TODO: move to separate step that provisions node in NRM
 
     subscription = NodeProvisioning.from_other_lifecycle(subscription, SubscriptionLifecycle.PROVISIONING)
     subscription.description = description(subscription)
@@ -105,7 +103,6 @@ def construct_node_model(
 
 @step("Create node in IMS")
 def create_node_in_ims(subscription: NodeProvisioning) -> State:
-    """Create node in IMS"""
     payload = build_payload(subscription.node, subscription)
     subscription.node.ims_id = netbox.create(payload)
     return {"subscription": subscription, "payload": payload.dict()}
@@ -113,10 +110,16 @@ def create_node_in_ims(subscription: NodeProvisioning) -> State:
 
 @step("Reserve loopback addresses")
 def reserve_loopback_addresses(subscription: NodeProvisioning) -> State:
-    """Reserve IPv4 and IPv6 loopback addresses"""
     subscription.node.ipv4_ipam_id, subscription.node.ipv6_ipam_id = netbox.reserve_loopback_addresses(
         subscription.node.ims_id
     )
+    return {"subscription": subscription}
+
+
+@step("Provision node in NRM")
+def provision_node_in_nrm(subscription: NodeProvisioning) -> State:
+    """Dummy step that only creates a random NRM ID, replace with actual call to NRM."""
+    subscription.node.nrm_id = randrange(2**16)
     return {"subscription": subscription}
 
 
@@ -129,4 +132,5 @@ def create_node() -> StepList:
         >> create_node_in_ims
         >> reserve_loopback_addresses
         >> update_node_in_ims
+        >> provision_node_in_nrm
     )

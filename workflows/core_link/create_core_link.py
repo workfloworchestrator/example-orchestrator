@@ -89,23 +89,16 @@ def construct_core_link_model(
     node_a = Node.from_subscription(node_subscription_id_a)
     interface_a = netbox.get_interface(id=port_ims_id_a)
     subscription.core_link.ports[0].ims_id = port_ims_id_a
-    subscription.core_link.ports[0].nrm_id = randrange(
-        2**16
-    )  # TODO: move to separate step that provisions core link in NRM
     subscription.core_link.ports[0].port_name = interface_a.name
     subscription.core_link.ports[0].node = node_a.node
     # side B
     node_b = Node.from_subscription(node_subscription_id_b)
     interface_b = netbox.get_interface(id=port_ims_id_b)
     subscription.core_link.ports[1].ims_id = port_ims_id_b
-    subscription.core_link.ports[1].nrm_id = randrange(
-        2**16
-    )  # TODO: move to separate step that provisions core link in NRM
     subscription.core_link.ports[1].port_name = interface_b.name
     subscription.core_link.ports[1].node = node_b.node
     # core link setting(s)
     subscription.core_link.under_maintenance = under_maintenance
-    subscription.core_link.nrm_id = randrange(2**16)  # TODO: move to separate step that provisions core link in NRM
 
     subscription = CoreLinkProvisioning.from_other_lifecycle(subscription, SubscriptionLifecycle.PROVISIONING)
     subscription.description = description(subscription)
@@ -170,13 +163,22 @@ def connect_ports(subscription: CoreLinkProvisioning):
 
 @step("enable ports in IMS")
 def enable_ports(subscription: CoreLinkProvisioning) -> State:
-    """Enable ports in IMS"""
+    # Note that the enabled field on the CorePortBlock is set to True by default, only need to send payload to IMS
     payload_port_a = build_payload(subscription.core_link.ports[0], subscription)
     netbox.update(payload_port_a, id=subscription.core_link.ports[0].ims_id)
     payload_port_b = build_payload(subscription.core_link.ports[1], subscription)
     netbox.update(payload_port_b, id=subscription.core_link.ports[1].ims_id)
 
     return {"payload_port_a": payload_port_a, "payload_port_b": payload_port_b}
+
+
+@step("Provision core link in NRM")
+def provision_core_link_in_nrm(subscription: CoreLinkProvisioning) -> State:
+    """Dummy step that only creates random NRM IDs, replace with actual call to NRM."""
+    subscription.core_link.ports[0].nrm_id = randrange(2**16)
+    subscription.core_link.ports[1].nrm_id = randrange(2**16)
+    subscription.core_link.nrm_id = randrange(2**16)
+    return {"subscription": subscription}
 
 
 @create_workflow("Create core_link", initial_input_form=initial_input_form_generator)
@@ -190,4 +192,5 @@ def create_core_link() -> StepList:
         >> assign_side_b_ipv6_prefix
         >> connect_ports
         >> enable_ports
+        >> provision_core_link_in_nrm
     )

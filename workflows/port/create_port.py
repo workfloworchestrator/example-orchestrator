@@ -14,7 +14,6 @@
 
 import uuid
 from random import randrange
-from typing import Optional
 
 from orchestrator.forms import FormPage
 from orchestrator.forms.validators import Label
@@ -60,10 +59,10 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
         port_settings: Label
 
         port_ims_id: free_port_selector(node_subscription_id, speed)  # type:ignore
-        port_description: Optional[str]
+        port_description: str | None
         port_mode: port_mode_selector()  # type:ignore
-        auto_negotiation: Optional[bool] = False
-        lldp: Optional[bool] = False
+        auto_negotiation: bool | None = False
+        lldp: bool | None = False
 
     user_input = yield CreatePortForm
     user_input_dict = user_input.dict()
@@ -79,7 +78,7 @@ def construct_port_model(
     product: UUIDstr,
     node_subscription_id: UUIDstr,
     port_ims_id: int,
-    port_description: Optional[str],
+    port_description: str | None,
     port_mode: PortMode,
     auto_negotiation: bool,
     lldp: bool,
@@ -100,7 +99,6 @@ def construct_port_model(
     subscription.port.lldp = lldp
     subscription.port.enabled = False
     subscription.port.ims_id = port_ims_id
-    subscription.port.nrm_id = randrange(2**16)  # TODO: move to separate step that provisions port in NRM
 
     subscription = PortProvisioning.from_other_lifecycle(subscription, SubscriptionLifecycle.PROVISIONING)
     subscription.description = description(subscription)
@@ -112,15 +110,26 @@ def construct_port_model(
     }
 
 
-@step("enable port")
+@step("enable port in IMS")
 def enable_port(subscription: PortProvisioning) -> State:
-    """Enable port in IMS"""
     subscription.port.enabled = True
+    return {"subscription": subscription}
+
+
+@step("Provision port in NRM")
+def provision_port_in_nrm(subscription: PortProvisioning) -> State:
+    """Dummy step that only creates a random NRM ID, replace with actual call to NRM."""
+    subscription.port.nrm_id = randrange(2**16)
     return {"subscription": subscription}
 
 
 @create_workflow("Create port", initial_input_form=initial_input_form_generator)
 def create_port() -> StepList:
     return (
-        begin >> construct_port_model >> store_process_subscription(Target.CREATE) >> enable_port >> update_port_in_ims
+        begin
+        >> construct_port_model
+        >> store_process_subscription(Target.CREATE)
+        >> enable_port
+        >> update_port_in_ims
+        >> provision_port_in_nrm
     )

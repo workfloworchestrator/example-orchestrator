@@ -39,10 +39,6 @@ def build_l2vpn_payload(model: VirtualCircuitBlockProvisioning, subscription: Su
 
     """
     return netbox.L2vpnPayload(
-        name=(
-            # f"{str(subscription.subscription_id)[:8]} "
-            # f"({'-'.join(sorted(list(set([sap.port.node.node_name for sap in model.saps]))))})"
-            f"{str(subscription.subscription_id)[:8]} {description(subscription)} "
-        ),
+        name=f"{str(subscription.subscription_id)[:8]} {description(subscription)} ",
         slug=str(subscription.subscription_id),
     )

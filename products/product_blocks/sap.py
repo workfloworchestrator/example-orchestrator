@@ -12,8 +12,6 @@
 # limitations under the License.
 
 
-from typing import Optional
-
 from orchestrator.domain.base import ProductBlockModel, serializable_property
 from orchestrator.types import SubscriptionLifecycle
 
@@ -25,20 +23,19 @@ from products.product_blocks.port import (
 
 
 class SAPBlockInactive(ProductBlockModel, product_block_name="SAP"):
-    port: Optional[PortBlockInactive] = None
-    vlan: Optional[int] = None
-    ims_id: Optional[int] = None
+    port: PortBlockInactive | None = None
+    vlan: int | None = None
+    ims_id: int | None = None
 
 
 class SAPBlockProvisioning(SAPBlockInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]):
     port: PortBlockProvisioning
     vlan: int
-    ims_id: Optional[int] = None
+    ims_id: int | None = None
 
     @serializable_property
     def title(self) -> str:
-        # TODO: format correct title string
-        return f"{self.name}"
+        return f"VLAN {self.vlan} on port {self.port.port_name} of {self.port.node.node_name}"
 
 
 class SAPBlock(SAPBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
