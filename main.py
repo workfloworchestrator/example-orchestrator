@@ -20,6 +20,7 @@ import products  # noqa: F401  Side-effects
 import workflows  # noqa: F401  Side-effects
 
 app = OrchestratorCore(base_settings=AppSettings())
+app.register_graphql()
 
 if __name__ == "__main__":
     core_cli()
