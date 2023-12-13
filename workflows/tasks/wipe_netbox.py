@@ -17,7 +17,7 @@ from orchestrator import workflow
 from orchestrator.forms import FormPage
 from orchestrator.targets import Target
 from orchestrator.types import FormGenerator, State
-from orchestrator.workflow import StepList, init, step
+from orchestrator.workflow import StepList, done, init, step
 from pydantic import validator
 
 from services import netbox
@@ -72,4 +72,4 @@ def wipe_all_objects() -> State:
 
 @workflow("Wipe Netbox", initial_input_form=initial_input_form_generator, target=Target.SYSTEM)
 def task_wipe_netbox() -> StepList:
-    return init >> wipe_all_objects
+    return init >> wipe_all_objects >> done

@@ -16,7 +16,7 @@ import structlog
 from orchestrator import workflow
 from orchestrator.targets import Target
 from orchestrator.types import State
-from orchestrator.workflow import StepList, init, step
+from orchestrator.workflow import StepList, done, init, step
 
 from services import netbox
 from settings import settings
@@ -77,4 +77,4 @@ def create_prefixes() -> State:
 
 @workflow("Bootstrap Netbox", target=Target.SYSTEM)
 def task_bootstrap_netbox() -> StepList:
-    return init >> create_initial_set_of_objects >> create_prefixes
+    return init >> create_initial_set_of_objects >> create_prefixes >> done
