@@ -16,9 +16,9 @@ python main.py db upgrade heads
 python -u -m uvicorn --reload --workers 4 --host 0.0.0.0 --port 8080 main:app
 ```
 
-This assumes a environment that has correct settings or it will use the orchestrator-core defaults (like DB name orchestratorc-core).
+This assumes a environment that has correct settings, or it will use the 
+orchestrator-core defaults (like DB name orchestrator-core).
 
 And example is in `.env.example`
 
 You can find a list with default settings [here](https://github.com/workfloworchestrator/orchestrator-core/blob/main/orchestrator/settings.py)
-
