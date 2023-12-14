@@ -1,0 +1,83 @@
+# Copyright 2019-2023 SURF.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+# This file describes the "Notice and Takedown" product
+#
+config:
+  create_summary_forms: true
+  send_email: true
+name: notice_and_takedown
+type: NoticeAndTakedown
+tag: NOTICE
+description: "Notice and takedown"
+fixed_inputs:
+  - name: notice_and_takedown_type
+    type: enum
+    description: "type of notice and takedown request"
+    enum_type: str
+    values:
+      - "malware"
+      - "phishing"
+product_blocks:
+  - name: notice_and_takedown
+    type: NoticeAndTakedown
+    tag: NOTICE
+    description: "notice and takedown product block"
+    fields:
+      - name: company_id
+        description: "ID in company ID in CRM"
+        type: int
+#        required: inactive
+        modifiable:
+      - name: company_name
+        description: "Name of company in CRM (for integrity checks)"
+        type: str
+#        required: inactive
+        modifiable:
+      - name: site_id
+        description: "ID in CMDB of site where the node is located"
+        type: int
+        required: inactive
+        modifiable:
+      - name: url
+        description: "URL or IP address"
+        type: str
+#        required: inactive
+        modifiable:
+      - name: ticket_id
+        description: "4Me ticket ID"
+        type: str
+        required: active
+        modifiable:
+      - name: description
+        description: "Description of the takedown notice"
+        type: str
+         required: inactive  # not needed by NetBox
+        modifiable:
+      - name: ims_id
+        description: "ID of the node in the inventory management system"
+        type: int
+        required: active
+      - name: nrm_id
+        type: int
+        description: "ID of the node in the network resource manager"
+        required: active
+      - name: ipv4_ipam_id
+        type: int
+        description: "ID of the node’s iPv4 loopback address in IPAM"
+        required: active
+      - name: ipv6_ipam_id
+        type: int
+        description: "ID of the node’s iPv6 loopback address in IPAM"
+        required: active
