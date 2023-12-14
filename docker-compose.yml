@@ -1,0 +1,155 @@
+version: "3.9"
+
+x-netbox:
+  &netbox
+  image: docker.io/netboxcommunity/netbox:${VERSION-v3.4-2.5.2}
+  depends_on:
+    - postgres
+    - redis
+  env_file: ./etc/netbox/netbox.env
+  user: 'unit:root'
+  healthcheck:
+    start_period: 360s
+    timeout: 3s
+    interval: 15s
+    test: "curl -f http://localhost:8080/api/ || exit 1"
+  volumes:
+    - ./etc/netbox/configuration:/etc/netbox/config:z,ro
+    - ./etc/netbox/reports:/etc/netbox/reports:z,ro
+    - ./etc/netbox/scripts:/etc/netbox/scripts:z,ro
+    - ./etc/netbox/entrypoint.sh:/etc/netbox/entrypoint.sh
+    - netbox-media-files:/opt/netbox/netbox/media:z
+    - ./etc/netbox/data.json:/etc/netbox/data.json
+
+services:
+  #
+  # Shared
+  #
+  postgres:
+    image: 'postgres:13'
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: nwa
+      POSTGRES_PASSWORD: nwa
+      POSTGRES_DB: orchestrator-core
+    volumes:
+      - db-data:/var/lib/postgresql/data/
+      - ./etc/postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "--username",
+          "nwa",
+          "--dbname",
+          "orchestrator-core"
+        ]
+      interval: "3s"
+      timeout: "2s"
+      retries: 20
+      start_period: "5s"
+
+  redis:
+    image: docker.io/redis:7-alpine
+    command:
+      - sh
+      - -c # this is to evaluate the $REDIS_PASSWORD from the env
+      - redis-server --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+    env_file: ./etc/redis/redis.env
+    volumes:
+      - netbox-redis-cache-data:/data
+
+  #
+  # Netbox
+  #
+  netbox:
+    <<: *netbox
+    expose:
+      - "8080"
+    ports:
+      - "8000:8080"
+    entrypoint:
+      [
+        "/opt/netbox/docker-entrypoint.sh",
+        "/etc/netbox/entrypoint.sh"
+      ]
+
+  netbox-worker:
+    <<: *netbox
+    depends_on:
+      netbox:
+        condition: service_healthy
+    command:
+      - /opt/netbox/venv/bin/python
+      - /opt/netbox/netbox/manage.py
+      - rqworker
+    healthcheck:
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      test: "ps -aux | grep -v grep | grep -q rqworker || exit 1"
+
+  netbox-housekeeping:
+    <<: *netbox
+    depends_on:
+      netbox:
+        condition: service_healthy
+    command:
+      - /opt/netbox/housekeeping.sh
+    healthcheck:
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      test: "ps -aux | grep -v grep | grep -q housekeeping || exit 1"
+
+  #
+  # Orchestrator
+  #
+  orchestrator-gui:
+    image: "ghcr.io/workfloworchestrator/orchestrator-core-gui:latest"
+    env_file: ./etc/orchestrator-gui/orchestrator-core-gui.env
+    ports:
+      - "3000:8080"
+    depends_on:
+      orchestrator:
+        condition: service_started
+
+  orchestrator:
+    &orchestrator
+    image: "ghcr.io/workfloworchestrator/orchestrator-core:latest"
+    env_file: ./etc/orchestrator/orchestrator.env
+    ports:
+      - "8080:8080"
+      - "5678:5678" #Enable Python debugger
+    expose:
+      - 5678 #Enable Python debugger
+    environment:
+      OAUTH2_ACTIVE: False
+    volumes:
+      - ./workflows:/home/orchestrator/workflows
+      - ./products:/home/orchestrator/products
+      - ./migrations:/home/orchestrator/migrations
+      - ./etc:/home/orchestrator/etc
+      - ./main.py:/home/orchestrator/main.py
+      - ./settings.py:/home/orchestrator/settings.py
+      - ./utils:/home/orchestrator/utils
+      - ./services:/home/orchestrator/services
+      - ./requirements.txt:/home/orchestrator/requirements.txt
+      - ./alembic.ini:/home/orchestrator/alembic.ini
+      - ./translations:/home/orchestrator/translations
+    entrypoint: [ "/home/orchestrator/etc/orchestrator/entrypoint.sh" ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  netbox-media-files:
+    driver: local
+  db-data:
+    driver: local
+  netbox-redis-data:
+    driver: local
+  netbox-redis-cache-data:
+    driver: local

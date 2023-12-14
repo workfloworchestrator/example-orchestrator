@@ -1,0 +1,57 @@
+[
+  {
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+      "password": "pbkdf2_sha256$390000$xrIkMpQTt4W3w9sBdGlHOw$83S/T0Zs4iLu+yo2NAx0HQEc+B57+XtFG6DnyV/8fsY=",
+      "last_login": "2023-05-30T13:30:17.683Z",
+      "is_superuser": true,
+      "username": "admin",
+      "first_name": "",
+      "last_name": "",
+      "email": "admin@admin.admin",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2023-04-03T20:31:46.411Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "users.userconfig",
+    "pk": 1,
+    "fields": {
+      "user": 1,
+      "data": {
+        "tables": {
+          "CableTable": {
+            "columns": [
+              "id",
+              "label",
+              "a_terminations",
+              "b_terminations",
+              "status",
+              "type",
+              "device_a",
+              "device_b"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "model": "users.token",
+    "pk": 1,
+    "fields": {
+      "user": 1,
+      "created": "2023-04-04T20:50:21.369Z",
+      "expires": null,
+      "last_used": "2023-04-04T20:51:55.276Z",
+      "key": "e744057d755255a31818bf74df2350c26eeabe54",
+      "write_enabled": true,
+      "description": "",
+      "allowed_ips": []
+    }
+  }
+]
