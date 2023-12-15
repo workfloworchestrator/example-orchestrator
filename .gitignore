@@ -2,3 +2,5 @@
 .DS_Store
 .idea/
 __pycache__/
+alembic.ini
+lint.sh
