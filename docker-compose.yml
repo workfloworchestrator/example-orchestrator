@@ -6,7 +6,7 @@ x-netbox:
   depends_on:
     - postgres
     - redis
-  env_file: ./etc/netbox/netbox.env
+  env_file: ./docker/netbox/netbox.env
   user: 'unit:root'
   healthcheck:
     start_period: 360s
@@ -14,12 +14,12 @@ x-netbox:
     interval: 15s
     test: "curl -f http://localhost:8080/api/ || exit 1"
   volumes:
-    - ./etc/netbox/configuration:/etc/netbox/config:z,ro
-    - ./etc/netbox/reports:/etc/netbox/reports:z,ro
-    - ./etc/netbox/scripts:/etc/netbox/scripts:z,ro
-    - ./etc/netbox/entrypoint.sh:/etc/netbox/entrypoint.sh
+    - ./docker/netbox/configuration:/etc/netbox/config:z,ro
+    - ./docker/netbox/reports:/etc/netbox/reports:z,ro
+    - ./docker/netbox/scripts:/etc/netbox/scripts:z,ro
+    - ./docker/netbox/entrypoint.sh:/etc/netbox/entrypoint.sh
     - netbox-media-files:/opt/netbox/netbox/media:z
-    - ./etc/netbox/data.json:/etc/netbox/data.json
+    - ./docker/netbox/data.json:/etc/netbox/data.json
 
 services:
   #
@@ -35,7 +35,7 @@ services:
       POSTGRES_DB: orchestrator-core
     volumes:
       - db-data:/var/lib/postgresql/data/
-      - ./etc/postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test:
         [
@@ -57,7 +57,7 @@ services:
       - sh
       - -c # this is to evaluate the $REDIS_PASSWORD from the env
       - redis-server --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
-    env_file: ./etc/redis/redis.env
+    env_file: ./docker/redis/redis.env
     volumes:
       - netbox-redis-cache-data:/data
 
@@ -109,7 +109,7 @@ services:
   #
   orchestrator-gui:
     image: "ghcr.io/workfloworchestrator/orchestrator-core-gui:latest"
-    env_file: ./etc/orchestrator-gui/orchestrator-core-gui.env
+    env_file: ./docker/orchestrator-gui/orchestrator-core-gui.env
     ports:
       - "3000:8080"
     depends_on:
@@ -119,7 +119,7 @@ services:
   orchestrator:
     &orchestrator
     image: "ghcr.io/workfloworchestrator/orchestrator-core:latest"
-    env_file: ./etc/orchestrator/orchestrator.env
+    env_file: ./docker/orchestrator/orchestrator.env
     ports:
       - "8080:8080"
       - "5678:5678" #Enable Python debugger
@@ -131,7 +131,7 @@ services:
       - ./workflows:/home/orchestrator/workflows
       - ./products:/home/orchestrator/products
       - ./migrations:/home/orchestrator/migrations
-      - ./etc:/home/orchestrator/etc
+      - ./docker:/home/orchestrator/etc
       - ./main.py:/home/orchestrator/main.py
       - ./settings.py:/home/orchestrator/settings.py
       - ./utils:/home/orchestrator/utils
