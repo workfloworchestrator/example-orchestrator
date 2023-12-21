@@ -116,6 +116,15 @@ services:
       orchestrator:
         condition: service_started
 
+  orchestrator-ui:
+    image: "ghcr.io/workfloworchestrator/orchestrator-ui:custom"
+    env_file: ./docker/orchestrator-ui/orchestrator-ui.env
+    ports:
+      - "4000:3000"
+    depends_on:
+      orchestrator:
+        condition: service_started
+
   orchestrator:
     &orchestrator
     image: "ghcr.io/workfloworchestrator/orchestrator-core:latest"
