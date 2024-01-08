@@ -127,7 +127,7 @@ services:
 
   orchestrator:
     &orchestrator
-    image: "ghcr.io/workfloworchestrator/orchestrator-core:latest"
+    image: "ghcr.io/workfloworchestrator/orchestrator-core:1.3.6"
     env_file: ./docker/orchestrator/orchestrator.env
     ports:
       - "8080:8080"
