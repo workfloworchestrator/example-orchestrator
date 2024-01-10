@@ -28,6 +28,7 @@ from orchestrator.types import SubscriptionLifecycle, SummaryData, UUIDstr
 
 from products.product_types.node import Node
 from services import netbox
+from pydantic import ConfigDict
 
 
 def subscriptions_by_product_type(product_type: str, status: List[SubscriptionLifecycle]) -> List[SubscriptionTable]:
@@ -112,8 +113,7 @@ def summary_form(product_name: str, summary_data: dict) -> Generator:
         data = SummaryData(**summary_data)
 
     class SummaryForm(FormPage):
-        class Config:
-            title = f"{product_name} summary"
+        model_config = ConfigDict(title=f"{product_name} summary")
 
         product_summary: ProductSummary
 

@@ -21,7 +21,7 @@ from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUID
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status, store_process_subscription
 from orchestrator.workflows.utils import create_workflow
-from pydantic import validator
+from pydantic import field_validator, ConfigDict
 
 from products.product_blocks.sap import SAPBlockInactive
 from products.product_types.l2vpn import L2vpn, L2vpnInactive, L2vpnProvisioning
@@ -34,14 +34,14 @@ from workflows.l2vpn.shared.forms import ports_selector
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:
     class CreateL2vpnForm(FormPage):
-        class Config:
-            title = product_name
+        model_config = ConfigDict(title=product_name)
 
         number_of_ports: int
         speed: int
         speed_policer: bool | None = False
 
-        @validator("number_of_ports", allow_reuse=True)
+        @field_validator("number_of_ports")
+        @classmethod
         def max_number_of_ports(cls, v: int):
             if v < 2 or v > 8:
                 raise AssertionError("number of ports must be not less than 2 and not greater than 8")
@@ -51,13 +51,13 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
     user_input_dict = user_input.dict()
 
     class SelectPortsForm(FormPage):
-        class Config:
-            title = product_name
+        model_config = ConfigDict(title=product_name)
 
         ports: ports_selector(int(user_input_dict["number_of_ports"]))
         vlan: int
 
-        @validator("vlan", allow_reuse=True)
+        @field_validator("vlan")
+        @classmethod
         def valid_vlan(cls, v: int):
             if v < 2 or v > 4094:
                 raise AssertionError("VLAN ID must be not less than 2 and not greater than 4094")

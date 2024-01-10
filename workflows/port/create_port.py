@@ -32,12 +32,12 @@ from services import netbox
 from workflows.port.shared.forms import port_mode_selector
 from workflows.port.shared.steps import update_port_in_ims
 from workflows.shared import create_summary_form, free_port_selector, node_selector
+from pydantic import ConfigDict
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
     class SelectNodeForm(FormPage):
-        class Config:
-            title = product_name
+        model_config = ConfigDict(title=product_name)
 
         # organisation: OrganisationId
 
@@ -51,8 +51,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
     speed = int(_product.fixed_input_value("speed"))
 
     class CreatePortForm(FormPage):
-        class Config:
-            title = product_name
+        model_config = ConfigDict(title=product_name)
 
         # organisation: OrganisationId
 

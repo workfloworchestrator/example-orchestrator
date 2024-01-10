@@ -37,14 +37,14 @@ from workflows.node.shared.forms import (
 )
 from workflows.node.shared.steps import update_node_in_ims
 from workflows.shared import create_summary_form
+from pydantic import ConfigDict
 
 
 def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGenerator:
     node_type = get_product_by_id(product).fixed_input_value("node_type")
 
     class CreateNodeForm(FormPage):
-        class Config:
-            title = product_name
+        model_config = ConfigDict(title=product_name)
 
         # organisation: OrganisationId
 

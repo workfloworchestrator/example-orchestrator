@@ -18,7 +18,7 @@ from orchestrator.forms import FormPage
 from orchestrator.targets import Target
 from orchestrator.types import FormGenerator, State
 from orchestrator.workflow import StepList, done, init, step
-from pydantic import validator
+from pydantic import ConfigDict, validator
 
 from services import netbox
 
@@ -42,11 +42,12 @@ endpoints = [
 
 def initial_input_form_generator() -> FormGenerator:
     class AreYouSure(FormPage):
-        class Config:
-            title = "Wipe Netbox"
+        model_config = ConfigDict(title="Wipe Netbox")
 
         annihilate: bool | None
 
+        # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+        # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
         @validator("annihilate", allow_reuse=True)
         def must_be_true(cls, v: str, values: dict, **kwargs):
             if not v:

@@ -22,7 +22,7 @@ from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUID
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
-from pydantic import validator
+from pydantic import ConfigDict, validator
 
 from products.product_types.core_link import CoreLinkInactive, CoreLinkProvisioning
 from products.product_types.node import Node
@@ -35,12 +35,13 @@ from workflows.shared import free_port_selector, node_selector
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
     class SelectNodes(FormPage):
-        class Config:
-            title = f"{product_name} - node A and B"
+        model_config = ConfigDict(title=f"{product_name} - node A and B")
 
         node_subscription_id_a: node_selector("NodesEnumA")  # type:ignore # noqa: F821
         node_subscription_id_b: node_selector("NodesEnumB")  # type:ignore # noqa: F821
 
+        # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+        # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
         @validator("node_subscription_id_b", allow_reuse=True)
         def separate_nodes(cls, v: str, values: dict, **kwargs):
             if v == values["node_subscription_id_a"]:
@@ -54,8 +55,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
     speed = int(_product.fixed_input_value("speed"))
 
     class SelectPorts(FormPage):
-        class Config:
-            title = f"{product_name} - port A and B"
+        model_config = ConfigDict(title=f"{product_name} - port A and B")
 
         port_ims_id_a: free_port_selector(
             select_nodes_dict["node_subscription_id_a"], speed, "PortsEnumA"  # type:ignore # noqa: F821
