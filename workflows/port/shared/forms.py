@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-from orchestrator.forms.validators import Choice
+from pydantic_forms.validators import Choice
 
 from products.product_blocks.port import PortMode
 

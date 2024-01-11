@@ -12,8 +12,9 @@
 # limitations under the License.
 
 
-from orchestrator.domain.base import ProductBlockModel, serializable_property
+from orchestrator.domain.base import ProductBlockModel
 from orchestrator.types import SubscriptionLifecycle
+from pydantic import computed_field
 
 from products.product_blocks.node import (
     NodeBlock,
@@ -39,7 +40,8 @@ class CorePortBlockProvisioning(CorePortBlockInactive, lifecycle=[SubscriptionLi
     node: NodeBlockProvisioning
     ipv6_ipam_id: int | None = None
 
-    @serializable_property
+    @computed_field  # type: ignore[misc]
+    @property
     def title(self) -> str:
         return f"core port {self.port_name} on {self.node.node_name}"
 

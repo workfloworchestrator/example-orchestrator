@@ -22,13 +22,13 @@ from orchestrator.db import (
     SubscriptionTable,
 )
 from orchestrator.domain.base import ProductBlockModel
-from orchestrator.forms import FormPage
-from orchestrator.forms.validators import Choice, MigrationSummary
 from orchestrator.types import SubscriptionLifecycle, SummaryData, UUIDstr
+from pydantic import ConfigDict
+from pydantic_forms.core import FormPage
+from pydantic_forms.validators import Choice, migration_summary
 
 from products.product_types.node import Node
 from services import netbox
-from pydantic import ConfigDict
 
 
 def subscriptions_by_product_type(product_type: str, status: List[SubscriptionLifecycle]) -> List[SubscriptionTable]:
@@ -88,7 +88,7 @@ def subscriptions_by_product_type_and_instance_value(
     )
 
 
-def node_selector(enum: str = "NodesEnum") -> Choice:
+def node_selector(enum: str = "NodesEnum") -> type[Choice]:
     node_subscriptions = subscriptions_by_product_type("Node", [SubscriptionLifecycle.ACTIVE])
     nodes = {
         str(subscription.subscription_id): subscription.description
@@ -97,7 +97,7 @@ def node_selector(enum: str = "NodesEnum") -> Choice:
     return Choice(enum, zip(nodes.keys(), nodes.items()))  # type:ignore
 
 
-def free_port_selector(node_subscription_id: UUIDstr, speed: int, enum: str = "PortsEnum") -> Choice:
+def free_port_selector(node_subscription_id: UUIDstr, speed: int, enum: str = "PortsEnum") -> type[Choice]:
     node = Node.from_subscription(node_subscription_id)
     interfaces = {
         str(interface.id): interface.name
@@ -108,21 +108,18 @@ def free_port_selector(node_subscription_id: UUIDstr, speed: int, enum: str = "P
     return Choice(enum, zip(interfaces.keys(), interfaces.items()))  # type:ignore
 
 
-def summary_form(product_name: str, summary_data: dict) -> Generator:
-    class ProductSummary(MigrationSummary):
-        data = SummaryData(**summary_data)
-
+def summary_form(product_name: str, summary_data: SummaryData) -> Generator:
     class SummaryForm(FormPage):
         model_config = ConfigDict(title=f"{product_name} summary")
 
-        product_summary: ProductSummary
+        product_summary: migration_summary(summary_data)  # type: ignore
 
     yield SummaryForm
 
 
 def create_summary_form(user_input: dict, product_name: str, fields: List[str]) -> Generator:
     columns = [[str(user_input[nm]) for nm in fields]]
-    yield from summary_form(product_name, {"labels": fields, "columns": columns})
+    yield from summary_form(product_name, SummaryData(labels=fields, columns=columns))  # type: ignore
 
 
 def modify_summary_form(user_input: dict, block: ProductBlockModel, fields: List[str]) -> Generator:
@@ -130,11 +127,7 @@ def modify_summary_form(user_input: dict, block: ProductBlockModel, fields: List
     after = [str(user_input[nm]) for nm in fields]
     yield from summary_form(
         block.subscription.product.name,
-        {
-            "labels": fields,
-            "headers": ["Before", "After"],
-            "columns": [before, after],
-        },
+        SummaryData(labels=fields, headers=["Before", "After"], columns=[before, after]),
     )
 
 

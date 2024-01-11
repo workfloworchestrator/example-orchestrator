@@ -15,14 +15,16 @@
 import uuid
 from random import randrange
 
-from orchestrator.forms import FormPage
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
-from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
+from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
-from pydantic import ConfigDict, validator
+from pydantic import ConfigDict, field_validator
+from pydantic_core.core_schema import FieldValidationInfo
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State
 
 from products.product_types.core_link import CoreLinkInactive, CoreLinkProvisioning
 from products.product_types.node import Node
@@ -40,13 +42,12 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
         node_subscription_id_a: node_selector("NodesEnumA")  # type:ignore # noqa: F821
         node_subscription_id_b: node_selector("NodesEnumB")  # type:ignore # noqa: F821
 
-        # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-        # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-        @validator("node_subscription_id_b", allow_reuse=True)
-        def separate_nodes(cls, v: str, values: dict, **kwargs):
-            if v == values["node_subscription_id_a"]:
-                raise AssertionError("node B cannot be the same as node A")
-            return v
+        @field_validator("node_subscription_id_b")
+        @classmethod
+        def separate_nodes(cls, node_subscription_id_b: UUIDstr, info: FieldValidationInfo):
+            if node_subscription_id_b == info.data["node_subscription_id_a"]:
+                raise ValueError("node B cannot be the same as node A")
+            return node_subscription_id_b
 
     select_nodes = yield SelectNodes
     select_nodes_dict = select_nodes.dict()

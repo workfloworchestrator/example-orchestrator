@@ -12,12 +12,13 @@
 # limitations under the License.
 
 
-from orchestrator.forms import FormPage, ReadOnlyField
-from orchestrator.forms.validators import Label
-from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
+from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import modify_workflow
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State
+from pydantic_forms.validators import Label, ReadOnlyField
 
 from products.product_types.port import Port, PortProvisioning
 from products.services.description import description
@@ -34,10 +35,10 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
 
         port_settings: Label
 
-        node_name: str = ReadOnlyField(port.node.node_name)
-        port_name: str = ReadOnlyField(port.port_name)
-        port_type: str = ReadOnlyField(port.port_type)
-        port_mode: str = ReadOnlyField(port.port_mode)
+        node_name: ReadOnlyField(port.node.node_name)
+        port_name: ReadOnlyField(port.port_name)
+        port_type: ReadOnlyField(port.port_type)
+        port_mode: ReadOnlyField(port.port_mode)
         port_description: str = port.port_description
         auto_negotiation: bool = port.auto_negotiation
         lldp: bool = port.lldp

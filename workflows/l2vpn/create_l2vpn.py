@@ -15,13 +15,14 @@
 import uuid
 from random import randrange
 
-from orchestrator.forms import FormPage
 from orchestrator.targets import Target
-from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
+from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status, store_process_subscription
 from orchestrator.workflows.utils import create_workflow
-from pydantic import field_validator, ConfigDict
+from pydantic import ConfigDict, field_validator
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State
 
 from products.product_blocks.sap import SAPBlockInactive
 from products.product_types.l2vpn import L2vpn, L2vpnInactive, L2vpnProvisioning
@@ -44,7 +45,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
         @classmethod
         def max_number_of_ports(cls, v: int):
             if v < 2 or v > 8:
-                raise AssertionError("number of ports must be not less than 2 and not greater than 8")
+                raise ValueError("number of ports must be not less than 2 and not greater than 8")
             return v
 
     user_input = yield CreateL2vpnForm
@@ -53,14 +54,14 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
     class SelectPortsForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        ports: ports_selector(int(user_input_dict["number_of_ports"]))
+        ports: ports_selector(int(user_input_dict["number_of_ports"]))  # type:ignore # noqa: F821
         vlan: int
 
         @field_validator("vlan")
         @classmethod
         def valid_vlan(cls, v: int):
             if v < 2 or v > 4094:
-                raise AssertionError("VLAN ID must be not less than 2 and not greater than 4094")
+                raise ValueError("VLAN ID must be not less than 2 and not greater than 4094")
             return v
 
     select_ports = yield SelectPortsForm

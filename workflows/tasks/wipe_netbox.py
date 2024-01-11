@@ -14,11 +14,11 @@
 
 import structlog
 from orchestrator import workflow
-from orchestrator.forms import FormPage
 from orchestrator.targets import Target
-from orchestrator.types import FormGenerator, State
 from orchestrator.workflow import StepList, done, init, step
-from pydantic import ConfigDict, validator
+from pydantic import ConfigDict, field_validator
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State
 
 from services import netbox
 
@@ -46,13 +46,11 @@ def initial_input_form_generator() -> FormGenerator:
 
         annihilate: bool | None
 
-        # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-        # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-        @validator("annihilate", allow_reuse=True)
-        def must_be_true(cls, v: str, values: dict, **kwargs):
-            if not v:
-                raise AssertionError("Will not continue unless you check this box")
-            return v
+        @field_validator("annihilate")
+        def must_be_true(cls, annihilate: str):
+            if not annihilate:
+                raise ValueError("Will not continue unless you check this box")
+            return annihilate
 
     yield AreYouSure
 

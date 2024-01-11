@@ -15,14 +15,16 @@
 import uuid
 from random import randrange
 
-from orchestrator.forms import FormPage
-from orchestrator.forms.validators import Label
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
-from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
+from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
+from pydantic import ConfigDict
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State
+from pydantic_forms.validators import Label
 
 from products.product_blocks.port import PortMode
 from products.product_types.node import Node
@@ -32,7 +34,6 @@ from services import netbox
 from workflows.port.shared.forms import port_mode_selector
 from workflows.port.shared.steps import update_port_in_ims
 from workflows.shared import create_summary_form, free_port_selector, node_selector
-from pydantic import ConfigDict
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
@@ -58,7 +59,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
         port_settings: Label
 
         port_ims_id: free_port_selector(node_subscription_id, speed)  # type:ignore
-        port_description: str | None
+        port_description: str | None = None
         port_mode: port_mode_selector()  # type:ignore
         auto_negotiation: bool | None = False
         lldp: bool | None = False

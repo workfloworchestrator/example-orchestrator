@@ -14,8 +14,9 @@
 
 from typing import List
 
-from orchestrator.domain.base import ProductBlockModel, serializable_property
+from orchestrator.domain.base import ProductBlockModel
 from orchestrator.types import SubscriptionLifecycle, strEnum
+from pydantic import computed_field
 
 from products.product_blocks.node import (
     NodeBlock,
@@ -67,17 +68,20 @@ class PortBlockProvisioning(PortBlockInactive, lifecycle=[SubscriptionLifecycle.
             and subscription_instance.subscription.status == SubscriptionLifecycle.ACTIVE
         ]
 
-    @serializable_property
+    @computed_field  # type: ignore[misc]
+    @property
     def vlans(self) -> List[int]:
         """Get list of active VLANs by looking at SAPBlock's that use this PortBlock."""
         return [sap_block.vlan for sap_block in self._active_sap_blocks()]
 
-    @serializable_property
+    @computed_field  # type: ignore[misc]
+    @property
     def vlan_ims_ids(self) -> List[int]:
         """Get list of active VLAN IMS IDs by looking at SAPBlock's that use this PortBlock."""
         return [sap_block.ims_id for sap_block in self._active_sap_blocks()]
 
-    @serializable_property
+    @computed_field  # type: ignore[misc]
+    @property
     def title(self) -> str:
         return f"port {self.port_name} on {self.node.node_name}"
 

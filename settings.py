@@ -12,7 +12,6 @@
 # limitations under the License.
 
 
-from pathlib import Path
 from pydantic_settings import BaseSettings
 
 
@@ -21,7 +20,7 @@ class Settings(BaseSettings):
     NETBOX_TOKEN: str = ""
     IPv4_LOOPBACK_PREFIX: str = "10.0.127.0/24"
     IPv6_LOOPBACK_PREFIX: str = "fc00:0:0:127::/64"
-    IPv4_CORE_LINK_PREFIX:str = "10.0.10.0/24"
+    IPv4_CORE_LINK_PREFIX: str = "10.0.10.0/24"
     IPv6_CORE_LINK_PREFIX: str = "fc00:0:0:10::/64"
 
 

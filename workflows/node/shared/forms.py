@@ -12,23 +12,23 @@
 # limitations under the License.
 
 
-from orchestrator.forms.validators import Choice
+from pydantic_forms.validators import Choice
 
 from products.product_blocks.shared.types import NodeStatus
 from services import netbox
 
 
-def site_selector() -> Choice:
+def site_selector() -> type[Choice]:
     sites = {str(site.id): site.name for site in netbox.get_sites(status="active")}
     return Choice("SitesEnum", zip(sites.keys(), sites.items()))  # type:ignore
 
 
-def node_role_selector() -> Choice:
+def node_role_selector() -> type[Choice]:
     roles = {str(role.id): role.name for role in netbox.get_device_roles()}
     return Choice("RolesEnum", zip(roles.keys(), roles.items()))  # type:ignore
 
 
-def node_type_selector(node_type: str) -> Choice:
+def node_type_selector(node_type: str) -> type[Choice]:
     types = {
         str(type.id): " ".join((type.manufacturer.name, type.model))
         for type in netbox.get_device_types()
@@ -37,6 +37,6 @@ def node_type_selector(node_type: str) -> Choice:
     return Choice("TypesEnum", zip(types.keys(), types.items()))  # type:ignore
 
 
-def node_status_selector() -> Choice:
+def node_status_selector() -> type[Choice]:
     statuses = NodeStatus.list()
     return Choice("NodeStatusEnum", zip(statuses, statuses))  # type:ignore

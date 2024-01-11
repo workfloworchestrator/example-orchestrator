@@ -15,14 +15,16 @@
 import uuid
 from random import randrange
 
-from orchestrator.forms import FormPage
-from orchestrator.forms.validators import Label
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
-from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
+from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
+from pydantic import ConfigDict
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State
+from pydantic_forms.validators import Label
 
 from products.product_blocks.shared.types import NodeStatus
 from products.product_types.node import NodeInactive, NodeProvisioning
@@ -37,7 +39,6 @@ from workflows.node.shared.forms import (
 )
 from workflows.node.shared.steps import update_node_in_ims
 from workflows.shared import create_summary_form
-from pydantic import ConfigDict
 
 
 def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGenerator:
@@ -55,7 +56,7 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
         site_id: site_selector()  # type:ignore
         node_status: node_status_selector()  # type:ignore
         node_name: str
-        node_description: str | None
+        node_description: str | None = None
 
     user_input = yield CreateNodeForm
     user_input_dict = user_input.dict()

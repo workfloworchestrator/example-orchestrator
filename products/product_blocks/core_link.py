@@ -12,14 +12,12 @@
 # limitations under the License.
 
 
-from typing import TypeVar
+from typing import Annotated, TypeVar
 
-from orchestrator.domain.base import (
-    ProductBlockModel,
-    SubscriptionInstanceList,
-    serializable_property,
-)
-from orchestrator.types import SubscriptionLifecycle
+from annotated_types import Len
+from orchestrator.domain.base import ProductBlockModel
+from orchestrator.types import SI, SubscriptionLifecycle
+from pydantic import computed_field
 
 from products.product_blocks.core_port import (
     CorePortBlock,
@@ -30,9 +28,7 @@ from products.product_blocks.core_port import (
 T = TypeVar("T", covariant=True)
 
 
-class ListOfPorts(SubscriptionInstanceList[T]):
-    min_items = 2
-    max_items = 2
+ListOfPorts = Annotated[list[SI], Len(min_length=2, max_length=2)]
 
 
 class CoreLinkBlockInactive(ProductBlockModel, product_block_name="CoreLink"):
@@ -50,7 +46,8 @@ class CoreLinkBlockProvisioning(CoreLinkBlockInactive, lifecycle=[SubscriptionLi
     nrm_id: int | None = None
     under_maintenance: bool
 
-    @serializable_property
+    @computed_field  # type: ignore[misc]
+    @property
     def title(self) -> str:
         return f"core link between {self.ports[0].node.node_name} and {self.ports[1].node.node_name}"
 
