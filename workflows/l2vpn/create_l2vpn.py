@@ -20,7 +20,7 @@ from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status, store_process_subscription
 from orchestrator.workflows.utils import create_workflow
-from pydantic import ConfigDict, field_validator
+from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State
 
@@ -31,22 +31,16 @@ from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
 from workflows.l2vpn.shared.forms import ports_selector
+from workflows.shared import AllowedNumberOfL2pnPorts, Vlan
 
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:
     class CreateL2vpnForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        number_of_ports: int
+        number_of_ports: AllowedNumberOfL2pnPorts
         speed: int
         speed_policer: bool | None = False
-
-        @field_validator("number_of_ports")
-        @classmethod
-        def max_number_of_ports(cls, v: int):
-            if v < 2 or v > 8:
-                raise ValueError("number of ports must be not less than 2 and not greater than 8")
-            return v
 
     user_input = yield CreateL2vpnForm
     user_input_dict = user_input.dict()
@@ -54,15 +48,8 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
     class SelectPortsForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        ports: ports_selector(int(user_input_dict["number_of_ports"]))  # type:ignore # noqa: F821
-        vlan: int
-
-        @field_validator("vlan")
-        @classmethod
-        def valid_vlan(cls, v: int):
-            if v < 2 or v > 4094:
-                raise ValueError("VLAN ID must be not less than 2 and not greater than 4094")
-            return v
+        ports: ports_selector(AllowedNumberOfL2pnPorts(user_input_dict["number_of_ports"]))  # type:ignore # noqa: F821
+        vlan: Vlan
 
     select_ports = yield SelectPortsForm
     select_ports_dict = select_ports.dict()
@@ -78,7 +65,7 @@ def construct_l2vpn_model(
     ports: list[UUIDstr],
     speed: int,
     speed_policer: bool,
-    vlan: int,
+    vlan: Vlan,
 ) -> State:
     subscription = L2vpnInactive.from_product_id(
         product_id=product,

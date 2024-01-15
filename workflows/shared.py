@@ -11,8 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from pprint import pformat
-from typing import Generator, List
+from typing import Annotated, Generator, List
 
+from annotated_types import Ge, Le, doc
 from deepdiff import DeepDiff
 from orchestrator.db import (
     ProductTable,
@@ -29,6 +30,10 @@ from pydantic_forms.validators import Choice, migration_summary
 
 from products.product_types.node import Node
 from services import netbox
+
+Vlan = Annotated[int, Ge(2), Le(4094), doc("VLAN ID.")]
+
+AllowedNumberOfL2pnPorts = Annotated[int, Ge(2), Le(8), doc("Allowed number of L2vpn ports.")]
 
 
 def subscriptions_by_product_type(product_type: str, status: List[SubscriptionLifecycle]) -> List[SubscriptionTable]:
