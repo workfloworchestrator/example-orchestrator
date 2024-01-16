@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from pprint import pformat
-from typing import Annotated, Generator, List
+from typing import Annotated, Generator, List, TypeAlias, cast
 
 from annotated_types import Ge, Le, doc
 from deepdiff import DeepDiff
@@ -26,14 +26,14 @@ from orchestrator.domain.base import ProductBlockModel
 from orchestrator.types import SubscriptionLifecycle, SummaryData, UUIDstr
 from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
-from pydantic_forms.validators import Choice, migration_summary
+from pydantic_forms.validators import Choice, MigrationSummary, migration_summary
 
 from products.product_types.node import Node
 from services import netbox
 
 Vlan = Annotated[int, Ge(2), Le(4094), doc("VLAN ID.")]
 
-AllowedNumberOfL2pnPorts = Annotated[int, Ge(2), Le(8), doc("Allowed number of L2vpn ports.")]
+AllowedNumberOfL2vpnPorts = Annotated[int, Ge(2), Le(8), doc("Allowed number of L2vpn ports.")]
 
 
 def subscriptions_by_product_type(product_type: str, status: List[SubscriptionLifecycle]) -> List[SubscriptionTable]:
@@ -114,10 +114,12 @@ def free_port_selector(node_subscription_id: UUIDstr, speed: int, enum: str = "P
 
 
 def summary_form(product_name: str, summary_data: SummaryData) -> Generator:
+    ProductSummary: TypeAlias = cast(type[MigrationSummary], migration_summary(summary_data))
+
     class SummaryForm(FormPage):
         model_config = ConfigDict(title=f"{product_name} summary")
 
-        product_summary: migration_summary(summary_data)  # type: ignore
+        product_summary: ProductSummary  # type: ignore
 
     yield SummaryForm
 

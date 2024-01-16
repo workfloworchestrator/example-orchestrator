@@ -14,6 +14,7 @@
 
 import uuid
 from random import randrange
+from typing import TypeAlias, cast
 
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
@@ -24,25 +25,27 @@ from orchestrator.workflows.utils import create_workflow
 from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State
-from pydantic_forms.validators import Label
+from pydantic_forms.validators import Choice, Label
 
 from products.product_blocks.port import PortMode
 from products.product_types.node import Node
 from products.product_types.port import PortInactive, PortProvisioning
 from products.services.description import description
 from services import netbox
-from workflows.port.shared.forms import port_mode_selector
+from workflows.port.shared.forms import PortModeChoice
 from workflows.port.shared.steps import update_port_in_ims
 from workflows.shared import create_summary_form, free_port_selector, node_selector
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
+    NodeChoice: TypeAlias = cast(type[Choice], node_selector())
+
     class SelectNodeForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
         # organisation: OrganisationId
 
-        node_subscription_id: node_selector()  # type:ignore
+        node_subscription_id: NodeChoice
 
     select_node = yield SelectNodeForm
     select_node_dict = select_node.dict()
@@ -50,6 +53,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
 
     _product = get_product_by_id(product)
     speed = int(_product.fixed_input_value("speed"))
+    FreePortChoice: TypeAlias = cast(type[Choice], free_port_selector(node_subscription_id, speed))
 
     class CreatePortForm(FormPage):
         model_config = ConfigDict(title=product_name)
@@ -58,9 +62,9 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
 
         port_settings: Label
 
-        port_ims_id: free_port_selector(node_subscription_id, speed)  # type:ignore
+        port_ims_id: FreePortChoice
         port_description: str | None = None
-        port_mode: port_mode_selector()  # type:ignore
+        port_mode: PortModeChoice
         auto_negotiation: bool | None = False
         lldp: bool | None = False
 

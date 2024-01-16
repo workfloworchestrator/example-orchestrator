@@ -14,6 +14,7 @@
 
 import uuid
 from random import randrange
+from typing import TypeAlias, cast
 
 from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle, UUIDstr
@@ -23,6 +24,7 @@ from orchestrator.workflows.utils import create_workflow
 from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State
+from pydantic_forms.validators import Choice
 
 from products.product_blocks.sap import SAPBlockInactive
 from products.product_types.l2vpn import L2vpn, L2vpnInactive, L2vpnProvisioning
@@ -31,24 +33,27 @@ from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
 from workflows.l2vpn.shared.forms import ports_selector
-from workflows.shared import AllowedNumberOfL2pnPorts, Vlan
+from workflows.shared import AllowedNumberOfL2vpnPorts, Vlan
 
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:
     class CreateL2vpnForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        number_of_ports: AllowedNumberOfL2pnPorts
+        number_of_ports: AllowedNumberOfL2vpnPorts
         speed: int
         speed_policer: bool | None = False
 
     user_input = yield CreateL2vpnForm
     user_input_dict = user_input.dict()
+    PortsChoiceList: TypeAlias = cast(
+        type[Choice], ports_selector(AllowedNumberOfL2vpnPorts(user_input_dict["number_of_ports"]))  # noqa: F821
+    )
 
     class SelectPortsForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        ports: ports_selector(AllowedNumberOfL2pnPorts(user_input_dict["number_of_ports"]))  # type:ignore # noqa: F821
+        ports: PortsChoiceList
         vlan: Vlan
 
     select_ports = yield SelectPortsForm

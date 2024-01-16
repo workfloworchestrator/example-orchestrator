@@ -10,7 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from typing import TypeAlias, cast
 
 import structlog
 from orchestrator.services.products import get_product_by_id
@@ -20,16 +20,16 @@ from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import modify_workflow
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State
-from pydantic_forms.validators import Label
+from pydantic_forms.validators import Choice, Label
 
 from products.product_blocks.shared.types import NodeStatus
 from products.product_types.node import Node, NodeProvisioning
 from products.services.description import description
 from workflows.node.shared.forms import (
-    node_role_selector,
-    node_status_selector,
+    NodeRoleChoice,
+    NodeStatusChoice,
+    SiteChoice,
     node_type_selector,
-    site_selector,
 )
 from workflows.node.shared.steps import update_node_in_ims
 from workflows.shared import modify_summary_form
@@ -41,16 +41,17 @@ def initial_input_form_generator(subscription_id: UUIDstr, product: UUIDstr) -> 
     subscription = Node.from_subscription(subscription_id)
     node = subscription.node
     node_type = get_product_by_id(product).fixed_input_value("node_type")
+    NodeTypeChoice: TypeAlias = cast(type[Choice], node_type_selector(node_type))
 
     class ModifyNodeForm(FormPage):
         # organisation: OrganisationId = subscription.customer_id  # type: ignore
 
         node_settings: Label
 
-        role_id: node_role_selector() = str(node.role_id)  # type:ignore
-        type_id: node_type_selector(node_type) = str(node.type_id)  # type:ignore
-        site_id: site_selector() = str(node.site_id)  # type:ignore
-        node_status: node_status_selector() = node.node_status  # type:ignore
+        role_id: NodeRoleChoice = str(node.role_id)
+        type_id: NodeTypeChoice = str(node.type_id)
+        site_id: SiteChoice = str(node.site_id)
+        node_status: NodeStatusChoice = node.node_status
         node_name: str = node.node_name
         node_description: str | None = node.node_description
 

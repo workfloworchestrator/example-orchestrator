@@ -14,6 +14,7 @@
 
 import uuid
 from random import randrange
+from typing import TypeAlias, cast
 
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
@@ -24,7 +25,7 @@ from orchestrator.workflows.utils import create_workflow
 from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State
-from pydantic_forms.validators import Label
+from pydantic_forms.validators import Choice, Label
 
 from products.product_blocks.shared.types import NodeStatus
 from products.product_types.node import NodeInactive, NodeProvisioning
@@ -32,10 +33,10 @@ from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
 from workflows.node.shared.forms import (
-    node_role_selector,
-    node_status_selector,
+    NodeRoleChoice,
+    NodeStatusChoice,
+    SiteChoice,
     node_type_selector,
-    site_selector,
 )
 from workflows.node.shared.steps import update_node_in_ims
 from workflows.shared import create_summary_form
@@ -43,6 +44,7 @@ from workflows.shared import create_summary_form
 
 def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGenerator:
     node_type = get_product_by_id(product).fixed_input_value("node_type")
+    NodeTypeChoice: TypeAlias = cast(type[Choice], node_type_selector(node_type))
 
     class CreateNodeForm(FormPage):
         model_config = ConfigDict(title=product_name)
@@ -51,10 +53,10 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
 
         node_settings: Label
 
-        role_id: node_role_selector()  # type:ignore
-        type_id: node_type_selector(node_type)  # type:ignore
-        site_id: site_selector()  # type:ignore
-        node_status: node_status_selector()  # type:ignore
+        role_id: NodeRoleChoice
+        type_id: NodeTypeChoice
+        site_id: SiteChoice
+        node_status: NodeStatusChoice
         node_name: str
         node_description: str | None = None
 

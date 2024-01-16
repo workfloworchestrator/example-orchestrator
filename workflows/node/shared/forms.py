@@ -10,7 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from typing import TypeAlias, cast
 
 from pydantic_forms.validators import Choice
 
@@ -18,25 +18,30 @@ from products.product_blocks.shared.types import NodeStatus
 from services import netbox
 
 
-def site_selector() -> type[Choice]:
+def site_selector() -> Choice:
     sites = {str(site.id): site.name for site in netbox.get_sites(status="active")}
-    return Choice("SitesEnum", zip(sites.keys(), sites.items()))  # type:ignore
+    return Choice("SiteEnum", zip(sites.keys(), sites.items()))
 
 
-def node_role_selector() -> type[Choice]:
+def node_role_selector() -> Choice:
     roles = {str(role.id): role.name for role in netbox.get_device_roles()}
-    return Choice("RolesEnum", zip(roles.keys(), roles.items()))  # type:ignore
+    return Choice("NodeRoleEnum", zip(roles.keys(), roles.items()))
 
 
-def node_type_selector(node_type: str) -> type[Choice]:
+def node_type_selector(node_type: str) -> Choice:
     types = {
         str(type.id): " ".join((type.manufacturer.name, type.model))
         for type in netbox.get_device_types()
         if type.manufacturer.name == node_type
     }
-    return Choice("TypesEnum", zip(types.keys(), types.items()))  # type:ignore
+    return Choice("NodeTypeEnum", zip(types.keys(), types.items()))
 
 
-def node_status_selector() -> type[Choice]:
+def node_status_selector() -> Choice:
     statuses = NodeStatus.list()
-    return Choice("NodeStatusEnum", zip(statuses, statuses))  # type:ignore
+    return Choice("NodeStatusEnum", zip(statuses, statuses))
+
+
+SiteChoice: TypeAlias = cast(type[Choice], site_selector())
+NodeRoleChoice: TypeAlias = cast(type[Choice], node_role_selector())
+NodeStatusChoice: TypeAlias = cast(type[Choice], node_status_selector())
