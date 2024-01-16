@@ -32,12 +32,7 @@ from products.product_types.node import NodeInactive, NodeProvisioning
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
-from workflows.node.shared.forms import (
-    NodeRoleChoice,
-    NodeStatusChoice,
-    SiteChoice,
-    node_type_selector,
-)
+from workflows.node.shared.forms import NodeRoleChoice, NodeStatusChoice, SiteChoice, node_type_selector
 from workflows.node.shared.steps import update_node_in_ims
 from workflows.shared import create_summary_form
 

@@ -25,12 +25,7 @@ from pydantic_forms.validators import Choice, Label
 from products.product_blocks.shared.types import NodeStatus
 from products.product_types.node import Node, NodeProvisioning
 from products.services.description import description
-from workflows.node.shared.forms import (
-    NodeRoleChoice,
-    NodeStatusChoice,
-    SiteChoice,
-    node_type_selector,
-)
+from workflows.node.shared.forms import NodeRoleChoice, NodeStatusChoice, SiteChoice, node_type_selector
 from workflows.node.shared.steps import update_node_in_ims
 from workflows.shared import modify_summary_form
 
