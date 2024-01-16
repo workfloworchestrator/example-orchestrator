@@ -14,14 +14,17 @@
 
 import uuid
 from random import randrange
+from typing import TypeAlias, cast
 
-from orchestrator.forms import FormPage
 from orchestrator.targets import Target
-from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
+from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status, store_process_subscription
 from orchestrator.workflows.utils import create_workflow
-from pydantic import validator
+from pydantic import ConfigDict
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State
+from pydantic_forms.validators import Choice
 
 from products.product_blocks.sap import SAPBlockInactive
 from products.product_types.l2vpn import L2vpn, L2vpnInactive, L2vpnProvisioning
@@ -30,41 +33,31 @@ from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
 from workflows.l2vpn.shared.forms import ports_selector
+from workflows.shared import AllowedNumberOfL2vpnPorts, Vlan
 
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:
     class CreateL2vpnForm(FormPage):
-        class Config:
-            title = product_name
+        model_config = ConfigDict(title=product_name)
 
-        number_of_ports: int
+        number_of_ports: AllowedNumberOfL2vpnPorts
         speed: int
         speed_policer: bool | None = False
 
-        @validator("number_of_ports", allow_reuse=True)
-        def max_number_of_ports(cls, v: int):
-            if v < 2 or v > 8:
-                raise AssertionError("number of ports must be not less than 2 and not greater than 8")
-            return v
-
     user_input = yield CreateL2vpnForm
-    user_input_dict = user_input.dict()
+    user_input_dict = user_input.model_dump()
+    PortsChoiceList: TypeAlias = cast(
+        type[Choice], ports_selector(AllowedNumberOfL2vpnPorts(user_input_dict["number_of_ports"]))  # noqa: F821
+    )
 
     class SelectPortsForm(FormPage):
-        class Config:
-            title = product_name
+        model_config = ConfigDict(title=product_name)
 
-        ports: ports_selector(int(user_input_dict["number_of_ports"]))
-        vlan: int
-
-        @validator("vlan", allow_reuse=True)
-        def valid_vlan(cls, v: int):
-            if v < 2 or v > 4094:
-                raise AssertionError("VLAN ID must be not less than 2 and not greater than 4094")
-            return v
+        ports: PortsChoiceList
+        vlan: Vlan
 
     select_ports = yield SelectPortsForm
-    select_ports_dict = select_ports.dict()
+    select_ports_dict = select_ports.model_dump()
     ports = [str(item) for item in select_ports_dict["ports"]]
 
     return user_input_dict | select_ports_dict | {"ports": ports}
@@ -77,7 +70,7 @@ def construct_l2vpn_model(
     ports: list[UUIDstr],
     speed: int,
     speed_policer: bool,
-    vlan: int,
+    vlan: Vlan,
 ) -> State:
     subscription = L2vpnInactive.from_product_id(
         product_id=product,

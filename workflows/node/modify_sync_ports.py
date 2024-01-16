@@ -18,10 +18,7 @@ import structlog
 from orchestrator.types import State, SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
-from orchestrator.workflows.utils import (
-    modify_initial_input_form_generator,
-    modify_workflow,
-)
+from orchestrator.workflows.utils import modify_initial_input_form_generator, modify_workflow
 
 from products.product_types.node import NodeProvisioning
 from services import netbox

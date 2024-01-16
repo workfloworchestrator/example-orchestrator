@@ -12,11 +12,12 @@
 # limitations under the License.
 
 
-from orchestrator.forms import FormPage
-from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
+from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import modify_workflow
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State
 
 from products.product_types.l2vpn import L2vpn, L2vpnProvisioning
 from products.services.description import description
@@ -32,7 +33,7 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
         speed_policer: bool = virtual_circuit.speed_policer
 
     user_input = yield ModifyL2vpnForm
-    user_input_dict = user_input.dict()
+    user_input_dict = user_input.model_dump()
 
     summary_fields = ["speed", "speed_policer"]
     yield from modify_summary_form(user_input_dict, subscription.virtual_circuit, summary_fields)

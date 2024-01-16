@@ -10,15 +10,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from typing import Annotated
 
 import structlog
 from orchestrator import workflow
-from orchestrator.forms import FormPage
 from orchestrator.targets import Target
-from orchestrator.types import FormGenerator, State
 from orchestrator.workflow import StepList, done, init, step
-from pydantic import validator
+from pydantic import AfterValidator, ConfigDict
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State
 
 from services import netbox
 
@@ -40,18 +40,20 @@ endpoints = [
 ]
 
 
+def must_be_true(annihilate: bool) -> bool:
+    if not annihilate:
+        raise ValueError("Will not continue unless you check this box")
+    return annihilate
+
+
+Annihilate = Annotated[bool, AfterValidator(must_be_true)]
+
+
 def initial_input_form_generator() -> FormGenerator:
     class AreYouSure(FormPage):
-        class Config:
-            title = "Wipe Netbox"
+        model_config = ConfigDict(title="Wipe Netbox")
 
-        annihilate: bool | None
-
-        @validator("annihilate", allow_reuse=True)
-        def must_be_true(cls, v: str, values: dict, **kwargs):
-            if not v:
-                raise AssertionError("Will not continue unless you check this box")
-            return v
+        annihilate: Annihilate = False
 
     yield AreYouSure
 

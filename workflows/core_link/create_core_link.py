@@ -14,15 +14,18 @@
 
 import uuid
 from random import randrange
+from typing import TypeAlias, cast
 
-from orchestrator.forms import FormPage
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
-from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
+from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
-from pydantic import validator
+from pydantic import ConfigDict, model_validator
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State
+from pydantic_forms.validators import Choice
 
 from products.product_types.core_link import CoreLinkInactive, CoreLinkProvisioning
 from products.product_types.node import Node
@@ -34,39 +37,44 @@ from workflows.shared import free_port_selector, node_selector
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
+    NodeAChoice: TypeAlias = cast(type[Choice], node_selector("NodeEnumA"))  # noqa: F821
+    NodeBChoice: TypeAlias = cast(type[Choice], node_selector("NodeEnumB"))  # noqa: F821
+
     class SelectNodes(FormPage):
-        class Config:
-            title = f"{product_name} - node A and B"
+        model_config = ConfigDict(title=f"{product_name} - node A and B")
 
-        node_subscription_id_a: node_selector("NodesEnumA")  # type:ignore # noqa: F821
-        node_subscription_id_b: node_selector("NodesEnumB")  # type:ignore # noqa: F821
+        node_subscription_id_a: NodeAChoice
+        node_subscription_id_b: NodeBChoice
 
-        @validator("node_subscription_id_b", allow_reuse=True)
-        def separate_nodes(cls, v: str, values: dict, **kwargs):
-            if v == values["node_subscription_id_a"]:
-                raise AssertionError("node B cannot be the same as node A")
-            return v
+        @model_validator(mode="after")
+        def separate_nodes(self) -> "SelectNodes":
+            if self.node_subscription_id_b == self.node_subscription_id_a:
+                raise ValueError("node B cannot be the same as node A")
+            return self
 
     select_nodes = yield SelectNodes
-    select_nodes_dict = select_nodes.dict()
+    select_nodes_dict = select_nodes.model_dump()
 
     _product = get_product_by_id(product)
     speed = int(_product.fixed_input_value("speed"))
+    FreePortAChoice: TypeAlias = cast(
+        type[Choice],
+        free_port_selector(select_nodes_dict["node_subscription_id_a"], speed, "FreePortEnumA"),  # noqa: F821
+    )
+    FreePortBChoice: TypeAlias = cast(
+        type[Choice],
+        free_port_selector(select_nodes_dict["node_subscription_id_b"], speed, "FreePortEnumB"),  # noqa: F821
+    )
 
     class SelectPorts(FormPage):
-        class Config:
-            title = f"{product_name} - port A and B"
+        model_config = ConfigDict(title=f"{product_name} - port A and B")
 
-        port_ims_id_a: free_port_selector(
-            select_nodes_dict["node_subscription_id_a"], speed, "PortsEnumA"  # type:ignore # noqa: F821
-        )
-        port_ims_id_b: free_port_selector(
-            select_nodes_dict["node_subscription_id_b"], speed, "PortsEnumB"  # type:ignore # noqa: F821
-        )
+        port_ims_id_a: FreePortAChoice
+        port_ims_id_b: FreePortBChoice
         under_maintenance: bool = False
 
     select_ports = yield SelectPorts
-    select_ports_dict = select_ports.dict()
+    select_ports_dict = select_ports.model_dump()
 
     return select_nodes_dict | select_ports_dict
 

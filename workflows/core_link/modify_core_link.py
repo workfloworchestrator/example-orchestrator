@@ -12,11 +12,12 @@
 # limitations under the License.
 
 
-from orchestrator.forms import FormPage
-from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
+from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import modify_workflow
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State
 
 from products.product_types.core_link import CoreLink, CoreLinkProvisioning
 from products.services.description import description
@@ -33,7 +34,7 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
         under_maintenance: bool = core_link.under_maintenance
 
     user_input = yield ModifyCoreLinkForm
-    user_input_dict = user_input.dict()
+    user_input_dict = user_input.model_dump()
 
     summary_fields = ["under_maintenance"]
     yield from modify_summary_form(user_input_dict, subscription.core_link, summary_fields)

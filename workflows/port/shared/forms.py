@@ -10,13 +10,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import TypeAlias, cast
 
-
-from orchestrator.forms.validators import Choice
+from pydantic_forms.validators import Choice
 
 from products.product_blocks.port import PortMode
 
 
-def port_mode_selector() -> list:
+def port_mode_selector() -> Choice:
     port_modes = [port_mode.value for port_mode in PortMode]
-    return Choice("PortModesEnum", zip(port_modes, port_modes))  # type: ignore
+    return Choice("PortModesEnum", zip(port_modes, port_modes))
+
+
+PortModeChoice: TypeAlias = cast(type[Choice], port_mode_selector())

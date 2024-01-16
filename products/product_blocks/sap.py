@@ -12,14 +12,11 @@
 # limitations under the License.
 
 
-from orchestrator.domain.base import ProductBlockModel, serializable_property
+from orchestrator.domain.base import ProductBlockModel
 from orchestrator.types import SubscriptionLifecycle
+from pydantic import computed_field
 
-from products.product_blocks.port import (
-    PortBlock,
-    PortBlockInactive,
-    PortBlockProvisioning,
-)
+from products.product_blocks.port import PortBlock, PortBlockInactive, PortBlockProvisioning
 
 
 class SAPBlockInactive(ProductBlockModel, product_block_name="SAP"):
@@ -33,7 +30,8 @@ class SAPBlockProvisioning(SAPBlockInactive, lifecycle=[SubscriptionLifecycle.PR
     vlan: int
     ims_id: int | None = None
 
-    @serializable_property
+    @computed_field  # type: ignore[misc]
+    @property
     def title(self) -> str:
         return f"VLAN {self.vlan} on port {self.port.port_name} of {self.port.node.node_name}"
 

@@ -14,58 +14,62 @@
 
 import uuid
 from random import randrange
+from typing import TypeAlias, cast
 
-from orchestrator.forms import FormPage
-from orchestrator.forms.validators import Label
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
-from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
+from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
+from pydantic import ConfigDict
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State
+from pydantic_forms.validators import Choice, Label
 
 from products.product_blocks.port import PortMode
 from products.product_types.node import Node
 from products.product_types.port import PortInactive, PortProvisioning
 from products.services.description import description
 from services import netbox
-from workflows.port.shared.forms import port_mode_selector
+from workflows.port.shared.forms import PortModeChoice
 from workflows.port.shared.steps import update_port_in_ims
 from workflows.shared import create_summary_form, free_port_selector, node_selector
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
+    NodeChoice: TypeAlias = cast(type[Choice], node_selector())
+
     class SelectNodeForm(FormPage):
-        class Config:
-            title = product_name
+        model_config = ConfigDict(title=product_name)
 
         # organisation: OrganisationId
 
-        node_subscription_id: node_selector()  # type:ignore
+        node_subscription_id: NodeChoice
 
     select_node = yield SelectNodeForm
-    select_node_dict = select_node.dict()
+    select_node_dict = select_node.model_dump()
     node_subscription_id = select_node_dict["node_subscription_id"]
 
     _product = get_product_by_id(product)
     speed = int(_product.fixed_input_value("speed"))
+    FreePortChoice: TypeAlias = cast(type[Choice], free_port_selector(node_subscription_id, speed))
 
     class CreatePortForm(FormPage):
-        class Config:
-            title = product_name
+        model_config = ConfigDict(title=product_name)
 
         # organisation: OrganisationId
 
         port_settings: Label
 
-        port_ims_id: free_port_selector(node_subscription_id, speed)  # type:ignore
-        port_description: str | None
-        port_mode: port_mode_selector()  # type:ignore
+        port_ims_id: FreePortChoice
+        port_description: str | None = None
+        port_mode: PortModeChoice
         auto_negotiation: bool | None = False
         lldp: bool | None = False
 
     user_input = yield CreatePortForm
-    user_input_dict = user_input.dict()
+    user_input_dict = user_input.model_dump()
 
     summary_fields = ["port_ims_id", "port_description", "port_mode", "auto_negotiation", "lldp"]
     yield from create_summary_form(user_input_dict, product_name, summary_fields)

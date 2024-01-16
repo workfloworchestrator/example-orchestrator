@@ -14,51 +14,51 @@
 
 import uuid
 from random import randrange
+from typing import TypeAlias, cast
 
-from orchestrator.forms import FormPage
-from orchestrator.forms.validators import Label
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
-from orchestrator.types import FormGenerator, State, SubscriptionLifecycle, UUIDstr
+from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
+from pydantic import ConfigDict
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State
+from pydantic_forms.validators import Choice, Label
 
 from products.product_blocks.shared.types import NodeStatus
 from products.product_types.node import NodeInactive, NodeProvisioning
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
-from workflows.node.shared.forms import (
-    node_role_selector,
-    node_status_selector,
-    node_type_selector,
-    site_selector,
-)
+from workflows.node.shared.forms import NodeStatusChoice, node_role_selector, node_type_selector, site_selector
 from workflows.node.shared.steps import update_node_in_ims
 from workflows.shared import create_summary_form
 
 
 def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGenerator:
     node_type = get_product_by_id(product).fixed_input_value("node_type")
+    NodeTypeChoice: TypeAlias = cast(type[Choice], node_type_selector(node_type))
+    NodeRoleChoice: TypeAlias = cast(type[Choice], node_role_selector())
+    SiteChoice: TypeAlias = cast(type[Choice], site_selector())
 
     class CreateNodeForm(FormPage):
-        class Config:
-            title = product_name
+        model_config = ConfigDict(title=product_name)
 
         # organisation: OrganisationId
 
         node_settings: Label
 
-        role_id: node_role_selector()  # type:ignore
-        type_id: node_type_selector(node_type)  # type:ignore
-        site_id: site_selector()  # type:ignore
-        node_status: node_status_selector()  # type:ignore
+        type_id: NodeTypeChoice
+        role_id: NodeRoleChoice
+        site_id: SiteChoice
+        node_status: NodeStatusChoice
         node_name: str
-        node_description: str | None
+        node_description: str | None = None
 
     user_input = yield CreateNodeForm
-    user_input_dict = user_input.dict()
+    user_input_dict = user_input.model_dump()
 
     summary_fields = ["role_id", "type_id", "site_id", "node_status", "node_name", "node_description"]
     yield from create_summary_form(user_input_dict, product_name, summary_fields)

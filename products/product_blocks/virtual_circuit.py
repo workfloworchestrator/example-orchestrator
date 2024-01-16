@@ -12,23 +12,16 @@
 # limitations under the License.
 
 
-from typing import TypeVar
+from typing import Annotated
 
-from orchestrator.domain.base import (
-    ProductBlockModel,
-    SubscriptionInstanceList,
-    serializable_property,
-)
-from orchestrator.types import SubscriptionLifecycle
+from annotated_types import Len
+from orchestrator.domain.base import ProductBlockModel
+from orchestrator.types import SI, SubscriptionLifecycle
+from pydantic import computed_field
 
 from products.product_blocks.sap import SAPBlock, SAPBlockInactive, SAPBlockProvisioning
 
-T = TypeVar("T", covariant=True)
-
-
-class ListOfSaps(SubscriptionInstanceList[T]):
-    min_items = 2
-    max_items = 8
+ListOfSaps = Annotated[list[SI], Len(min_length=2, max_length=8)]
 
 
 class VirtualCircuitBlockInactive(ProductBlockModel, product_block_name="VirtualCircuit"):
@@ -46,10 +39,11 @@ class VirtualCircuitBlockProvisioning(VirtualCircuitBlockInactive, lifecycle=[Su
     ims_id: int | None = None
     nrm_id: int | None = None
 
-    @serializable_property
+    @computed_field  # type: ignore[misc]
+    @property
     def title(self) -> str:
         return (
-            f"{self.speed} Mbit/s circuit between"
+            f"{self.speed} Mbit/s circuit between "
             f"{self.saps[0].port.node.node_name} and "
             f"{self.saps[1].port.node.node_name}"
         )

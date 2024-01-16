@@ -15,11 +15,7 @@
 from orchestrator.domain.base import SubscriptionModel
 from orchestrator.types import SubscriptionLifecycle, strEnum
 
-from products.product_blocks.node import (
-    NodeBlock,
-    NodeBlockInactive,
-    NodeBlockProvisioning,
-)
+from products.product_blocks.node import NodeBlock, NodeBlockInactive, NodeBlockProvisioning
 
 
 class Node_Type(strEnum):
