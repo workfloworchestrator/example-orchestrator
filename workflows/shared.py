@@ -24,8 +24,7 @@ from orchestrator.db import (
 )
 from orchestrator.domain.base import ProductBlockModel
 from orchestrator.types import SubscriptionLifecycle, SummaryData, UUIDstr
-from pydantic import AfterValidator, ConfigDict
-from pydantic_core.core_schema import FieldValidationInfo
+from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
 from pydantic_forms.validators import Choice, MigrationSummary, migration_summary
 
@@ -101,19 +100,6 @@ def node_selector(enum: str = "NodesEnum") -> type[Choice]:
         for subscription in sorted(node_subscriptions, key=lambda node: node.description)
     }
     return Choice(enum, zip(nodes.keys(), nodes.items()))  # type:ignore
-
-
-def separate_nodes(node_subscription_id_b: UUIDstr, info: FieldValidationInfo):
-    if node_subscription_id_b == info.data["node_subscription_id_a"]:
-        raise ValueError("node B cannot be the same as node A")
-    return node_subscription_id_b
-
-
-NodeChoice: TypeAlias = cast(type[Choice], node_selector())
-NodeAChoice: TypeAlias = cast(type[Choice], node_selector("NodeEnumA"))  # noqa: F821
-NodeBChoice: TypeAlias = Annotated[
-    cast(type[Choice], node_selector("NodeEnumB")), AfterValidator(separate_nodes)  # noqa: F821
-]
 
 
 def free_port_selector(node_subscription_id: UUIDstr, speed: int, enum: str = "PortsEnum") -> type[Choice]:

@@ -42,6 +42,4 @@ def node_status_selector() -> Choice:
     return Choice("NodeStatusEnum", zip(statuses, statuses))
 
 
-SiteChoice: TypeAlias = cast(type[Choice], site_selector())
-NodeRoleChoice: TypeAlias = cast(type[Choice], node_role_selector())
 NodeStatusChoice: TypeAlias = cast(type[Choice], node_status_selector())

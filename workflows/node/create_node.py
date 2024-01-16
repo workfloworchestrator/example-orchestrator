@@ -32,7 +32,7 @@ from products.product_types.node import NodeInactive, NodeProvisioning
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
-from workflows.node.shared.forms import NodeRoleChoice, NodeStatusChoice, SiteChoice, node_type_selector
+from workflows.node.shared.forms import NodeStatusChoice, node_role_selector, node_type_selector, site_selector
 from workflows.node.shared.steps import update_node_in_ims
 from workflows.shared import create_summary_form
 
@@ -40,6 +40,8 @@ from workflows.shared import create_summary_form
 def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGenerator:
     node_type = get_product_by_id(product).fixed_input_value("node_type")
     NodeTypeChoice: TypeAlias = cast(type[Choice], node_type_selector(node_type))
+    NodeRoleChoice: TypeAlias = cast(type[Choice], node_role_selector())
+    SiteChoice: TypeAlias = cast(type[Choice], site_selector())
 
     class CreateNodeForm(FormPage):
         model_config = ConfigDict(title=product_name)
@@ -48,8 +50,8 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
 
         node_settings: Label
 
-        role_id: NodeRoleChoice
         type_id: NodeTypeChoice
+        role_id: NodeRoleChoice
         site_id: SiteChoice
         node_status: NodeStatusChoice
         node_name: str

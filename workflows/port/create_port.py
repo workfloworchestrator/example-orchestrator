@@ -34,10 +34,12 @@ from products.services.description import description
 from services import netbox
 from workflows.port.shared.forms import PortModeChoice
 from workflows.port.shared.steps import update_port_in_ims
-from workflows.shared import NodeChoice, create_summary_form, free_port_selector
+from workflows.shared import create_summary_form, free_port_selector, node_selector
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
+    NodeChoice: TypeAlias = cast(type[Choice], node_selector())
+
     class SelectNodeForm(FormPage):
         model_config = ConfigDict(title=product_name)
 

@@ -25,7 +25,7 @@ from pydantic_forms.validators import Choice, Label
 from products.product_blocks.shared.types import NodeStatus
 from products.product_types.node import Node, NodeProvisioning
 from products.services.description import description
-from workflows.node.shared.forms import NodeRoleChoice, NodeStatusChoice, SiteChoice, node_type_selector
+from workflows.node.shared.forms import NodeStatusChoice, node_role_selector, node_type_selector, site_selector
 from workflows.node.shared.steps import update_node_in_ims
 from workflows.shared import modify_summary_form
 
@@ -37,14 +37,16 @@ def initial_input_form_generator(subscription_id: UUIDstr, product: UUIDstr) -> 
     node = subscription.node
     node_type = get_product_by_id(product).fixed_input_value("node_type")
     NodeTypeChoice: TypeAlias = cast(type[Choice], node_type_selector(node_type))
+    NodeRoleChoice: TypeAlias = cast(type[Choice], node_role_selector())
+    SiteChoice: TypeAlias = cast(type[Choice], site_selector())
 
     class ModifyNodeForm(FormPage):
         # organisation: OrganisationId = subscription.customer_id  # type: ignore
 
         node_settings: Label
 
-        role_id: NodeRoleChoice = str(node.role_id)
         type_id: NodeTypeChoice = str(node.type_id)
+        role_id: NodeRoleChoice = str(node.role_id)
         site_id: SiteChoice = str(node.site_id)
         node_status: NodeStatusChoice = node.node_status
         node_name: str = node.node_name

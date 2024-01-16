@@ -14,7 +14,7 @@
 
 import uuid
 from random import randrange
-from typing import TypeAlias, cast
+from typing import Annotated, TypeAlias, cast
 
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
@@ -22,7 +22,8 @@ from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
-from pydantic import ConfigDict
+from pydantic import AfterValidator, ConfigDict
+from pydantic_core.core_schema import FieldValidationInfo
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State
 from pydantic_forms.validators import Choice
@@ -33,10 +34,20 @@ from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
 from settings import settings
-from workflows.shared import NodeAChoice, NodeBChoice, free_port_selector
+from workflows.shared import free_port_selector, node_selector
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
+    def separate_nodes(node_subscription_id_b: UUIDstr, info: FieldValidationInfo):
+        if node_subscription_id_b == info.data["node_subscription_id_a"]:
+            raise ValueError("node B cannot be the same as node A")
+        return node_subscription_id_b
+
+    NodeAChoice: TypeAlias = cast(type[Choice], node_selector("NodeEnumA"))  # noqa: F821
+    NodeBChoice: TypeAlias = Annotated[
+        cast(type[Choice], node_selector("NodeEnumB")), AfterValidator(separate_nodes)  # noqa: F821
+    ]
+
     class SelectNodes(FormPage):
         model_config = ConfigDict(title=f"{product_name} - node A and B")
 
