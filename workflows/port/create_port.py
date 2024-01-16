@@ -48,7 +48,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
         node_subscription_id: NodeChoice
 
     select_node = yield SelectNodeForm
-    select_node_dict = select_node.dict()
+    select_node_dict = select_node.model_dump()
     node_subscription_id = select_node_dict["node_subscription_id"]
 
     _product = get_product_by_id(product)
@@ -69,7 +69,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
         lldp: bool | None = False
 
     user_input = yield CreatePortForm
-    user_input_dict = user_input.dict()
+    user_input_dict = user_input.model_dump()
 
     summary_fields = ["port_ims_id", "port_description", "port_mode", "auto_negotiation", "lldp"]
     yield from create_summary_form(user_input_dict, product_name, summary_fields)

@@ -119,7 +119,7 @@ def summary_form(product_name: str, summary_data: SummaryData) -> Generator:
     class SummaryForm(FormPage):
         model_config = ConfigDict(title=f"{product_name} summary")
 
-        product_summary: ProductSummary  # type: ignore
+        product_summary: ProductSummary
 
     yield SummaryForm
 

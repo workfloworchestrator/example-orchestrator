@@ -45,7 +45,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
         speed_policer: bool | None = False
 
     user_input = yield CreateL2vpnForm
-    user_input_dict = user_input.dict()
+    user_input_dict = user_input.model_dump()
     PortsChoiceList: TypeAlias = cast(
         type[Choice], ports_selector(AllowedNumberOfL2vpnPorts(user_input_dict["number_of_ports"]))  # noqa: F821
     )
@@ -57,7 +57,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
         vlan: Vlan
 
     select_ports = yield SelectPortsForm
-    select_ports_dict = select_ports.dict()
+    select_ports_dict = select_ports.model_dump()
     ports = [str(item) for item in select_ports_dict["ports"]]
 
     return user_input_dict | select_ports_dict | {"ports": ports}

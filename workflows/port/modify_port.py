@@ -44,7 +44,7 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
         lldp: bool = port.lldp
 
     user_input = yield ModifyPortForm
-    user_input_dict = user_input.dict()
+    user_input_dict = user_input.model_dump()
 
     summary_fields = ["port_description", "auto_negotiation", "lldp"]
     yield from modify_summary_form(user_input_dict, subscription.port, summary_fields)

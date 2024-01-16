@@ -33,7 +33,7 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
         speed_policer: bool = virtual_circuit.speed_policer
 
     user_input = yield ModifyL2vpnForm
-    user_input_dict = user_input.dict()
+    user_input_dict = user_input.model_dump()
 
     summary_fields = ["speed", "speed_policer"]
     yield from modify_summary_form(user_input_dict, subscription.virtual_circuit, summary_fields)

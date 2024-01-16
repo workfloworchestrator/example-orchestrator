@@ -53,7 +53,7 @@ def initial_input_form_generator(subscription_id: UUIDstr, product: UUIDstr) -> 
         node_description: str | None = node.node_description
 
     user_input = yield ModifyNodeForm
-    user_input_dict = user_input.dict()
+    user_input_dict = user_input.model_dump()
 
     summary_fields = ["role_id", "type_id", "site_id", "node_status", "node_name", "node_description"]
     yield from modify_summary_form(user_input_dict, subscription.node, summary_fields)

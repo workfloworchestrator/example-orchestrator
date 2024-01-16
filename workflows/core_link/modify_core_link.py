@@ -34,7 +34,7 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
         under_maintenance: bool = core_link.under_maintenance
 
     user_input = yield ModifyCoreLinkForm
-    user_input_dict = user_input.dict()
+    user_input_dict = user_input.model_dump()
 
     summary_fields = ["under_maintenance"]
     yield from modify_summary_form(user_input_dict, subscription.core_link, summary_fields)

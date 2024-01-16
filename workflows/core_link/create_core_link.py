@@ -23,7 +23,6 @@ from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
 from pydantic import ConfigDict, model_validator
-from pydantic_core.core_schema import FieldValidationInfo
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State
 from pydantic_forms.validators import Choice
@@ -54,7 +53,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
             return self
 
     select_nodes = yield SelectNodes
-    select_nodes_dict = select_nodes.dict()
+    select_nodes_dict = select_nodes.model_dump()
 
     _product = get_product_by_id(product)
     speed = int(_product.fixed_input_value("speed"))
@@ -75,7 +74,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
         under_maintenance: bool = False
 
     select_ports = yield SelectPorts
-    select_ports_dict = select_ports.dict()
+    select_ports_dict = select_ports.model_dump()
 
     return select_nodes_dict | select_ports_dict
 

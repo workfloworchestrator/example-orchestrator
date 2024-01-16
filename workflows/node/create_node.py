@@ -58,7 +58,7 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
         node_description: str | None = None
 
     user_input = yield CreateNodeForm
-    user_input_dict = user_input.dict()
+    user_input_dict = user_input.model_dump()
 
     summary_fields = ["role_id", "type_id", "site_id", "node_status", "node_name", "node_description"]
     yield from create_summary_form(user_input_dict, product_name, summary_fields)
