@@ -20,12 +20,12 @@ tasks = [
     {
         "name": "task_bootstrap_netbox",
         "target": Target.SYSTEM,
-        "description": "Bootstrap Netbox",
+        "description": "Netbox Bootstrap",
     },
     {
         "name": "task_wipe_netbox",
         "target": Target.SYSTEM,
-        "description": "Wipe Netbox",
+        "description": "Netbox Wipe",
     },
 ]
 

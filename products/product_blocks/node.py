@@ -45,7 +45,7 @@ class NodeBlockProvisioning(NodeBlockInactive, lifecycle=[SubscriptionLifecycle.
     @computed_field  # type: ignore[misc]
     @property
     def title(self) -> str:
-        return f"{self.node_name} status {self.node_status}"
+        return f"node {self.node_name} status {self.node_status}"
 
 
 class NodeBlock(NodeBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
