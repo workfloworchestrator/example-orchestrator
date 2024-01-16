@@ -19,11 +19,7 @@ from orchestrator.domain.base import ProductBlockModel
 from orchestrator.types import SI, SubscriptionLifecycle
 from pydantic import computed_field
 
-from products.product_blocks.core_port import (
-    CorePortBlock,
-    CorePortBlockInactive,
-    CorePortBlockProvisioning,
-)
+from products.product_blocks.core_port import CorePortBlock, CorePortBlockInactive, CorePortBlockProvisioning
 
 T = TypeVar("T", covariant=True)
 

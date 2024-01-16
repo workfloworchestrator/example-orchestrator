@@ -16,11 +16,7 @@ from orchestrator.domain.base import ProductBlockModel
 from orchestrator.types import SubscriptionLifecycle
 from pydantic import computed_field
 
-from products.product_blocks.port import (
-    PortBlock,
-    PortBlockInactive,
-    PortBlockProvisioning,
-)
+from products.product_blocks.port import PortBlock, PortBlockInactive, PortBlockProvisioning
 
 
 class SAPBlockInactive(ProductBlockModel, product_block_name="SAP"):

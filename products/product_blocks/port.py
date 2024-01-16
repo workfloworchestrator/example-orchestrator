@@ -18,11 +18,7 @@ from orchestrator.domain.base import ProductBlockModel
 from orchestrator.types import SubscriptionLifecycle, strEnum
 from pydantic import computed_field
 
-from products.product_blocks.node import (
-    NodeBlock,
-    NodeBlockInactive,
-    NodeBlockProvisioning,
-)
+from products.product_blocks.node import NodeBlock, NodeBlockInactive, NodeBlockProvisioning
 
 
 class PortMode(strEnum):

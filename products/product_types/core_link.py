@@ -17,11 +17,7 @@ from enum import IntEnum
 from orchestrator.domain.base import SubscriptionModel
 from orchestrator.types import SubscriptionLifecycle
 
-from products.product_blocks.core_link import (
-    CoreLinkBlock,
-    CoreLinkBlockInactive,
-    CoreLinkBlockProvisioning,
-)
+from products.product_blocks.core_link import CoreLinkBlock, CoreLinkBlockInactive, CoreLinkBlockProvisioning
 
 
 class CoreLinkSpeed(IntEnum):
