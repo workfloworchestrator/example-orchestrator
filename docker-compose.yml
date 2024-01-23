@@ -134,8 +134,6 @@ services:
       - "5678:5678" #Enable Python debugger
     expose:
       - 5678 #Enable Python debugger
-    environment:
-      OAUTH2_ACTIVE: False
     volumes:
       - ./workflows:/home/orchestrator/workflows
       - ./products:/home/orchestrator/products
