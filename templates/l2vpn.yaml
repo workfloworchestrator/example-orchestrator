@@ -15,7 +15,7 @@
 # This file describes the "L2VPN" product
 #
 config:
-  create_summary_forms: true
+  summary_forms: true
 name: l2vpn
 type: L2vpn
 tag: L2VPN
@@ -37,10 +37,12 @@ product_blocks:
         description: "speed of the L2VPN im Mbit/s"
         type: int
         required: provisioning
+        modifiable:
       - name: speed_policer
         description: "speed policer active?"
         type: bool
         required: provisioning
+        modifiable:
       - name: ims_id
         description: "ID of the L2VPN in the inventory management system"
         type: int

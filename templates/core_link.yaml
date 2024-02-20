@@ -15,7 +15,7 @@
 # This file describes the "Core Link" product
 #
 config:
-  create_summary_forms: true
+  summary_forms: true
 name: core_link
 type: CoreLink
 tag: CORE_LINK
@@ -24,6 +24,7 @@ fixed_inputs:
   - name: speed
     type: enum
     enum_type: int
+    values:
       - 10000
       - 100000
     description: "speed of the core link im Mbit/s"
@@ -39,6 +40,7 @@ product_blocks:
         list_type: CorePort
         min_items: 2
         max_items: 2
+        required: provisioning
       - name: ims_id
         description: "ID of the core link in the inventory management system"
         type: int
@@ -55,6 +57,7 @@ product_blocks:
         type: bool
         description: "core link under maintenance?"
         required: provisioning
+        modifiable:
   - name: core_port
     type: CorePort
     tag: CORE_PORT
@@ -66,7 +69,7 @@ product_blocks:
       - name: enabled
         type: bool
         description: "is port enabled in inventory management system?"
-        required: inactive
+        required: provisioning
       - name: ims_id
         description: "ID of the port in the inventory management system"
         type: int
@@ -78,7 +81,7 @@ product_blocks:
       - name: node
         type: Node
         description: "link to the Node product block the port is residing on"
-        required: inactive
+        required: provisioning
       - name: ipv6_ipam_id
         type: int
         description: "ID of the port's IPv6 address in IPAM"

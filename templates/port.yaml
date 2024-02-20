@@ -15,7 +15,7 @@
 # This file describes the "Port" product
 #
 config:
-  create_summary_forms: true
+  summary_forms: true
 name: port
 type: Port
 tag: PORT
@@ -24,6 +24,7 @@ fixed_inputs:
   - name: speed
     type: enum
     enum_type: int
+    values:
       - 1000
       - 10000
       - 40000
@@ -39,11 +40,11 @@ product_blocks:
       - name: port_name
         description: "Unique name of the port on the device"
         type: str
-        required: inactive
+        required: provisioning
       - name: port_type
         description: "Type of the port"
         type: str
-        required: inactive
+        required: provisioning
       - name: port_description
         description: "Description of the port"
         type: str
@@ -51,29 +52,29 @@ product_blocks:
       - name: port_mode
         type: str
         description: "Mode of the port, either untagged, tagged or a link_member (in an aggregate)"
-        required: inactive
+        required: provisioning
       - name: auto_negotiation
         type: bool
         description: "is Ethernet auto negotiation enabled or not"
-        required: inactive
+        required: provisioning
         modifiable:
       - name: lldp
         type: bool
         description: "is Link Llayer Discovery Protocol enabled or not"
-        required: inactive
+        required: provisioning
         modifiable:
       - name: enabled
         type: bool
         description: "is port enabled in inventory management system?"
-        required: inactive
+        required: provisioning
       - name: node
         type: Node
         description: "link to the Node product block the port is residing on"
-        required: inactive
+        required: provisioning
       - name: ims_id
         description: "ID of the node in the inventory management system"
         type: int
-        required: inactive
+        required: provisioning
       - name: nrm_id
         type: int
         description: "ID of the node in the network resource manager"

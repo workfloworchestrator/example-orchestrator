@@ -15,8 +15,7 @@
 # This file describes the "Port" product
 #
 config:
-  create_summary_forms: false
-  send_email: false
+  summary_forms: true
 name: node
 type: Node
 tag: NODE
@@ -36,35 +35,42 @@ product_blocks:
     description: "node product block"
     fields:
       - name: role_id
-        description: "ID in CMDB of role of the node in the network"
+        description: "IMS ID of role of the node in the network"
         type: int
-        required: inactive
+        required: provisioning
         modifiable:
       - name: type_id
-        description: "ID in CMDB of type of the node"
+        description: "IMS ID of type of the node"
         type: int
-        required: inactive
+        required: provisioning
         modifiable:
       - name: site_id
-        description: "ID in CMDB of site where the node is located"
+        description: "IMS ID of site where the node is located"
         type: int
-        required: inactive
+        required: provisioning
         modifiable:
       - name: node_status
         description: "Operational status of the node"
-        type: str
-        required: inactive
+        type: enum
+        enum_type: str
+        values:
+          - "offline"
+          - "active"
+          - "planned"
+          - "staged"
+          - "failed"
+          - "inventory"
+          - "decommissioning"
+        required: provisioning
         modifiable:
       - name: node_name
         description: "Unique name of the node"
         type: str
         required: provisioning
-        # required: inactive  # not needed by NetBox
         modifiable:
       - name: node_description
         description: "Description of the node"
         type: str
-        # required: inactive  # not needed by NetBox
         modifiable:
       - name: ims_id
         description: "ID of the node in the inventory management system"
