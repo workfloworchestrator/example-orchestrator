@@ -79,7 +79,7 @@ pages to see the orchestrator interact with netbox:
   - Terminations
 
 
-# Abstract
+## Abstract
 
 A set of best common practices is explained using on an orchestrator
 implementation based on the open source Workflow Orchestrator. A basic
@@ -87,7 +87,7 @@ set of NREN products and workflow is modelled for a Node, Core Link,
 Customer port and L2VPN service, together with the an IMS and IPAM
 integration using Netbox.
 
-# Summary
+## Summary
 
 More and more NREN’s start automating and orchestrating their
 operational network procedures and flows of information, making use of
@@ -125,7 +125,7 @@ the interface is fully implemented for the supported products.
 The example orchestrator is fully functional and showcases how the WFO
 can be integrated with Netbox.
 
-# Introduction
+## Introduction
 
 To capture the Best Common Practices for implementing a network
 orchestrator using the Workflow Orchestrator (WFO) software framework,
@@ -174,13 +174,13 @@ for the complete IP address administration and physical and logical
 network infrastructure. It has a REST based API that makes it easy to
 integrate with the Workflow Orchestrator.
 
-# Example orchestrator
+## Example orchestrator
 
 To automate the administration and provisioning of the nodes, core
 links, customer ports and L2VPN’s of the virtual NREN, an orchestrator
 is implemented making use of the WFO framework.
 
-## Folder layout
+### Folder layout
 
 Creating an orchestrator based on the WFO framework needs custom
 integration code that is business specific. This code can be organised
@@ -210,7 +210,7 @@ WFO users.
 └── tasks
 ~~~
 
-### migrations/versions/schema
+#### migrations/versions/schema
 
 This is the default location used by Alembic to store migration files.
 Alembic is a lightweight database migration tool that is part of
@@ -220,13 +220,13 @@ maintain its own list of migrations. Usually there is at least a
 migration file for each new product plus associated workflows that is
 added to the implementation.
 
-### products/product_types
+#### products/product_types
 
 Each product has its own file, named after the product, that describes
 the product domain model in all its lifecycle stages. For example, the
 filename for a L2VPN product would be `l2vpn.py`.
 
-### products/product_blocks
+#### products/product_blocks
 
 Products can use one or more product blocks, and product blocks can be
 shared by different products. Every product block that is defined, has a
@@ -235,7 +235,7 @@ in all its lifecycle stages. For example, the core port product block
 used by the core link product has a file called `core_port.py` in this
 folder.
 
-### products/services
+#### products/services
 
 Collection of helper functions that deliver a service to product related
 code. For example, the generation of descriptions, or payload for
@@ -243,13 +243,13 @@ OSS/BSS API’s, for different product and product blocks. For example,
 the folder `products/services/netbox/` contains the NetBox API payload
 service.
 
-### services
+#### services
 
 Similar to the product services but with code base wide helper
 functions. For example, the folder `services/netbox/` contains the
 service that interfaces with the NetBox API.
 
-### templates
+#### templates
 
 List of product configuration templates, with a template per product.
 Based on a template, currently an experimental feature, the WFO can
@@ -257,18 +257,18 @@ generate skeleton code for: the product and product block domain models,
 all four types of workflows including input forms, registration of the
 product and workflows, and the corresponding database migration.
 
-### translations
+#### translations
 
 The translations for the WFO GUI for input form fields, subscriptions,
 subscription instances, and workflows.
 
-### utils
+#### utils
 
 A collection of helper functions that are not directly related to the
 code base but are, for example, used to setup a deployment environment
 or generate documentation.
 
-### workflows
+#### workflows
 
 Every product has a folder here, named after the product. Each folder
 contains the collection of workflows for that product. Every workflow
@@ -278,13 +278,13 @@ workflows for the Port product, and the file
 `workflows/port/create_port.py` contains the Port subscription create
 workflow.
 
-### shared
+#### shared
 
 Throughout the code base, shared folders are used that contain helper
 functions for that module and below. As good coding practice, it is best
 to define the helper functions as locally as possible.
 
-## Main application
+### Main application
 
 The main application is as simple as shown below, and can be deployed by
 a ASGI server like Uvicorn[^5].
@@ -302,7 +302,7 @@ app = OrchestratorCore(base_settings=AppSettings())
 All other code is referenced by importing the products and workflows
 modules.
 
-## Implemented products
+### Implemented products
 
 In the `product.product_types` module the following products are
 defined:
@@ -336,10 +336,9 @@ port.
 When this example orchestrator is deployed, it can create a growing
 graph of product blocks as is shown below.
 
-![Product block graph](.pictures/subscriptions.png)
-<!--<img src=".pictures/subscriptions.png" alt="Product block graph" width=75% height=75% align="center">
--->
-## How to use
+<img src=".pictures/subscriptions.png" alt="Product block graph" width=75% height=75%>
+
+### How to use
 
 human workflows regarding the delivery of products to customers are
 often comprehensive. To limit the scope of this example orchestrator,
@@ -356,13 +355,13 @@ orchestrator:
 - IPv4 and IPv6 prefix for node loopback addresses
 - IPv4 and IPv6 prefix for core link addressing
 
-The task Bootstrap Netbox takes care of initializing Netbox with a
-default set of this information. For convenience, a task Wipe Netbox is
+The task Netbox Bootstrap takes care of initializing Netbox with a
+default set of this information. For convenience, a task Netbox Wipe is
 added as well, that will remove all object from Netbox again, including
-the ones that are created by the different workflows. Task can be found
-in the orchestrator GUI under **Tasks-\>New Task**.
+the ones that are created by the different workflows. Tasks can be found
+in the orchestrator UI in the `New tasks` pulldown on the `tasks` page.
 
-### Node
+#### Node
 
 The Node create workflow will read all configured, sites and device
 roles, manufactures types, and allowe the user to choose appropriate
@@ -385,14 +384,14 @@ There are variants of the node product that allow the creation of nodes
 for different manufactures, and only the matching device types will be
 shown in the dropdown.
 
-### CoreLink
+#### CoreLink
 
 To build a core link, at least two node subscription should already
 exist, this is to satisfy the constraint that the A and B side of the
 core link need to be different. On each node, there should be at least
 one port available that matches the requested core link speed.
 
-### Port
+#### Port
 
 To create a customer port, at least one node should exist with at least
 one free interface of the requested port speed. The type of port can be
@@ -400,14 +399,14 @@ untagged, tagged, or link member, but note that currently only one
 network service product is implemented, and that product only supports
 tagged ports.
 
-### L2vpn
+#### L2vpn
 
 To create a L2VPN services for a customer, at least two customer ports
 should exist, and every port can only be used once in the same L2VPN.
 This product is only supported on tagged interfaces, and VLAN retagging
 is not supported.
 
-# Products
+## Products
 
 Products are described in Domain Models that are designed to help the
 developer manage complex subscription models and interact with the
@@ -430,7 +429,7 @@ resource types, the product blocks usually contain links to other
 product blocks as well. If a fixed input needs a custom type, then it is
 defined here together with fixed input definition.
 
-## Product types
+### Product types
 
 The product types in the code are upper camel cased, like all other type
 definitions. Per default, the product type is declared for the inactive,
@@ -539,7 +538,7 @@ create(conn, new_products)
 <span id="_Toc152947594" class="anchor"></span>Figure : Product
 migration
 
-## Product blocks
+### Product blocks
 
 Like product types, the product blocks are declared for the inactive,
 provisioning and active lifecycle states. The name of the product block
@@ -643,7 +642,7 @@ other resource type using subscription.port.title. This is not a random
 example, the title of a product block is used by the orchestrator GUI
 while displaying detailed subscription information.
 
-# Workflows
+## Workflows
 
 Four types of workflows are defined, three lifecycle related ones to
 create, modify and terminate subscriptions, and a fourth one to validate
@@ -698,7 +697,7 @@ by terminating the subscription and creating it again with the modified
 input. Finally, the modify workflow is implemented to allow changes to a
 subscription with minimal or no impact to the customer.
 
-## Create workflow
+### Create workflow
 
 A create workflow needs an initial input form generator and defines the
 steps to create a subscription on a product. The @create_workflow
@@ -812,7 +811,7 @@ summary_fields = \["role_id", "node_name", "node_description"\]
 yield from create_summary_form(user_input_dict, product_name,
 summary_fields)
 
-## Modify workflow
+### Modify workflow
 
 A modify workflow also follows a general pattern, like described below.
 The **@modify_workflow** decorator adds some additional steps to the
@@ -883,7 +882,7 @@ summary_fields = \["node_status", "node_name", "node_description"\]
 yield from modify_summary_form(user_input_dict, subscription.node,
 summary_fields)
 
-## Terminate workflow
+### Terminate workflow
 
 At the end of the subscription lifecycle, the terminate workflow updates
 all OSS and BSS accordingly, and the **@terminate_workflow** decorator
@@ -939,7 +938,7 @@ workflow input form
 class TerminateForm(FormPage):  
 subscription_id: DisplaySubscription = subscription_id
 
-## Validate workflows
+### Validate workflows
 
 And finally, the validate workflow, used to check if the information in
 all OSS and BSS is still the same with the information in the
@@ -1014,7 +1013,7 @@ the orchestrator, a task (a workflow with **Target.SYSTEM)** can be
 written that will retrieve a list of all L2VPNs from IMS and compare it
 against a list of all L2VPN subscription from the orchestrator.
 
-# Services\`
+## Services\`
 
 Services are collections of helper functions that deliver a service to
 other parts of the code base. The common programming pattern of function
@@ -1036,7 +1035,7 @@ track of all registered functions and the type of their first argument.
 This allows for more informative error messages when the single dispatch
 function is called with an unsupported parameter.
 
-## Subscription descriptions
+### Subscription descriptions
 
 An example of a service is the generation of descriptions for
 subscriptions or product block instances, the description is generated
@@ -1072,7 +1071,7 @@ description register
 def \_(product: NodeProvisioning) -\> str:  
 return f"node {product.node.node_name} ({product.node.node_status})"
 
-## Netbox
+### Netbox
 
 The Netbox service is an interplay between several single dispatch
 functions, one to generate the payload for a specific product block, and
@@ -1080,7 +1079,7 @@ two others that create or modify an object in Netbox based on the type
 of payload. The Pynetbox[^7] Python API client library is used to
 interface with Netbox.
 
-### Payload
+#### Payload
 
 The **build_payload()** single dispatch allows a first argument of type
 product block model, and a subscription model parameter that is used
@@ -1136,7 +1135,7 @@ that are expected by Netbox. The speed of the interface is taken from
 the fixed input speed with the same name on the subscription, the
 multiplication by 1000 is to convert between Mbit/s and Kbit/s.
 
-### Create
+#### Create
 
 To create an object in Netbox based on the type of Netbox payload, the
 single dispatch **create()** is used:
@@ -1177,7 +1176,7 @@ The ID of the object that is created in Netbox is returned so that it
 can be registered in the subscription for later reference, e.q. when the
 object needs to be modified or deleted.
 
-### Update
+#### Update
 
 The single dispatch **update()** is defined in a similar way, the only
 difference is that an additional argument is used to specify the ID of
@@ -1203,7 +1202,7 @@ return object.save()
 <span id="_Toc152947617" class="anchor"></span>Figure : Netbox service
 update object
 
-### Get
+#### Get
 
 The Netbox service defines other helpers as well. For example, to get an
 single object, or a list of objects, of a specific type from Netbox.
@@ -1224,7 +1223,7 @@ specify the object(s) that are wanted. For example
 equal to 3 from Netbox. And **get_interfaces(speed=1000000)** will get a
 list of all interface objects from Netbox that have a speed of 1Gbit/s.
 
-### Delete
+#### Delete
 
 Another set of helpers is defined to delete objects from Netbox. For
 example, to delete an Interface object from Netbox, see below.
@@ -1245,7 +1244,7 @@ def delete_from_netbox(endpoint, \*\*kwargs) -\> None:
 object = endpoint.get(\*\*kwargs):  
 object.delete()
 
-### Product block to Netbox object mapping
+#### Product block to Netbox object mapping
 
 The modelling used in the orchestrator does not necessarily have to
 match exactly with the modelling in your OSS or BSS. In many cases,
@@ -1274,7 +1273,7 @@ nodes.
 <span id="_Toc152947622" class="anchor"></span>Figure : Node, port and
 L2VPN type mapping
 
-# Glossary
+## Glossary
 
 **API** Application Programming Interface
 
