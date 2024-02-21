@@ -41,42 +41,42 @@ http://localhost:8000/
 Use the following steps to see the example orchestrator in action:
 
 1. bootstrap Netbox
-   1. from the `Tasks` tab click `New Task`
-   2. select `Bootstrap Netbox` and click `Submit` (twice)
+ 1. from the `Tasks` tab click `New Task`
+ 2. select `Bootstrap Netbox` and click `Submit` (twice)
 2. create a network node (need at least two to create a core link)
-   1. in the right-above corner, click on the `New Process` button
-   2. select either the `Node Cisco` or `Node Nokia` and click `Next`
-   3. fill in the needed fields, click `Submit` and view the summary form
-   4. click `Submit` again to start the workflow, or click `Previous` to modify fields
+ 1. in the right-above corner, click on the `New Process` button
+ 2. select either the `Node Cisco` or `Node Nokia` and click `Next`
+ 3. fill in the needed fields, click `Submit` and view the summary form
+ 4. click `Submit` again to start the workflow, or click `Previous` to modify fields
 3. add interfaces to a node (needed by the other products)
-   1. on the `Subscriptions` tab, click on the subscription for the node to show the details
-   2. on the `Actions` tab, click on the `Sync ports with IMS` action and confirm to start the workflow
+ 1. on the `Subscriptions` tab, click on the subscription for the node to show the details
+ 2. on the `Actions` tab, click on the `Sync ports with IMS` action and confirm to start the workflow
 4. create a core link
-   1. in the right-above corner, click on the `New Process` button
-   2. select either the `core link 10G` or `core link 100G` and click `Next`
-   3. fill in de forms and finally click on `Submit` to start the workflow
+ 1. in the right-above corner, click on the `New Process` button
+ 2. select either the `core link 10G` or `core link 100G` and click `Next`
+ 3. fill in de forms and finally click on `Submit` to start the workflow
 5. create a customer port (need at least two **tagged** ports to create a l2vpn)
-   1. start a `New Process` for either a `port 10G` or a `port 100G`
-   3. fill in de forms and finally click on `Submit` to start the workflow
+ 1. start a `New Process` for either a `port 10G` or a `port 100G`
+ 3. fill in de forms and finally click on `Submit` to start the workflow
 6. create a l2vpn
-   1. start a `New Process` for a `l2vpn`, fill in the forms, and `Submit` to start the workflow
+ 1. start a `New Process` for a `l2vpn`, fill in the forms, and `Submit` to start the workflow
 
 While running the different workflows, have a look at the following netbox
 pages to see the orchestrator interact with netbox:
 
 - Devices
-  - Devices
-  - Interfaces
+- Devices
+- Interfaces
 - Connections
-  - Cables
-  - Interface Connections
+- Cables
+- Interface Connections
 - IPAM
-  - IP Addresses
-  - Prefixes
-  - VLANs
+- IP Addresses
+- Prefixes
+- VLANs
 - Overlay
-  - L2VPNs
-  - Terminations
+- L2VPNs
+- Terminations
 
 
 ## Abstract
@@ -146,11 +146,11 @@ based on a simple fictional NREN that has the following characteristics:
 - The network consists of Provider and Provider Edge network nodes
 - The network nodes are connected to each other through core links
 - On top of this substrate a set of services like Internet Access, L3VPN
-  and L2VPN are offered
+and L2VPN are offered
 - The Operations Support Systems (OSS) used are:
-  - An IP Administration Management (IPAM) tool
-  - A network Inventory Management System (IMS)
-  - A Network Resource Manager (NRM) to provision the network
+- An IP Administration Management (IPAM) tool
+- A network Inventory Management System (IMS)
+- A Network Resource Manager (NRM) to provision the network
 - There is no Business Support System (BSS) yet
 
 This NREN decided on a phased introduction of automation in their
@@ -158,16 +158,16 @@ organisation, only automating some of the procedures and flows of
 information while leaving others unautomated for the moment:
 
 - Automated administration and provisioning of:
-  - Network nodes including loopback IP addresses
-  - Core links in between network nodes including point-to-point IP
-    addresses
-  - Customer ports
-  - Customer L2VPN’s
+- Network nodes including loopback IP addresses
+- Core links in between network nodes including point-to-point IP
+addresses
+- Customer ports
+- Customer L2VPN’s
 - Not automated administration and provisioning of:
-  - Role, make and model of the network nodes
-  - Sites where network nodes are installed
-  - Customer sevices like Internet Access, L3VPN, …
-  - Internet peering
+- Role, make and model of the network nodes
+- Sites where network nodes are installed
+- Customer sevices like Internet Access, L3VPN, …
+- Internet peering
 
 NetBox[^3] is used as IMS and IPAM, and serves as the source of truth
 for the complete IP address administration and physical and logical
@@ -191,7 +191,7 @@ associated workflows increases. The following layout is recommended and
 is, for example, also being used in the WFO workshops and by many of the
 WFO users.
 
-~~~
+```
 ├── migrations
 │   └── versions
 │   └── schema
@@ -208,7 +208,7 @@ WFO users.
 └── workflows
 ├── <product>
 └── tasks
-~~~
+```
 
 #### migrations/versions/schema
 
@@ -290,12 +290,12 @@ The main application is as simple as shown below, and can be deployed by
 a ASGI server like Uvicorn[^5].
 
 ```python	
-from orchestrator import OrchestratorCore  
-from orchestrator.settings import AppSettings  
-  
-import products  
-import workflows  
-  
+from orchestrator import OrchestratorCore
+from orchestrator.settings import AppSettings
+
+import products
+import workflows
+
 app = OrchestratorCore(base_settings=AppSettings())
 ```
 
@@ -443,17 +443,17 @@ before it ends up terminated. The terminated state does not have its own
 type definition.
 
 ```python
-class PortInactive(SubscriptionModel, is_base=True):  
-	speed: PortSpeed  
-	port: PortBlockInactive  
-  
-class PortProvisioning(PortInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]):  
-	speed: PortSpeed  
-	port: PortBlockProvisioning  
-  
-class Port(PortProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):  
-	speed: PortSpeed  
-	port: PortBlock
+class PortInactive(SubscriptionModel, is_base=True):
+    speed: PortSpeed
+    port: PortBlockInactive
+
+class PortProvisioning(PortInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]):
+    speed: PortSpeed
+    port: PortBlockProvisioning
+
+class Port(PortProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
+    speed: PortSpeed
+    port: PortBlock
 ```
 
 As can be seen in the above example, the inactive product type
@@ -470,14 +470,16 @@ separate type is declared with the allowed values, see below.
 
 <span id="_Toc152947592" class="anchor"></span>Figure : Type definition
 
-from enum import IntEnum  
-  
-class PortSpeed(IntEnum):  
-\_1000 = 1000  
-\_10000 = 10000  
-\_40000 = 40000  
-\_100000 = 100000  
-\_400000 = 400000
+```python
+from enum import IntEnum
+
+class PortSpeed(IntEnum):
+    _1000 = 1000
+    _10000 = 10000
+    _40000 = 40000
+    _100000 = 100000
+    _400000 = 400000
+```
 
 This type is not only used to ensure that the speed fixed input can only
 take these values, but is also used in user input forms to limit the
@@ -485,53 +487,52 @@ choices, and in the database migration to register the speed variant of
 this product.
 
 Products need to be registered in two places. All product variants have
-to be added to the **SUBSCRIPTION_MODEL_REGISTRY**, in
-**products/\_\_init\_\_.py**, as shown below.
+to be added to the `SUBSCRIPTION_MODEL_REGISTRY`, in
+`products/__init__.py`, as shown below.
 
-<span id="_Toc152947593" class="anchor"></span>Figure : Subscription
-model registry
+```python
+from orchestrator.domain import SUBSCRIPTION_MODEL_REGISTRY
+from products.product_types.core_link import CoreLink
 
-from orchestrator.domain import SUBSCRIPTION_MODEL_REGISTRY  
-from products.product_types.core_link import CoreLink  
-  
-SUBSCRIPTION_MODEL_REGISTRY.update(  
-{  
-"core link 10G": CoreLink,  
-"core link 100G": CoreLink,  
-}  
+SUBSCRIPTION_MODEL_REGISTRY.update(
+    {
+        "core link 10G": CoreLink,
+        "core link 100G": CoreLink,
+    }
 )
+```
 
 And all variants also have to entered into the database using a
 migration. The migration uses the create helper function from
-**orchestrator.migrations.helpers** that takes the following dictionary
+`orchestrator.migrations.helpers` that takes the following dictionary
 as an argument, see below. Notice that the name of the product and the
 product type need to match with the subscription model registry.
 
-from orchestrator.migrations.helpers import create  
-  
-new_products = {  
-"products": {  
-"core link 10G": {  
-"product_id": uuid4(),  
-"product_type": "CoreLink",  
-"description": "Core link",  
-"tag": "CORE_LINK",  
-"status": "active",  
-"product_blocks": \[  
-"CoreLink",  
-"CorePort",  
-\],  
-"fixed_inputs": {  
-"speed": CoreLinkSpeed.\_10000.value,  
-},  
-},  
-  
-def upgrade() -\> None:  
-conn = op.get_bind()  
-create(conn, new_products)
+```python
+from orchestrator.migrations.helpers import create
 
-<span id="_Toc152947594" class="anchor"></span>Figure : Product
-migration
+new_products = {
+    "products": {
+        "core link 10G": {
+            "product_id": uuid4(),
+            "product_type": "CoreLink",
+            "description": "Core link",
+            "tag": "CORE_LINK",
+            "status": "active",
+            "product_blocks": [
+                "CoreLink",
+                "CorePort",
+            ],
+            "fixed_inputs": {
+                "speed": CoreLinkSpeed._10000.value,
+            },
+        },
+}
+
+def upgrade() -> None:
+    conn = op.get_bind()
+    create(conn, new_products)
+```
 
 ### Product blocks
 
@@ -556,42 +557,36 @@ not optional anymore for the active lifecycle state. Resource types that
 are still optional in the active state are used to store non-mandatory
 information.
 
-<span id="_Toc152947595" class="anchor"></span>Figure : Product block
-domain model
+```python
+class NodeBlockInactive(ProductBlockModel, product_block_name="Node"):
+    type_id: int | None = None
+    node_name: str | None = None
+    ims_id: int | None = None
+    nrm_id: int | None = None
+    node_description: str | None = None
 
-class NodeBlockInactive(ProductBlockModel, product_block_name="Node"):  
-type_id: int \| None = None  
-node_name: str \| None = None  
-ims_id: int \| None = None  
-nrm_id: int \| None = None  
-node_description: str \| None = None  
-  
-  
-class NodeBlockProvisioning(  
-NodeBlockInactive, lifecycle=\[SubscriptionLifecycle.PROVISIONING\]  
-):  
-type_id: int  
-node_name: str  
-ims_id: int \| None = None  
-nrm_id: int \| None = None  
-node_description: str \| None = None  
-  
-  
-class NodeBlock(NodeBlockProvisioning,
-lifecycle=\[SubscriptionLifecycle.ACTIVE\]):  
-type_id: int  
-node_name: str  
-ims_id: int  
-nrm_id: int  
-node_description: str \| None = None
+class NodeBlockProvisioning(NodeBlockInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]):
+    type_id: int
+    node_name: str
+    ims_id: int | None = None
+    nrm_id: int | None = None
+    node_description: str | None = None
+
+class NodeBlock(NodeBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
+    type_id: int
+    node_name: str
+    ims_id: int
+    nrm_id: int
+    node_description: str | None = None
+```
 
 In the simplified node product block shown above, the type and the name
 of the node are supplied by the user and stored on the
-NodeBlockInactive. Then, the subscription transitions to Provisioning
+`NodeBlockInactive`. Then, the subscription transitions to Provisioning
 and a check is performed to ensure that both pieces of information are
 present on the product block. During the provisioning phase the node is
 administered in IMS and the handle to that information is stored on the
-NodeBlockProvsioning. Next, the node is provisioned in the NRM and the
+`NodeBlockProvsioning`. Next, the node is provisioned in the NRM and the
 handle is also stored. If both of these two actions were successful, the
 subscription is transitioned to Active and it is checked that the type
 and node name, and the IMS and NRM ID, are present on the product block.
@@ -608,28 +603,24 @@ following example of a, stripped down version, of a port and node
 product block, and a title for the port block that is generated
 dynamically.
 
-<span id="_Toc152947596" class="anchor"></span>Figure : Serializable
-property on domain model
+```python
+class NodeBlock(NodeBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
+    node_name: str
 
-class NodeBlock(NodeBlockProvisioning,
-lifecycle=\[SubscriptionLifecycle.ACTIVE\]):  
-node_name: str  
-  
-  
-class PortBlock(PortBlockProvisioning,
-lifecycle=\[SubscriptionLifecycle.ACTIVE\]):  
-port_name: str  
-node: NodeBlock  
-  
-@serializable_property  
-def title(self) -\> str:  
-return f"{self.port_name} on {self.node.node_name}"
 
-class Port(PortProvisioning,
-lifecycle=\[SubscriptionLifecycle.ACTIVE\]):  
-port: PortBlock
+class PortBlock(PortBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
+    port_name: str
+    node: NodeBlock
 
-A @serializable_property has been added that will dynamically render the
+    @serializable_property
+    def title(self) -> str:
+        return f"{self.port_name} on {self.node.node_name}"
+
+class Port(PortProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
+    port: PortBlock
+```
+
+A `@serializable_property` has been added that will dynamically render the
 title of the port product block. Even after a modify workflow was run to
 change the node name on the node subscription, the title of the port
 block will always be up to date. The title can be referenced as any
@@ -642,20 +633,20 @@ while displaying detailed subscription information.
 Four types of workflows are defined, three lifecycle related ones to
 create, modify and terminate subscriptions, and a fourth one to validate
 subscriptions against the OSS and BSS. The decorators
-**@create_workflow**, **@modify_workflow**, **@terminate_workflow**, and
-**@validate_workflow** are used to define the different types of
-workflow, and the **@step** decorator is used to define workflow steps
+`@create_workflow`, `@modify_workflow`, `@terminate_workflow`, and
+`@validate_workflow` are used to define the different types of
+workflow, and the `@step` decorator is used to define workflow steps
 that can be used in any type of workflow.
 
-Information between workflow steps is passed using **State**, which is
+Information between workflow steps is passed using `State`, which is
 nothing more than a collection of key/value pairs, in Python represented
-by a **Dict**, with string keys and arbitrary values. Between steps the
-**State** is serialized to JSON and stored in the database. The step
+by a `Dict`, with string keys and arbitrary values. Between steps the
+`State` is serialized to JSON and stored in the database. The step
 decorator is used to turn a function into a workflow step, all arguments
 to the step function will automatically be initialised with the value
-from the matching key in the **State**. In turn the step function will
-return a **Dict** of new and/or modified key/value pairs that will be
-merged into the **State** to be consumed by the next step. The
+from the matching key in the `State`. In turn the step function will
+return a `Dict` of new and/or modified key/value pairs that will be
+merged into the `State` to be consumed by the next step. The
 serialization and deserialization between JSON and the indicated Python
 types is done automatically. That is why it is important to correctly
 type the step function parameters.
@@ -695,50 +686,36 @@ subscription with minimal or no impact to the customer.
 ### Create workflow
 
 A create workflow needs an initial input form generator and defines the
-steps to create a subscription on a product. The @create_workflow
+steps to create a subscription on a product. The `@create_workflow`
 decorator adds some additional steps to the workflow that are always
 part of a create workflow. The steps of a create workflow in general
 follow the same pattern, as described below using the create node
 workflow as an example.
 
-@create_workflow("Create node",
-initial_input_form=initial_input_form_generator)  
-def create_node() -\> StepList:  
-return (  
-begin  
-\>\> construct_node_model  
-\>\> store_process_subscription(Target.CREATE)  
-\>\> create_node_in_ims  
-\>\> reserve_loopback_addresses  
-\>\> provision_node_in_nrm  
-)
+```python
+@create_workflow("Create node", initial_input_form=initial_input_form_generator)
+def create_node() -> StepList:
+    return (
+        begin
+        >> construct_node_model
+        >> store_process_subscription(Target.CREATE)
+        >> create_node_in_ims
+        >> reserve_loopback_addresses
+        >> provision_node_in_nrm
+    )
+```
 
-<span id="_Toc152947597" class="anchor"></span>Figure : Create workflow
-
-1.  Collect input from user (**initial_input_form**)
-
-2.  Instantiate subscription (**construct_node_model**):
-
-    1.  Create inactive subscription model
-
-    2.  assign user input to subscription
-
-    3.  transition to subscription to provisioning
-
-3.  Register create process for this subscription
-    (**store_process_subscription**)
-
-4.  Interact with OSS and/or BSS, in this example
-
-    1.  Administer subscription in IMS (**create_node_in ims**)
-
-    2.  Reserve IP addresses in IPAM (**reserve_loopback_addresses**)
-
-    3.  Provision subscription in the network
-        (**provision_node_in_nrm**)
-
-5.  Transition subscription to active and ‘in sync’
-    (**@create_workflow**)
+1. Collect input from user (`initial_input_form`)
+2. Instantiate subscription (`construct_node_model`):
+    1. Create inactive subscription model
+    2. assign user input to subscription
+    3. transition to subscription to provisioning
+3. Register create process for this subscription (`store_process_subscription`)
+4. Interact with OSS and/or BSS, in this example
+    1. Administer subscription in IMS (`create_node_in ims`)
+    2. Reserve IP addresses in IPAM (`reserve_loopback_addresses`)
+    3. Provision subscription in the network (`provision_node_in_nrm`)
+5. Transition subscription to active and ‘in sync’ (`@create_workflow`)
 
 As long as every step remains as idempotent as possible, the work can be
 divided over fewer or more steps as desired.
@@ -751,12 +728,12 @@ for example the title of the form page.
 <span id="_Toc152947598" class="anchor"></span>Figure : Create workflow
 input form
 
-class CreateNodeForm(FormPage):  
-class Config:  
-title = product_name  
-  
-role_id: node_role_selector(node_type)  
-node_name: str  
+class CreateNodeForm(FormPage):
+class Config:
+title = product_name
+
+role_id: node_role_selector(node_type)
+node_name: str
 node_description: str \| None
 
 By default, Pydantic validates the input against the specified type and
@@ -766,10 +743,10 @@ below.
 
 <span id="_Toc152947599" class="anchor"></span>Figure : Input validator
 
-@validator("vlan", allow_reuse=True)  
-def valid_vlan(cls, v: int):  
-if v \< 2 or v \> 4094:  
-raise AssertionError("VLAN ID must be between 2 and 4094 (inclusive)")  
+@validator("vlan", allow_reuse=True)
+def valid_vlan(cls, v: int):
+if v \< 2 or v > 4094:
+raise AssertionError("VLAN ID must be between 2 and 4094 (inclusive)")
 return v
 
 The node role is defined as type Choice and will be rendered as a
@@ -779,16 +756,16 @@ defined in Netbox.
 <span id="_Toc152947600" class="anchor"></span>Figure : Choice
 definition
 
-def node_role_selector() -\> Choice:  
+def node_role_selector() -> Choice:
 roles = {str(role.id): role.name for role in
-netbox.get_device_roles()}  
+netbox.get_device_roles()}
 return Choice("RolesEnum", zip(roles.keys(), roles.items()))
 
 When more than one item needs to be selected, a choice_list() can be
 used to specify the constraints, for example to select multiple ports
 for a L2VPN:
 
-choice = Choice("PortsEnum", zip(ports.keys(), ports.items()))  
+choice = Choice("PortsEnum", zip(ports.keys(), ports.items()))
 return choice_list(choice, min_items=2, max_items=8, unique_items=True)
 
 Finally, a summary form is shown with the user supplied values. When a
@@ -802,53 +779,53 @@ summary form
 <span id="_Toc152947602" class="anchor"></span>Figure : Choice list
 definition
 
-summary_fields = \["role_id", "node_name", "node_description"\]  
+summary_fields = ["role_id", "node_name", "node_description"]
 yield from create_summary_form(user_input_dict, product_name,
 summary_fields)
 
 ### Modify workflow
 
 A modify workflow also follows a general pattern, like described below.
-The **@modify_workflow** decorator adds some additional steps to the
+The `@modify_workflow` decorator adds some additional steps to the
 workflow that are always needed.
 
 @modify_workflow("Modify node",
-initial_input_form=initial_input_form_generator)  
-def modify_node() -\> StepList:  
-return (  
-begin  
-\>\> set_status(SubscriptionLifecycle.PROVISIONING)  
-\>\> update_subscription  
-\>\> update_node_in_ims
+initial_input_form=initial_input_form_generator)
+def modify_node() -> StepList:
+return (
+begin
+>> set_status(SubscriptionLifecycle.PROVISIONING)
+>> update_subscription
+>> update_node_in_ims
 
-\>\> update_node_in_nrm  
-\>\> set_status(SubscriptionLifecycle.ACTIVE)  
+>> update_node_in_nrm
+>> set_status(SubscriptionLifecycle.ACTIVE)
 )
 
 <span id="_Toc152947603" class="anchor"></span>Figure : Modify workflow
 
-1.  Collect input from user (**initial_input_form**)
+1.Collect input from user (`initial_input_form`)
 
-2.  Necessary subscription administration (**@modify_workflow**):
+2.Necessary subscription administration (`@modify_workflow`):
 
-    1.  Register modify process for this subscription
+1.Register modify process for this subscription
 
-    2.  Set subscription ‘out of sync’ to prevent the start of other
-        processes
+2.Set subscription ‘out of sync’ to prevent the start of other
+processes
 
-3.  Transition subscription to Provisioning (**set_status**)
+3.Transition subscription to Provisioning (`set_status`)
 
-4.  Update subscription with the user input
+4.Update subscription with the user input
 
-5.  Interact with OSS and/or BSS, in this example
+5.Interact with OSS and/or BSS, in this example
 
-    1.  Update subscription in IMS (**update_node_in ims**)
+1.Update subscription in IMS (`update_node_in ims`)
 
-    2.  Update subscription in NRM (**update_node_in nrm**)
+2.Update subscription in NRM (`update_node_in nrm`)
 
-6.  Transition subscription to active (**set_status**)
+6.Transition subscription to active (`set_status`)
 
-7.  Set subscription ‘in sync’ (**@modify_workflow**)
+7.Set subscription ‘in sync’ (`@modify_workflow`)
 
 Like a create workflow, the modify workflow also uses an initial input
 form but this time to only collect the values from the user that need to
@@ -862,9 +839,9 @@ optional.
 <span id="_Toc152947604" class="anchor"></span>Figure : Modify workflow
 input form
 
-class ModifyNodeForm(FormPage):  
-node_name: str = ReadOnlyField(node.node_name)  
-node_status: node_status_selector() = node.node_status  
+class ModifyNodeForm(FormPage):
+node_name: str = ReadOnlyField(node.node_name)
+node_status: node_status_selector() = node.node_status
 node_description: str \| None = node.node_description
 
 After a summary form has been shown that lists the current and the new
@@ -873,56 +850,56 @@ values, the modify workflow is started.
 <span id="_Toc152947605" class="anchor"></span>Figure : Modify workflow
 summary form
 
-summary_fields = \["node_status", "node_name", "node_description"\]  
+summary_fields = ["node_status", "node_name", "node_description"]
 yield from modify_summary_form(user_input_dict, subscription.node,
 summary_fields)
 
 ### Terminate workflow
 
 At the end of the subscription lifecycle, the terminate workflow updates
-all OSS and BSS accordingly, and the **@terminate_workflow** decorator
+all OSS and BSS accordingly, and the `@terminate_workflow` decorator
 takes care of most of the necessary subscription administration.
 
 <span id="_Toc152947606" class="anchor"></span>Figure : Terminate
 workflow
 
 @terminate_workflow("Terminate node",
-initial_input_form=initial_input_form_generator)  
-def terminate_node() -\> StepList:  
+initial_input_form=initial_input_form_generator)
+def terminate_node() -> StepList:
 return (
 
 begin
 
-\>\> load_initial_state
+>> load_initial_state
 
-\>\> delete_node_from_ims
+>> delete_node_from_ims
 
-\>\> deprovision_node_in_nrm
+>> deprovision_node_in_nrm
 
-1.  Show subscription details and ask user to confirm termination
-    (**initial_input_form**)
+1.Show subscription details and ask user to confirm termination
+(`initial_input_form`)
 
-2.  Necessary subscription administration (**@terminate_workflow**):
+2.Necessary subscription administration (`@terminate_workflow`):
 
-    1.  Register terminate process for this subscription
+1.Register terminate process for this subscription
 
-    2.  Set subscription ‘out of sync’ to prevent the start of other
-        processes
+2.Set subscription ‘out of sync’ to prevent the start of other
+processes
 
-3.  Get subscription and add information for following steps to the
-    State (**load_initial_state**)
+3.Get subscription and add information for following steps to the
+State (`load_initial_state`)
 
-4.  Interact with OSS and/or BSS, in this example
+4.Interact with OSS and/or BSS, in this example
 
-    1.  Delete node in IMS (**delete_node_in ims**)
+1.Delete node in IMS (`delete_node_in ims`)
 
-    2.  Deprovision node in NRM (**deprovision_node_in_nrm**)
+2.Deprovision node in NRM (`deprovision_node_in_nrm`)
 
-5.  Necessary subscription administration (**@terminate_workflow**)
+5.Necessary subscription administration (`@terminate_workflow`)
 
-    1.  Transition subscription to terminated
+1.Transition subscription to terminated
 
-    2.  Set subscription ‘in sync’
+2.Set subscription ‘in sync’
 
 The initial input form for the terminate workflow is very simple, it
 only has to show the details of the subscription:
@@ -930,7 +907,7 @@ only has to show the details of the subscription:
 <span id="_Toc152947607" class="anchor"></span>Figure : Terminate
 workflow input form
 
-class TerminateForm(FormPage):  
+class TerminateForm(FormPage):
 subscription_id: DisplaySubscription = subscription_id
 
 ### Validate workflows
@@ -941,48 +918,48 @@ subscription. One way to do this is to reconstruct the payload sent to
 the external system using information queried from that system, and
 compare this with the payload that would have been sent by generating a
 payload based on the current state of the subscription. The
-**@validate_workflow** decorator takes care of necessary subscription
+`@validate_workflow` decorator takes care of necessary subscription
 administration. There is no initial input form for this type of
 workflow.
 
-@validate_workflow("Validate l2vpn")  
-def validate_l2vpn() -\> StepList:  
+@validate_workflow("Validate l2vpn")
+def validate_l2vpn() -> StepList:
 return (
 
 begin
 
-\>\> validate_l2vpn_in_ims
+>> validate_l2vpn_in_ims
 
-\>\> validate_l2vpn_terminations_in_ims
+>> validate_l2vpn_terminations_in_ims
 
-\>\> validate_vlans_on_ports_in_ims
+>> validate_vlans_on_ports_in_ims
 
 )
 
-1.  Necessary subscription administration (**@validate_workflow**):
+1.Necessary subscription administration (`@validate_workflow`):
 
 <span id="_Toc152947608" class="anchor"></span>Figure : Validate
 workflow
 
-1.  Register validate process for this subscription
+1.Register validate process for this subscription
 
-2.  Set subscription ‘out of sync’, even when subscription is already
-    out of sync
+2.Set subscription ‘out of sync’, even when subscription is already
+out of sync
 
 <!-- -->
 
-2.  One or more steps to validate the subscription against all OSS and
-    BSS:
+2.One or more steps to validate the subscription against all OSS and
+BSS:
 
-    1.  Validate subscription against IMS:
+1.Validate subscription against IMS:
 
-        1.  **validate_l2vpn_in_ims**
+1.`validate_l2vpn_in_ims`
 
-        2.  **validate_l2vpn_terminations_in_ims**
+2.`validate_l2vpn_terminations_in_ims`
 
-        3.  **validate_vlans_on_ports_in_ims**
+3.`validate_vlans_on_ports_in_ims`
 
-3.  Set subscription ‘in sync’ again (**@validate_workflow**)
+3.Set subscription ‘in sync’ again (`@validate_workflow`)
 
 When one of the validation steps fail, the subscription will stay ‘out
 of sync’, prohibiting other workflows to be started for this
@@ -1004,7 +981,7 @@ system.
 Not only validations per subscription can be done, is also possible to
 validate other requirements. For example, to make sure that there are no
 L2VPNs administered in IMS that do not have a matching subscription in
-the orchestrator, a task (a workflow with **Target.SYSTEM)** can be
+the orchestrator, a task (a workflow with `Target.SYSTEM)` can be
 written that will retrieve a list of all L2VPNs from IMS and compare it
 against a list of all L2VPN subscription from the orchestrator.
 
@@ -1019,13 +996,13 @@ Python does not allow function overloading, but similar functionality
 can be achieved through the use of the single dispatch feature that is
 part of the standard Python library.
 
-First, an interface is defined and decorated with **@singledispatch**.
+First, an interface is defined and decorated with `@singledispatch`.
 Then different nameless functions can be registered that implement that
 interface but for different parameters. Note that only the first
 parameter will be taken into account to decide which one of the
 functions need to be execute.
 
-A helper function called **single_dispatch_base()** is used to keep
+A helper function called `single_dispatch_base()` is used to keep
 track of all registered functions and the type of their first argument.
 This allows for more informative error messages when the single dispatch
 function is called with an unsupported parameter.
@@ -1046,12 +1023,12 @@ matching function.
 <span id="_Toc152947609" class="anchor"></span>Figure : Single dispatch
 description
 
-@singledispatch  
+@singledispatch
 def description(
 
-model: Union\[ProductModel, ProductBlockModel, SubscriptionModel\]
+model: Union[ProductModel, ProductBlockModel, SubscriptionModel]
 
-) -\> str:  
+) -> str:
 return single_dispatch_base(description, model)
 
 Then, implementations of the description function can be registered,
@@ -1062,8 +1039,8 @@ followed by the status of the node in parenthesis.
 <span id="_Toc152947610" class="anchor"></span>Figure : Single dispatch
 description register
 
-@description.register  
-def \_(product: NodeProvisioning) -\> str:  
+@description.register
+def \_(product: NodeProvisioning) -> str:
 return f"node {product.node.node_name} ({product.node.node_status})"
 
 ### Netbox
@@ -1076,19 +1053,19 @@ interface with Netbox.
 
 #### Payload
 
-The **build_payload()** single dispatch allows a first argument of type
+The `build_payload()` single dispatch allows a first argument of type
 product block model, and a subscription model parameter that is used
 when related information is needed from other parts of the subscription.
 The specified return type is the base class that is used for all Netbox
 payload definitions.
 
-@singledispatch  
+@singledispatch
 def build_payload(
 
 model: ProductBlockModel, subscription: SubscriptionModel, \*\*kwargs:
 Any
 
-) -\> netbox.NetboxPayload:  
+) -> netbox.NetboxPayload:
 return single_dispatch_base(build_payload, model)
 
 When the payload is generated from a product block, the correct mapping
@@ -1099,26 +1076,26 @@ Interface type in Netbox, as can be seen below.
 <span id="_Toc152947611" class="anchor"></span>Figure : Single dispatch
 Netbox payload
 
-@build_payload.register  
+@build_payload.register
 def \_(
 
 model: PortBlockProvisioning, subscription: SubscriptionModel
 
-) -\> netbox.InterfacePayload:  
-return build_port_payload(model, subscription)  
-  
-def build_port_payload(  
-model: PortBlockProvisioning, subscription: SubscriptionModel  
-) -\> netbox.InterfacePayload:  
-return netbox.InterfacePayload(  
-device=model.node.ims_id,  
-name=model.port_name,  
-type=model.port_type,  
-tagged_vlans=model.vlan_ims_ids,  
-mode="tagged" if model.port_mode == PortMode.TAGGED else "",  
-description=model.port_description,  
-enabled=model.enabled,  
-speed=subscription.speed \* 1000,  
+) -> netbox.InterfacePayload:
+return build_port_payload(model, subscription)
+
+def build_port_payload(
+model: PortBlockProvisioning, subscription: SubscriptionModel
+) -> netbox.InterfacePayload:
+return netbox.InterfacePayload(
+device=model.node.ims_id,
+name=model.port_name,
+type=model.port_type,
+tagged_vlans=model.vlan_ims_ids,
+mode="tagged" if model.port_mode == PortMode.TAGGED else "",
+description=model.port_description,
+enabled=model.enabled,
+speed=subscription.speed \* 1000,
 )
 
 <span id="_Toc152947612" class="anchor"></span>Figure : Single dispatch
@@ -1133,25 +1110,25 @@ multiplication by 1000 is to convert between Mbit/s and Kbit/s.
 #### Create
 
 To create an object in Netbox based on the type of Netbox payload, the
-single dispatch **create()** is used:
+single dispatch `create()` is used:
 
 <span id="_Toc152947613" class="anchor"></span>Figure : Single dispatch
 Netbox create
 
-@singledispatch  
-def create(payload: NetboxPayload, \*\*kwargs: Any) -\> int:  
+@singledispatch
+def create(payload: NetboxPayload, \*\*kwargs: Any) -> int:
 return single_dispatch_base(create, payload)
 
 When registering the payload type, a keyword argument is used to inject
 the matching endpoint on the Netbox API that is used to create the
 desired object. In the example below can be seen that interface payload
-is to be used against the **api.dcim.interfaces** endpoint.
+is to be used against the `api.dcim.interfaces` endpoint.
 
 <span id="_Toc152947614" class="anchor"></span>Figure : Single dispatch
 Netbox create register
 
-@create.register  
-def \_(payload: InterfacePayload, \*\*kwargs: Any) -\> int:  
+@create.register
+def \_(payload: InterfacePayload, \*\*kwargs: Any) -> int:
 return \_create_object(payload, endpoint=api.dcim.interfaces)
 
 Finally, the payload is used to generate a dictionary as expected by
@@ -1162,9 +1139,9 @@ by the Netbox API.
 <span id="_Toc152947615" class="anchor"></span>Figure : Netbox service
 create object
 
-def \_create_object(payload: NetboxPayload, endpoint: Endpoint) -\>
-int:  
-object = endpoint.create(payload.dict())  
+def \_create_object(payload: NetboxPayload, endpoint: Endpoint) ->
+int:
+object = endpoint.create(payload.dict())
 return object.id
 
 The ID of the object that is created in Netbox is returned so that it
@@ -1173,15 +1150,15 @@ object needs to be modified or deleted.
 
 #### Update
 
-The single dispatch **update()** is defined in a similar way, the only
+The single dispatch `update()` is defined in a similar way, the only
 difference is that an additional argument is used to specify the ID of
 the object in Netbox that needs to be updated.
 
 <span id="_Toc152947616" class="anchor"></span>Figure : Single dispatch
 Netbox update
 
-@update.register  
-def \_(payload: InterfacePayload, id: int, \*\*kwargs: Any) -\> bool:  
+@update.register
+def \_(payload: InterfacePayload, id: int, \*\*kwargs: Any) -> bool:
 return \_update_object(payload, id, endpoint=api.dcim.interfaces)
 
 The ID is used to fetch the object from the Netbox API, update the
@@ -1189,9 +1166,9 @@ object with the dictionary created from the supplied payload, and send
 the update to Netbox.
 
 def \_update_object(payload: NetboxPayload, id: int, endpoint: Endpoint)
--\> bool:  
-object = endpoint.get(id)  
-object.update(payload.dict())  
+-> bool:
+object = endpoint.get(id)
+object.update(payload.dict())
 return object.save()
 
 <span id="_Toc152947617" class="anchor"></span>Figure : Netbox service
@@ -1205,17 +1182,17 @@ single object, or a list of objects, of a specific type from Netbox.
 <span id="_Toc152947618" class="anchor"></span>Figure : Netbox service
 get object(s)
 
-def get_interfaces(\*\*kwargs) -\> List:  
-return api.dcim.interfaces.filter(\*\*kwargs)  
-  
-  
-def get_interface(\*\*kwargs):  
+def get_interfaces(\*\*kwargs) -> List:
+return api.dcim.interfaces.filter(\*\*kwargs)
+
+
+def get_interface(\*\*kwargs):
 return api.dcim.interfaces.get(\*\*kwargs)
 
 Both types of helpers accept keyword arguments that can be used to
 specify the object(s) that are wanted. For example
-**get_inteface(id=3)** will fetch the single interface object with ID
-equal to 3 from Netbox. And **get_interfaces(speed=1000000)** will get a
+`get_inteface(id=3)` will fetch the single interface object with ID
+equal to 3 from Netbox. And `get_interfaces(speed=1000000)` will get a
 list of all interface objects from Netbox that have a speed of 1Gbit/s.
 
 #### Delete
@@ -1226,7 +1203,7 @@ example, to delete an Interface object from Netbox, see below.
 <span id="_Toc152947619" class="anchor"></span>Figure : Netbox service
 delete
 
-def delete_interface(\*\*kwargs) -\> None:  
+def delete_interface(\*\*kwargs) -> None:
 delete_from_netbox(api.dcim.interfaces, \*\*kwargs)
 
 The keyword arguments allow for different ways to select the object to
@@ -1235,8 +1212,8 @@ be deleted, as long as the supplied arguments result in a single object.
 <span id="_Toc152947620" class="anchor"></span>Figure : Netbox service
 delete object
 
-def delete_from_netbox(endpoint, \*\*kwargs) -\> None:  
-object = endpoint.get(\*\*kwargs):  
+def delete_from_netbox(endpoint, \*\*kwargs) -> None:
+object = endpoint.get(\*\*kwargs):
 object.delete()
 
 #### Product block to Netbox object mapping
@@ -1307,20 +1284,20 @@ L2VPN type mapping
 **WFO** WorkFlow Orchestrator
 
 [^1]: M7.3 Common NREN Network Service Product Models -
-    https://resources.geant.org/wp-content/uploads/2023/06/M7.3_Common-NREN-Network-Service-Product-Models.pdf
+https://resources.geant.org/wp-content/uploads/2023/06/M7.3_Common-NREN-Network-Service-Product-Models.pdf
 
 [^2]: Workflow Orchestrator website -
-    https://workfloworchestrator.org/orchestrator-core/
+https://workfloworchestrator.org/orchestrator-core/
 
 [^3]: Netbox is a tool for data center infrastructure management and IP
-    address management - https://netbox.dev
+address management - https://netbox.dev
 
 [^4]: The Python SQL Toolkit and Object Relational Mapper -
-    https://www.sqlalchemy.org
+https://www.sqlalchemy.org
 
 [^5]: ASGI server Uvicorn - https://www.uvicorn.org
 
 [^6]: Pydantic is a data validation library for Python -
-    https://pydantic.dev/
+https://pydantic.dev/
 
 [^7]: Pynetbox Python API - https://github.com/netbox-community/pynetbox
