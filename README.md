@@ -1,12 +1,11 @@
 # Example Workflow Orchestrator
 
 Example workflow orchestrator implementation based on the
-(https://workfloworchestrator.org/orchestrator-core/) framework.
+[orchestrator-core](https://workfloworchestrator.org/orchestrator-core/) framework.
 
 - [Quickstart](#quickstart)
     * [Start application](#start-application)
     * [Using the example orchestrator](#using-the-example-orchestrator)
-- [Abstract](#abstract)
 - [Summary](#summary)
 - [Introduction](#introduction)
 - [Example orchestrator](#example-orchestrator)
@@ -101,15 +100,6 @@ pages to see the orchestrator interact with netbox:
 - Overlay
 - L2VPNs
 - Terminations
-
-
-## Abstract
-
-A set of best common practices is explained using on an orchestrator
-implementation based on the open source Workflow Orchestrator. A basic
-set of NREN products and workflow is modelled for a Node, Core Link,
-Customer port and L2VPN service, together with the an IMS and IPAM
-integration using Netbox.
 
 ## Summary
 
