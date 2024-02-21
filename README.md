@@ -336,9 +336,9 @@ port.
 When this example orchestrator is deployed, it can create a growing
 graph of product blocks as is shown below.
 
-<!--![Product block graph](subscriptions.png)-->
-<img src=".pictures/subscriptions.png" alt="Product block graph" width=75% height=75% align="center">
-
+![Product block graph](.pictures/subscriptions.png)
+<!--<img src=".pictures/subscriptions.png" alt="Product block graph" width=75% height=75% align="center">
+-->
 ## How to use
 
 human workflows regarding the delivery of products to customers are
