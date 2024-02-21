@@ -734,54 +734,48 @@ class CreateNodeForm(FormPage):
    node_name: str
    node_description: str | None
 ```
-<figure><figcaption></figure>
 
 By default, Pydantic validates the input against the specified type and
 will signal missing input fields. But custom validations can also be
 added, like a check on the validity of the entered VLAN ID as shown
 below.
 
-<span id="_Toc152947599" class="anchor"></span>Figure : Input validator
-
+```python
 @validator("vlan", allow_reuse=True)
 def valid_vlan(cls, v: int):
-if v \< 2 or v > 4094:
-raise AssertionError("VLAN ID must be between 2 and 4094 (inclusive)")
-return v
+    if v < 2 or v > 4094:
+        raise AssertionError("VLAN ID must be between 2 and 4094 (inclusive)")
+    return v
+```
 
 The node role is defined as type Choice and will be rendered as a
 dropdown that is filled with a mapping between the role IDs and names as
 defined in Netbox.
 
-<span id="_Toc152947600" class="anchor"></span>Figure : Choice
-definition
-
+```python
 def node_role_selector() -> Choice:
-roles = {str(role.id): role.name for role in
-netbox.get_device_roles()}
-return Choice("RolesEnum", zip(roles.keys(), roles.items()))
+    roles = {str(role.id): role.name for role in netbox.get_device_roles()}
+    return Choice("RolesEnum", zip(roles.keys(), roles.items()))
+```
 
 When more than one item needs to be selected, a choice_list() can be
 used to specify the constraints, for example to select multiple ports
 for a L2VPN:
 
+```python
 choice = Choice("PortsEnum", zip(ports.keys(), ports.items()))
 return choice_list(choice, min_items=2, max_items=8, unique_items=True)
+```
 
 Finally, a summary form is shown with the user supplied values. When a
 value appears to be incorrect, the user can go back to the previous form
 to correct the mistake, otherwise, when the form is submitted, the
 workflow is kicked off.
 
-<span id="_Toc152947601" class="anchor"></span>Figure : Create workflow
-summary form
-
-<span id="_Toc152947602" class="anchor"></span>Figure : Choice list
-definition
-
+```python
 summary_fields = ["role_id", "node_name", "node_description"]
-yield from create_summary_form(user_input_dict, product_name,
-summary_fields)
+yield from create_summary_form(user_input_dict, product_name, summary_fields)
+```
 
 ### Modify workflow
 
@@ -789,43 +783,30 @@ A modify workflow also follows a general pattern, like described below.
 The `@modify_workflow` decorator adds some additional steps to the
 workflow that are always needed.
 
-@modify_workflow("Modify node",
-initial_input_form=initial_input_form_generator)
+```pyrhon
+@modify_workflow("Modify node", initial_input_form=initial_input_form_generator)
 def modify_node() -> StepList:
-return (
-begin
->> set_status(SubscriptionLifecycle.PROVISIONING)
->> update_subscription
->> update_node_in_ims
+    return (
+        begin
+        >> set_status(SubscriptionLifecycle.PROVISIONING)
+        >> update_subscription
+        >> update_node_in_ims
+        >> update_node_in_nrm
+        >> set_status(SubscriptionLifecycle.ACTIVE)
+    )
+```
 
->> update_node_in_nrm
->> set_status(SubscriptionLifecycle.ACTIVE)
-)
-
-<span id="_Toc152947603" class="anchor"></span>Figure : Modify workflow
-
-1.Collect input from user (`initial_input_form`)
-
-2.Necessary subscription administration (`@modify_workflow`):
-
-1.Register modify process for this subscription
-
-2.Set subscription ‘out of sync’ to prevent the start of other
-processes
-
-3.Transition subscription to Provisioning (`set_status`)
-
-4.Update subscription with the user input
-
-5.Interact with OSS and/or BSS, in this example
-
-1.Update subscription in IMS (`update_node_in ims`)
-
-2.Update subscription in NRM (`update_node_in nrm`)
-
-6.Transition subscription to active (`set_status`)
-
-7.Set subscription ‘in sync’ (`@modify_workflow`)
+1. Collect input from user (`initial_input_form`)
+2. Necessary subscription administration (`@modify_workflow`):
+    1. Register modify process for this subscription
+    2. Set subscription ‘out of sync’ to prevent the start of other processes
+3. Transition subscription to Provisioning (`set_status`)
+4. Update subscription with the user input
+5. Interact with OSS and/or BSS, in this example
+    1. Update subscription in IMS (`update_node_in ims`)
+    2. Update subscription in NRM (`update_node_in nrm`)
+6. Transition subscription to active (`set_status`)
+7. Set subscription ‘in sync’ (`@modify_workflow`)
 
 Like a create workflow, the modify workflow also uses an initial input
 form but this time to only collect the values from the user that need to
@@ -836,23 +817,20 @@ but cannot be changed, the node status can be changed and the dropdown
 is set to the current node status, and the node description is still
 optional.
 
-<span id="_Toc152947604" class="anchor"></span>Figure : Modify workflow
-input form
-
+```python
 class ModifyNodeForm(FormPage):
-node_name: str = ReadOnlyField(node.node_name)
-node_status: node_status_selector() = node.node_status
-node_description: str | None = node.node_description
+    node_name: str = ReadOnlyField(node.node_name)
+    node_status: node_status_selector() = node.node_status
+    node_description: str | None = node.node_description
+```
 
 After a summary form has been shown that lists the current and the new
 values, the modify workflow is started.
 
-<span id="_Toc152947605" class="anchor"></span>Figure : Modify workflow
-summary form
-
+```python
 summary_fields = ["node_status", "node_name", "node_description"]
-yield from modify_summary_form(user_input_dict, subscription.node,
-summary_fields)
+yield from modify_summary_form(user_input_dict, subscription.node, summary_fields)
+```
 
 ### Terminate workflow
 
@@ -860,55 +838,37 @@ At the end of the subscription lifecycle, the terminate workflow updates
 all OSS and BSS accordingly, and the `@terminate_workflow` decorator
 takes care of most of the necessary subscription administration.
 
-<span id="_Toc152947606" class="anchor"></span>Figure : Terminate
-workflow
-
+```python
 @terminate_workflow("Terminate node",
 initial_input_form=initial_input_form_generator)
 def terminate_node() -> StepList:
-return (
+    return (
+        begin
+        >> load_initial_state
+        >> delete_node_from_ims
+        >> deprovision_node_in_nrm
+    )
+```
 
-begin
-
->> load_initial_state
-
->> delete_node_from_ims
-
->> deprovision_node_in_nrm
-
-1.Show subscription details and ask user to confirm termination
-(`initial_input_form`)
-
-2.Necessary subscription administration (`@terminate_workflow`):
-
-1.Register terminate process for this subscription
-
-2.Set subscription ‘out of sync’ to prevent the start of other
-processes
-
-3.Get subscription and add information for following steps to the
-State (`load_initial_state`)
-
-4.Interact with OSS and/or BSS, in this example
-
-1.Delete node in IMS (`delete_node_in ims`)
-
-2.Deprovision node in NRM (`deprovision_node_in_nrm`)
-
-5.Necessary subscription administration (`@terminate_workflow`)
-
-1.Transition subscription to terminated
-
-2.Set subscription ‘in sync’
+1. Show subscription details and ask user to confirm termination (`initial_input_form`)
+2. Necessary subscription administration (`@terminate_workflow`):
+    1. Register terminate process for this subscription
+    2. Set subscription ‘out of sync’ to prevent the start of other processes
+3. Get subscription and add information for following steps to the State (`load_initial_state`)
+4. Interact with OSS and/or BSS, in this example
+    1. Delete node in IMS (`delete_node_in ims`)
+    2. Deprovision node in NRM (`deprovision_node_in_nrm`)
+5. Necessary subscription administration (`@terminate_workflow`)
+    1. Transition subscription to terminated
+    2. Set subscription ‘in sync’
 
 The initial input form for the terminate workflow is very simple, it
 only has to show the details of the subscription:
 
-<span id="_Toc152947607" class="anchor"></span>Figure : Terminate
-workflow input form
-
+```python
 class TerminateForm(FormPage):
-subscription_id: DisplaySubscription = subscription_id
+    subscription_id: DisplaySubscription = subscription_id
+```
 
 ### Validate workflows
 
@@ -922,44 +882,26 @@ payload based on the current state of the subscription. The
 administration. There is no initial input form for this type of
 workflow.
 
+```python
 @validate_workflow("Validate l2vpn")
 def validate_l2vpn() -> StepList:
-return (
+    return (
+        begin
+        >> validate_l2vpn_in_ims
+        >> validate_l2vpn_terminations_in_ims
+        >> validate_vlans_on_ports_in_ims
+   )
+```
 
-begin
-
->> validate_l2vpn_in_ims
-
->> validate_l2vpn_terminations_in_ims
-
->> validate_vlans_on_ports_in_ims
-
-)
-
-1.Necessary subscription administration (`@validate_workflow`):
-
-<span id="_Toc152947608" class="anchor"></span>Figure : Validate
-workflow
-
-1.Register validate process for this subscription
-
-2.Set subscription ‘out of sync’, even when subscription is already
-out of sync
-
-<!-- -->
-
-2.One or more steps to validate the subscription against all OSS and
-BSS:
-
-1.Validate subscription against IMS:
-
-1.`validate_l2vpn_in_ims`
-
-2.`validate_l2vpn_terminations_in_ims`
-
-3.`validate_vlans_on_ports_in_ims`
-
-3.Set subscription ‘in sync’ again (`@validate_workflow`)
+1. Necessary subscription administration (`@validate_workflow`):
+    1. Register validate process for this subscription
+    2. Set subscription ‘out of sync’, even when subscription is already out of sync
+2. One or more steps to validate the subscription against all OSS and BSS:
+    1. Validate subscription against IMS:
+        1. `validate_l2vpn_in_ims`
+        2. `validate_l2vpn_terminations_in_ims`
+        3. `validate_vlans_on_ports_in_ims`
+3. Set subscription ‘in sync’ again (`@validate_workflow`)
 
 When one of the validation steps fail, the subscription will stay ‘out
 of sync’, prohibiting other workflows to be started for this
@@ -981,11 +923,11 @@ system.
 Not only validations per subscription can be done, is also possible to
 validate other requirements. For example, to make sure that there are no
 L2VPNs administered in IMS that do not have a matching subscription in
-the orchestrator, a task (a workflow with `Target.SYSTEM)` can be
+the orchestrator, a task (a workflow with `Target.SYSTEM`) can be
 written that will retrieve a list of all L2VPNs from IMS and compare it
 against a list of all L2VPN subscription from the orchestrator.
 
-## Services\`
+## Services
 
 Services are collections of helper functions that deliver a service to
 other parts of the code base. The common programming pattern of function
@@ -1020,28 +962,22 @@ The description single dispatch allows a first argument of type product
 model, product block model, or subscription model, and will call the
 matching function.
 
-<span id="_Toc152947609" class="anchor"></span>Figure : Single dispatch
-description
-
+```python
 @singledispatch
-def description(
-
-model: Union[ProductModel, ProductBlockModel, SubscriptionModel]
-
-) -> str:
-return single_dispatch_base(description, model)
+def description(model: Union[ProductModel, ProductBlockModel, SubscriptionModel]) -> str:
+    return single_dispatch_base(description, model)
+```
 
 Then, implementations of the description function can be registered,
 like the generation of a description for a Node product, starting from
 the provisioning lifecycle state, that will show the name of the node
 followed by the status of the node in parenthesis.
 
-<span id="_Toc152947610" class="anchor"></span>Figure : Single dispatch
-description register
-
+```python
 @description.register
-def \_(product: NodeProvisioning) -> str:
-return f"node {product.node.node_name} ({product.node.node_status})"
+def _(product: NodeProvisioning) -> str:
+    return f"node {product.node.node_name} ({product.node.node_status})"
+```
 
 ### Netbox
 
@@ -1059,14 +995,11 @@ when related information is needed from other parts of the subscription.
 The specified return type is the base class that is used for all Netbox
 payload definitions.
 
+```python
 @singledispatch
-def build_payload(
-
-model: ProductBlockModel, subscription: SubscriptionModel, \*\*kwargs:
-Any
-
-) -> netbox.NetboxPayload:
-return single_dispatch_base(build_payload, model)
+def build_payload(model: ProductBlockModel, subscription: SubscriptionModel, \*\*kwargs: Any) -> netbox.NetboxPayload:
+    return single_dispatch_base(build_payload, model)
+```
 
 When the payload is generated from a product block, the correct mapping
 is made between the types used in the orchestrator and the types used in
