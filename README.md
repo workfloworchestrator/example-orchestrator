@@ -336,7 +336,7 @@ port.
 When this example orchestrator is deployed, it can create a growing
 graph of product blocks as is shown below.
 
-<img src=".pictures/subscriptions.png" alt="Product block graph" width=75% height=75%>
+<center><img src=".pictures/subscriptions.png" alt="Product block graph" width=75% height=75%></center>
 
 ### How to use
 
@@ -997,7 +997,7 @@ payload definitions.
 
 ```python
 @singledispatch
-def build_payload(model: ProductBlockModel, subscription: SubscriptionModel, \*\*kwargs: Any) -> netbox.NetboxPayload:
+def build_payload(model: ProductBlockModel, subscription: SubscriptionModel, **kwargs: Any) -> netbox.NetboxPayload:
     return single_dispatch_base(build_payload, model)
 ```
 
@@ -1006,33 +1006,23 @@ is made between the types used in the orchestrator and the types used in
 the OSS or BSS. For example, the Port product block maps on the
 Interface type in Netbox, as can be seen below.
 
-<span id="_Toc152947611" class="anchor"></span>Figure : Single dispatch
-Netbox payload
-
+```python
 @build_payload.register
-def \_(
+def _(model: PortBlockProvisioning, subscription: SubscriptionModel) -> netbox.InterfacePayload:
+    return build_port_payload(model, subscription)
 
-model: PortBlockProvisioning, subscription: SubscriptionModel
-
-) -> netbox.InterfacePayload:
-return build_port_payload(model, subscription)
-
-def build_port_payload(
-model: PortBlockProvisioning, subscription: SubscriptionModel
-) -> netbox.InterfacePayload:
-return netbox.InterfacePayload(
-device=model.node.ims_id,
-name=model.port_name,
-type=model.port_type,
-tagged_vlans=model.vlan_ims_ids,
-mode="tagged" if model.port_mode == PortMode.TAGGED else "",
-description=model.port_description,
-enabled=model.enabled,
-speed=subscription.speed \* 1000,
-)
-
-<span id="_Toc152947612" class="anchor"></span>Figure : Single dispatch
-Netbox payload register
+def build_port_payload(model: PortBlockProvisioning, subscription: SubscriptionModel) -> netbox.InterfacePayload:
+    return netbox.InterfacePayload(
+        device=model.node.ims_id,
+        name=model.port_name,
+        type=model.port_type,
+        tagged_vlans=model.vlan_ims_ids,
+        mode="tagged" if model.port_mode == PortMode.TAGGED else "",
+        description=model.port_description,
+        enabled=model.enabled,
+        speed=subscription.speed * 1000,
+    )
+```
 
 The values from the product block are copied to the appropriate place in
 the Interface payload. The interface payload field names match the ones
@@ -1045,37 +1035,33 @@ multiplication by 1000 is to convert between Mbit/s and Kbit/s.
 To create an object in Netbox based on the type of Netbox payload, the
 single dispatch `create()` is used:
 
-<span id="_Toc152947613" class="anchor"></span>Figure : Single dispatch
-Netbox create
-
+```python
 @singledispatch
-def create(payload: NetboxPayload, \*\*kwargs: Any) -> int:
-return single_dispatch_base(create, payload)
+def create(payload: NetboxPayload, **kwargs: Any) -> int:
+    return single_dispatch_base(create, payload)
+```
 
 When registering the payload type, a keyword argument is used to inject
 the matching endpoint on the Netbox API that is used to create the
 desired object. In the example below can be seen that interface payload
 is to be used against the `api.dcim.interfaces` endpoint.
 
-<span id="_Toc152947614" class="anchor"></span>Figure : Single dispatch
-Netbox create register
-
+```python
 @create.register
-def \_(payload: InterfacePayload, \*\*kwargs: Any) -> int:
-return \_create_object(payload, endpoint=api.dcim.interfaces)
+def _(payload: InterfacePayload, **kwargs: Any) -> int:
+    return _create_object(payload, endpoint=api.dcim.interfaces)
+```
 
 Finally, the payload is used to generate a dictionary as expected by
 that Netbox API endpoint. Notice that the names of the fields of the
 Netbox payload have to match the names of the fields that are expected
 by the Netbox API.
 
-<span id="_Toc152947615" class="anchor"></span>Figure : Netbox service
-create object
-
-def \_create_object(payload: NetboxPayload, endpoint: Endpoint) ->
-int:
-object = endpoint.create(payload.dict())
-return object.id
+```python
+def _create_object(payload: NetboxPayload, endpoint: Endpoint) -> int:
+    object = endpoint.create(payload.dict())
+    return object.id
+```
 
 The ID of the object that is created in Netbox is returned so that it
 can be registered in the subscription for later reference, e.q. when the
@@ -1087,40 +1073,36 @@ The single dispatch `update()` is defined in a similar way, the only
 difference is that an additional argument is used to specify the ID of
 the object in Netbox that needs to be updated.
 
-<span id="_Toc152947616" class="anchor"></span>Figure : Single dispatch
-Netbox update
-
+```python
 @update.register
-def \_(payload: InterfacePayload, id: int, \*\*kwargs: Any) -> bool:
-return \_update_object(payload, id, endpoint=api.dcim.interfaces)
+def _(payload: InterfacePayload, id: int, **kwargs: Any) -> bool:
+    return _update_object(payload, id, endpoint=api.dcim.interfaces)
+```
 
 The ID is used to fetch the object from the Netbox API, update the
 object with the dictionary created from the supplied payload, and send
 the update to Netbox.
 
-def \_update_object(payload: NetboxPayload, id: int, endpoint: Endpoint)
--> bool:
-object = endpoint.get(id)
-object.update(payload.dict())
-return object.save()
-
-<span id="_Toc152947617" class="anchor"></span>Figure : Netbox service
-update object
+```python
+def _update_object(payload: NetboxPayload, id: int, endpoint: Endpoint) -> bool:
+    object = endpoint.get(id)
+    object.update(payload.dict())
+    return object.save()
+```
 
 #### Get
 
 The Netbox service defines other helpers as well. For example, to get an
 single object, or a list of objects, of a specific type from Netbox.
 
-<span id="_Toc152947618" class="anchor"></span>Figure : Netbox service
-get object(s)
-
-def get_interfaces(\*\*kwargs) -> List:
-return api.dcim.interfaces.filter(\*\*kwargs)
+```python
+def get_interfaces(**kwargs) -> List:
+    return api.dcim.interfaces.filter(**kwargs)
 
 
-def get_interface(\*\*kwargs):
-return api.dcim.interfaces.get(\*\*kwargs)
+def get_interface(**kwargs):
+    return api.dcim.interfaces.get(**kwargs)
+```
 
 Both types of helpers accept keyword arguments that can be used to
 specify the object(s) that are wanted. For example
@@ -1133,21 +1115,19 @@ list of all interface objects from Netbox that have a speed of 1Gbit/s.
 Another set of helpers is defined to delete objects from Netbox. For
 example, to delete an Interface object from Netbox, see below.
 
-<span id="_Toc152947619" class="anchor"></span>Figure : Netbox service
-delete
-
-def delete_interface(\*\*kwargs) -> None:
-delete_from_netbox(api.dcim.interfaces, \*\*kwargs)
+```python
+def delete_interface(**kwargs) -> None:
+    delete_from_netbox(api.dcim.interfaces, **kwargs)
+```
 
 The keyword arguments allow for different ways to select the object to
 be deleted, as long as the supplied arguments result in a single object.
 
-<span id="_Toc152947620" class="anchor"></span>Figure : Netbox service
-delete object
-
-def delete_from_netbox(endpoint, \*\*kwargs) -> None:
-object = endpoint.get(\*\*kwargs):
-object.delete()
+```python
+def delete_from_netbox(endpoint, **kwargs) -> None:
+    object = endpoint.get(**kwargs)
+    object.delete()
+```
 
 #### Product block to Netbox object mapping
 
@@ -1164,23 +1144,18 @@ core link between two nodes, and how they map to the objects as
 administered in Netbox. The product blocks are in orange and the Netbox
 objects are in green.
 
-<img src="media/image5.png" style="width:3.66667in;height:5.5in" />
-
-<span id="_Toc152947621" class="anchor"></span>Figure : Node and core
-link type mapping
+<center><img src=".pictures/netbox_node_core_link.png" alt="Node and core link type mapping" width=45% height=45%></center>
 
 And the following diagram shows the mapping and relation between product
 blocks and Netbox objects for a L2VPN on customer ports between two
 nodes.
 
-<img src="media/image6.png" style="width:3.27778in;height:6.45833in" />
-
-<span id="_Toc152947622" class="anchor"></span>Figure : Node, port and
-L2VPN type mapping
+<center><img src=".pictures/netbox_node_port_l2vpn.png" alt="Node, port and L2VPN type mapping" width=40% height=40%></center>
 
 ## Glossary
 
-**API** Application Programming Interface
+<dl>
+<dt>API</dt><dd>Application Programming Interface</dd>
 
 **ASGI** Asynchronous Server Gateway Interface
 
@@ -1215,6 +1190,7 @@ L2VPN type mapping
 **SNMP** Simple Network Management Protocol
 
 **WFO** WorkFlow Orchestrator
+</dl>
 
 [^1]: M7.3 Common NREN Network Service Product Models -
 https://resources.geant.org/wp-content/uploads/2023/06/M7.3_Common-NREN-Network-Service-Product-Models.pdf
