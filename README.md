@@ -720,21 +720,21 @@ def create_node() -> StepList:
 As long as every step remains as idempotent as possible, the work can be
 divided over fewer or more steps as desired.
 
-The input form is created by subclassing the FormPage and add the input
+The input form is created by subclassing the `FormPage` and add the input
 fields together with the type and indication if they are optional or
 not. Additional form settings can be changed via the Config class, like
 for example the title of the form page.
 
-<span id="_Toc152947598" class="anchor"></span>Figure : Create workflow
-input form
-
+```python
 class CreateNodeForm(FormPage):
-class Config:
-title = product_name
+    class Config:
+        title = product_name
 
-role_id: node_role_selector(node_type)
-node_name: str
-node_description: str \| None
+   role_id: node_role_selector(node_type)
+   node_name: str
+   node_description: str | None
+```
+<figure><figcaption></figure>
 
 By default, Pydantic validates the input against the specified type and
 will signal missing input fields. But custom validations can also be
@@ -842,7 +842,7 @@ input form
 class ModifyNodeForm(FormPage):
 node_name: str = ReadOnlyField(node.node_name)
 node_status: node_status_selector() = node.node_status
-node_description: str \| None = node.node_description
+node_description: str | None = node.node_description
 
 After a summary form has been shown that lists the current and the new
 values, the modify workflow is started.
