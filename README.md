@@ -442,24 +442,19 @@ can transition from active to provisioning and back again many times,
 before it ends up terminated. The terminated state does not have its own
 type definition.
 
-<span id="_Toc152947591" class="anchor"></span>Figure : Product domain
-model
-
+```python
 class PortInactive(SubscriptionModel, is_base=True):  
-speed: PortSpeed  
-port: PortBlockInactive  
+	speed: PortSpeed  
+	port: PortBlockInactive  
   
+class PortProvisioning(PortInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]):  
+	speed: PortSpeed  
+	port: PortBlockProvisioning  
   
-class PortProvisioning(PortInactive,
-lifecycle=\[SubscriptionLifecycle.PROVISIONING\]):  
-speed: PortSpeed  
-port: PortBlockProvisioning  
-  
-  
-class Port(PortProvisioning,
-lifecycle=\[SubscriptionLifecycle.ACTIVE\]):  
-speed: PortSpeed  
-port: PortBlock
+class Port(PortProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):  
+	speed: PortSpeed  
+	port: PortBlock
+```
 
 As can be seen in the above example, the inactive product type
 definition is subclassed from SubScriptionModel, and the following
