@@ -3,6 +3,30 @@
 Example workflow orchestrator implementation based on the
 (https://workfloworchestrator.org/orchestrator-core/) framework.
 
+- [Quickstart](#quickstart)
+    * [Start application](#start-application)
+    * [Using the example orchestrator](#using-the-example-orchestrator)
+- [Abstract](#abstract)
+- [Summary](#summary)
+- [Introduction](#introduction)
+- [Example orchestrator](#example-orchestrator)
+    * [Folder layout](#folder-layout)
+    * [Main application](#main-application)
+    * [Implemented products](#implemented-products)
+    * [How to use](#how-to-use)
+- [Products](#products)
+    * [Product types](#product-types)
+    * [Product blocks](#product-blocks)
+- [Workflows](#workflows)
+    * [Create workflow](#create-workflow)
+    * [Modify workflow](#modify-workflow)
+    * [Terminate workflow](#terminate-workflow)
+    * [Validate workflows](#validate-workflows)
+- [Services](#services)
+    * [Subscription descriptions](#subscription-descriptions)
+    * [Netbox](#netbox)
+- [Glossary](#glossary)
+
 ## Quickstart
 
 ### Start application
@@ -1155,41 +1179,24 @@ nodes.
 ## Glossary
 
 <dl>
-<dt>API</dt><dd>Application Programming Interface</dd>
-
-**ASGI** Asynchronous Server Gateway Interface
-
-**BCP** Best Common Practice
-
-**BSS** Business Support System
-
-**gNMI** gRPC Network Management Interface
-
-**gRPC** generic Remote Procedure Call
-
-**GUI** Graphical User Interface
-
-**IMS** Inventory Management System
-
-**IPAM** IP Address Management
-
-**L2VPN** Layer 2 Virtual Private Network
-
-**L3VPN** Layer 3 Virtual Private Network
-
-**NETCONF** NETwork CONFiguration protocal
-
-**NREN** National Research and Education Network
-
-**OSS** Operation Support System
-
-**REST** REpresentational state transfer
-
-**SAP** Service Access Point
-
-**SNMP** Simple Network Management Protocol
-
-**WFO** WorkFlow Orchestrator
+<dt> API  </dt><dd>  Application Programming Interface </dd>
+<dt> ASGI </dt><dd>  Asynchronous Server Gateway Interface </dd>
+<dt> BCP </dt><dd> Best Common Practice </dd>
+<dt> BSS </dt><dd> Business Support System </dd>
+<dt> gNMI </dt><dd> gRPC Network Management Interface </dd>
+<dt> gRPC </dt><dd> generic Remote Procedure Call </dd>
+<dt> GUI </dt><dd> Graphical User Interface </dd>
+<dt> IMS </dt><dd> Inventory Management System </dd>
+<dt> IPAM </dt><dd> IP Address Management </dd>
+<dt> L2VPN </dt><dd> Layer 2 Virtual Private Network </dd>
+<dt> L3VPN </dt><dd> Layer 3 Virtual Private Network </dd>
+<dt> NETCONF </dt><dd> NETwork CONFiguration protocal </dd>
+<dt> NREN </dt><dd> National Research and Education Network </dd>
+<dt> OSS </dt><dd> Operation Support System </dd>
+<dt> REST </dt><dd> REpresentational state transfer </dd>
+<dt> SAP </dt><dd> Service Access Point </dd>
+<dt> SNMP </dt><dd> Simple Network Management Protocol </dd><dt>
+<dt> WFO </dt><dd> WorkFlow Orchestrator </dd>
 </dl>
 
 [^1]: M7.3 Common NREN Network Service Product Models -
