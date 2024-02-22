@@ -85,8 +85,8 @@ Use the following steps to see the example orchestrator in action:
 6. create a l2vpn
     1. use `New subscription` for a `l2vpn`, fill in the forms, and `Start workflow`
 
-While running the different workflows, have a look at the following netbox
-pages to see the orchestrator interact with netbox:
+While running the different workflows, have a look at the following
+netbox pages to see the orchestrator interact with netbox:
 
 - Devices
 - Devices
@@ -299,21 +299,36 @@ to define the helper functions as locally as possible.
 
 ### Main application
 
-The main application is as simple as shown below, and can be deployed by
-a ASGI server like Uvicorn[^5].
+The `main.py` can be as simple as shown below, and can be deployed by a
+ASGI server like Uvicorn[^5].
 
 ```python	
 from orchestrator import OrchestratorCore
+from orchestrator.cli.main import app as core_cli
 from orchestrator.settings import AppSettings
 
 import products
 import workflows
 
 app = OrchestratorCore(base_settings=AppSettings())
+app.register_graphql()
+
+if __name__ == "__main__":
+    core_cli()
 ```
 
-All other code is referenced by importing the products and workflows
-modules.
+All other orchestrator code is referenced by importing the `products`
+and `workflows` modules. The application is started with:
+
+```shell
+uvicorn --host localhost --port 8080 main:app
+```
+
+To use the orchestrator command line interface use:
+
+```shell
+python main.py --help
+```
 
 ### Implemented products
 
@@ -325,8 +340,8 @@ defined:
 - Port
 - L2vpn
 
-And in the `product.product_blocks` module the following product
-blocks are defined:
+And in the `product.product_blocks` module the following product blocks
+are defined:
 
 - NodeBlock
 - CoreLinkBlock
@@ -481,8 +496,6 @@ different lifecycle states if that suits your use case.
 Because a port is only available in a limited number of speeds, a
 separate type is declared with the allowed values, see below.
 
-<span id="_Toc152947592" class="anchor"></span>Figure : Type definition
-
 ```python
 from enum import IntEnum
 
@@ -517,8 +530,8 @@ SUBSCRIPTION_MODEL_REGISTRY.update(
 
 And all variants also have to entered into the database using a
 migration. The migration uses the create helper function from
-`orchestrator.migrations.helpers` that takes the following dictionary
-as an argument, see below. Notice that the name of the product and the
+`orchestrator.migrations.helpers` that takes the following dictionary as
+an argument, see below. Notice that the name of the product and the
 product type need to match with the subscription model registry.
 
 ```python
@@ -620,7 +633,6 @@ dynamically.
 class NodeBlock(NodeBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
     node_name: str
 
-
 class PortBlock(PortBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
     port_name: str
     node: NodeBlock
@@ -633,10 +645,10 @@ class Port(PortProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
     port: PortBlock
 ```
 
-A `@serializable_property` has been added that will dynamically render the
-title of the port product block. Even after a modify workflow was run to
-change the node name on the node subscription, the title of the port
-block will always be up to date. The title can be referenced as any
+A `@serializable_property` has been added that will dynamically render
+the title of the port product block. Even after a modify workflow was
+run to change the node name on the node subscription, the title of the
+port block will always be up to date. The title can be referenced as any
 other resource type using subscription.port.title. This is not a random
 example, the title of a product block is used by the orchestrator GUI
 while displaying detailed subscription information.
@@ -647,9 +659,9 @@ Four types of workflows are defined, three lifecycle related ones to
 create, modify and terminate subscriptions, and a fourth one to validate
 subscriptions against the OSS and BSS. The decorators
 `@create_workflow`, `@modify_workflow`, `@terminate_workflow`, and
-`@validate_workflow` are used to define the different types of
-workflow, and the `@step` decorator is used to define workflow steps
-that can be used in any type of workflow.
+`@validate_workflow` are used to define the different types of workflow,
+and the `@step` decorator is used to define workflow steps that can be
+used in any type of workflow.
 
 Information between workflow steps is passed using `State`, which is
 nothing more than a collection of key/value pairs, in Python represented
@@ -733,32 +745,28 @@ def create_node() -> StepList:
 As long as every step remains as idempotent as possible, the work can be
 divided over fewer or more steps as desired.
 
-The input form is created by subclassing the `FormPage` and add the input
-fields together with the type and indication if they are optional or
-not. Additional form settings can be changed via the Config class, like
-for example the title of the form page.
+The input form is created by subclassing the `FormPage` and add the
+input fields together with the type and indication if they are optional
+or not. Additional form settings can be changed via the Config class,
+like for example the title of the form page.
 
 ```python
 class CreateNodeForm(FormPage):
-    class Config:
-        title = product_name
+    model_config = ConfigDict(title=product_name)
 
-   role_id: node_role_selector(node_type)
-   node_name: str
-   node_description: str | None
+    role_id: NodeRoleChoice
+    node_name: str
+    node_description: str | None = None
 ```
 
 By default, Pydantic validates the input against the specified type and
-will signal missing input fields. But custom validations can also be
-added, like a check on the validity of the entered VLAN ID as shown
-below.
+will signal incorrect input and/or missing but required input fields.
+Type annotations can be used to describe additional constraints, for
+example a check on the validity of the entered VLAN ID can be sprecified
+as shown below, the type `Vlan` can then be used instead of `int`.
 
 ```python
-@validator("vlan", allow_reuse=True)
-def valid_vlan(cls, v: int):
-    if v < 2 or v > 4094:
-        raise AssertionError("VLAN ID must be between 2 and 4094 (inclusive)")
-    return v
+Vlan = Annotated[int, Ge(2), Le(4094), doc("Allowed VLAN ID range.")]
 ```
 
 The node role is defined as type Choice and will be rendered as a
@@ -769,15 +777,39 @@ defined in Netbox.
 def node_role_selector() -> Choice:
     roles = {str(role.id): role.name for role in netbox.get_device_roles()}
     return Choice("RolesEnum", zip(roles.keys(), roles.items()))
+
+NodeRoleChoice: TypeAlias = cast(type[Choice], node_role_selector())
 ```
 
-When more than one item needs to be selected, a choice_list() can be
-used to specify the constraints, for example to select multiple ports
-for a L2VPN:
+When more than one item needs to be selected, a `choice_list` can be
+used to specify the constraints, for example to select two ports for a
+point-to-point service:
 
 ```python
-choice = Choice("PortsEnum", zip(ports.keys(), ports.items()))
-return choice_list(choice, min_items=2, max_items=8, unique_items=True)
+def ports_selector(number_of_ports: int) -> type[list[Choice]]:
+    subscriptions = subscriptions_by_product_type("Port", [SubscriptionLifecycle.ACTIVE])
+    ports = {str(subscription.subscription_id): subscription.description for subscription in subscriptions)}
+    return choice_list(
+        Choice("PortsEnum", zip(ports.keys(), ports.items())),
+        min_items=number_of_ports,
+        max_items=number_of_ports,
+        unique_items=True,
+    )
+
+PortsChoiceList: TypeAlias = cast(type[Choice], ports_selector(2))
+```
+
+Validations between multiple fields is also possible by making use of
+the Pydantic `@model_validator` that gives access to all fields. To
+check if the A and B side of a point-to-point service are not on the
+same network node one could use:
+
+```python
+@model_validator(mode="after")
+def separate_nodes(self) -> "SelectNodes":
+    if self.node_subscription_id_b == self.node_subscription_id_a:
+        raise ValueError("node B cannot be the same as node A")
+    return self
 ```
 
 Finally, a summary form is shown with the user supplied values. When a
@@ -825,15 +857,15 @@ Like a create workflow, the modify workflow also uses an initial input
 form but this time to only collect the values from the user that need to
 be changed. Usually, only a subset of the values may be changed. To
 assist the user, additional values can be shown in the input form using
-read-only fields. In the example below, the name of the node is shown
-but cannot be changed, the node status can be changed and the dropdown
-is set to the current node status, and the node description is still
+`ReadOnlyField`. In the example below, the name of the node is shown but
+cannot be changed, the node status can be changed and the dropdown is
+set to the current node status, and the node description is still
 optional.
 
 ```python
 class ModifyNodeForm(FormPage):
-    node_name: str = ReadOnlyField(node.node_name)
-    node_status: node_status_selector() = node.node_status
+    node_name: ReadOnlyField(port.node.node_name)
+    node_status: NodeStatusChoice = node.node_status
     node_description: str | None = node.node_description
 ```
 
@@ -957,9 +989,9 @@ interface but for different parameters. Note that only the first
 parameter will be taken into account to decide which one of the
 functions need to be execute.
 
-A helper function called `single_dispatch_base()` is used to keep
-track of all registered functions and the type of their first argument.
-This allows for more informative error messages when the single dispatch
+A helper function called `single_dispatch_base()` is used to keep track
+of all registered functions and the type of their first argument.  This
+allows for more informative error messages when the single dispatch
 function is called with an unsupported parameter.
 
 ### Subscription descriptions
@@ -1112,16 +1144,15 @@ single object, or a list of objects, of a specific type from Netbox.
 def get_interfaces(**kwargs) -> List:
     return api.dcim.interfaces.filter(**kwargs)
 
-
 def get_interface(**kwargs):
     return api.dcim.interfaces.get(**kwargs)
 ```
 
 Both types of helpers accept keyword arguments that can be used to
-specify the object(s) that are wanted. For example
-`get_inteface(id=3)` will fetch the single interface object with ID
-equal to 3 from Netbox. And `get_interfaces(speed=1000000)` will get a
-list of all interface objects from Netbox that have a speed of 1Gbit/s.
+specify the object(s) that are wanted. For example `get_inteface(id=3)`
+will fetch the single interface object with ID equal to 3 from Netbox.
+And `get_interfaces(speed=1000000)` will get a list of all interface
+objects from Netbox that have a speed of 1Gbit/s.
 
 #### Delete
 
