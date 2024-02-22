@@ -38,7 +38,7 @@ Example workflow orchestrator
 docker compose up
 ```
 
-This will start the `orchestrator`, `orchestrator-ui`, orchestrator-gui,
+This will start the `orchestrator`, `orchestrator-ui`, `orchestrator-gui`,
 `netbox`, `postgres` and `redis`.
 
 To access the new v2 `orchestrator-ui`, point your browser to:
@@ -78,10 +78,10 @@ Use the following steps to see the example orchestrator in action:
 4. create a core link
     1. in the left-above corner, click on `New subscription`
     2. select either the `core link 10G` or `core link 100G`
-    3. fill in de forms and finally click on `Start workflow` to start the workflow
+    3. fill in the forms and finally click on `Start workflow` to start the workflow
 5. create a customer port (need at least two **tagged** ports to create a l2vpn)
     1. use `New subscription` for either a `port 10G` or a `port 100G`
-    3. fill in de forms and click on `Start workflow` to start the workflow
+    3. fill in the forms and click on `Start workflow` to start the workflow
 6. create a l2vpn
     1. use `New subscription` for a `l2vpn`, fill in the forms, and `Start workflow`
 
@@ -179,7 +179,7 @@ information while leaving others unautomated for the moment:
 - Not automated administration and provisioning of:
     - Role, make and model of the network nodes
     - Sites where network nodes are installed
-    - Customer sevices like Internet Access, L3VPN, …
+    - Customer services like Internet Access, L3VPN, …
     - Internet peering
 
 NetBox[^3] is used as IMS and IPAM, and serves as the source of truth
@@ -371,7 +371,7 @@ graph of product blocks as is shown below.
 human workflows regarding the delivery of products to customers are
 often comprehensive. To limit the scope of this example orchestrator,
 but still show the BCP while automating procedures, only inventory
-management and provisioning are modelled. The implemented products and
+management and provisioning are modeled. The implemented products and
 workflows are designed with particular procedures in mind. For example,
 it is assumed that the following is administered in IMS outside of the
 orchestrator:
@@ -392,7 +392,7 @@ in the orchestrator UI in the `New tasks` pulldown on the `tasks` page.
 #### Node
 
 The Node create workflow will read all configured, sites and device
-roles, manufactures types, and allowe the user to choose appropriate
+roles, manufactures types, and allows the user to choose appropriate
 values using dropdowns. The only thing that needs to be entered by hand
 is a unique name for the node and an optional description. This is
 enough to create a node subscription and administer the node in the IMS.
@@ -762,7 +762,7 @@ class CreateNodeForm(FormPage):
 By default, Pydantic validates the input against the specified type and
 will signal incorrect input and/or missing but required input fields.
 Type annotations can be used to describe additional constraints, for
-example a check on the validity of the entered VLAN ID can be sprecified
+example a check on the validity of the entered VLAN ID can be specified
 as shown below, the type `Vlan` can then be used instead of `int`.
 
 ```python
@@ -800,9 +800,9 @@ PortsChoiceList: TypeAlias = cast(type[Choice], ports_selector(2))
 ```
 
 Validations between multiple fields is also possible by making use of
-the Pydantic `@model_validator` that gives access to all fields. To
-check if the A and B side of a point-to-point service are not on the
-same network node one could use:
+the Pydantic `@model_validator` decorator that gives access to all
+fields. To check if the A and B side of a point-to-point service are not
+on the same network node one could use:
 
 ```python
 @model_validator(mode="after")
@@ -811,6 +811,10 @@ def separate_nodes(self) -> "SelectNodes":
         raise ValueError("node B cannot be the same as node A")
     return self
 ```
+
+For more information on validation, see the [Pydantic
+Validators](https://docs.pydantic.dev/latest/concepts/validators/)
+documentation
 
 Finally, a summary form is shown with the user supplied values. When a
 value appears to be incorrect, the user can go back to the previous form
@@ -1175,8 +1179,8 @@ def delete_from_netbox(endpoint, **kwargs) -> None:
 
 #### Product block to Netbox object mapping
 
-The modelling used in the orchestrator does not necessarily have to
-match exactly with the modelling in your OSS or BSS. In many cases,
+The modeling used in the orchestrator does not necessarily have to
+match exactly with the modeling in your OSS or BSS. In many cases,
 different names are used, or a one-to-many or many-to-one relation needs
 to be created. To make a future transition to a different external
 system as easy as possible, any needed mappings, or translations between
@@ -1210,7 +1214,7 @@ nodes.
 <dt> IPAM </dt><dd> IP Address Management </dd>
 <dt> L2VPN </dt><dd> Layer 2 Virtual Private Network </dd>
 <dt> L3VPN </dt><dd> Layer 3 Virtual Private Network </dd>
-<dt> NETCONF </dt><dd> NETwork CONFiguration protocal </dd>
+<dt> NETCONF </dt><dd> NETwork CONFiguration protocol </dd>
 <dt> NREN </dt><dd> National Research and Education Network </dd>
 <dt> OSS </dt><dd> Operation Support System </dd>
 <dt> REST </dt><dd> REpresentational state transfer </dd>
