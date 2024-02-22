@@ -32,8 +32,6 @@ Example workflow orchestrator implementation based on the
 
 Make sure you have docker installed and run:
 
-Example workflow orchestrator
-
 ```
 docker compose up
 ```
@@ -89,18 +87,18 @@ While running the different workflows, have a look at the following
 netbox pages to see the orchestrator interact with netbox:
 
 - Devices
-- Devices
-- Interfaces
+    - Devices
+    - Interfaces
 - Connections
-- Cables
-- Interface Connections
+    - Cables
+    - Interface Connections
 - IPAM
-- IP Addresses
-- Prefixes
-- VLANs
+    - IP Addresses
+    - Prefixes
+    - VLANs
 - Overlay
-- L2VPNs
-- Terminations
+    - L2VPNs
+    - Terminations
 
 ## Summary
 
