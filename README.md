@@ -38,16 +38,16 @@ Example workflow orchestrator
 docker compose up
 ```
 
-This will start the `orchestrator`, `orchestrator-gui`, orchestrator-ui,
+This will start the `orchestrator`, `orchestrator-ui`, orchestrator-gui,
 `netbox`, `postgres` and `redis`.
 
-To access the `orchestrator-gui` v1, point your browser to:
+To access the new v2 `orchestrator-ui`, point your browser to:
 
 ```
 http://localhost:3000/
 ```
 
-To access the `orchestrator-ui` v2, point your browser to:
+To access the old v1 `orchestrator-ui`, point your browser to:
 
 ```
 http://localhost:4000/
@@ -64,25 +64,26 @@ http://localhost:8000/
 Use the following steps to see the example orchestrator in action:
 
 1. bootstrap Netbox
-    1. from the `Tasks` tab click `New Task`
-    2. select `Bootstrap Netbox` and click `Submit` (twice)
+    1. from the `Tasks` page click `New Task`
+    2. select `Netbox Bootstrap` and click `Start task`
+    3. select `Expand all` on the following page to see the step details
 2. create a network node (need at least two to create a core link)
-    1. in the right-above corner, click on the `New Process` button
-    2. select either the `Node Cisco` or `Node Nokia` and click `Next`
-    3. fill in the needed fields, click `Submit` and view the summary form
-    4. click `Submit` again to start the workflow, or click `Previous` to modify fields
+    1. in the left-above corner, click on `New subscription`
+    2. select either the `Node Cisco` or `Node Nokia`
+    3. fill in the needed fields, click `Start workflow` and view the summary form
+    4. click `Start workflow` again to start the workflow, or click `Previous` to modify fields
 3. add interfaces to a node (needed by the other products)
-    1. on the `Subscriptions` tab, click on the subscription for the node to show the details
-    2. on the `Actions` tab, click on the `Sync ports with IMS` action and confirm to start the workflow
+    1. on the `Subscriptions` page, click on the subscription description of the node to show the details
+    2. select `Update node interfaces` from the `Actions` pulldown
 4. create a core link
-    1. in the right-above corner, click on the `New Process` button
-    2. select either the `core link 10G` or `core link 100G` and click `Next`
-    3. fill in de forms and finally click on `Submit` to start the workflow
+    1. in the left-above corner, click on `New subscription`
+    2. select either the `core link 10G` or `core link 100G`
+    3. fill in de forms and finally click on `Start workflow` to start the workflow
 5. create a customer port (need at least two **tagged** ports to create a l2vpn)
-    1. start a `New Process` for either a `port 10G` or a `port 100G`
-    3. fill in de forms and finally click on `Submit` to start the workflow
+    1. use `New subscription` for either a `port 10G` or a `port 100G`
+    3. fill in de forms and click on `Start workflow` to start the workflow
 6. create a l2vpn
-    1. start a `New Process` for a `l2vpn`, fill in the forms, and `Submit` to start the workflow
+    1. use `New subscription` for a `l2vpn`, fill in the forms, and `Start workflow`
 
 While running the different workflows, have a look at the following netbox
 pages to see the orchestrator interact with netbox:
