@@ -47,7 +47,7 @@ To access the new v2 `orchestrator-ui`, point your browser to:
 http://localhost:3000/
 ```
 
-To access the old v1 `orchestrator-ui`, point your browser to:
+To access the old v1 `orchestrator-gui`, point your browser to:
 
 ```
 http://localhost:4000/
@@ -160,12 +160,11 @@ based on a simple fictional NREN that has the following characteristics:
 
 - The network consists of Provider and Provider Edge network nodes
 - The network nodes are connected to each other through core links
-- On top of this substrate a set of services like Internet Access, L3VPN
-and L2VPN are offered
+- On top of this substrate a set of services like Internet Access, L3VPN and L2VPN are offered
 - The Operations Support Systems (OSS) used are:
-- An IP Administration Management (IPAM) tool
-- A network Inventory Management System (IMS)
-- A Network Resource Manager (NRM) to provision the network
+    - An IP Administration Management (IPAM) tool
+    - A network Inventory Management System (IMS)
+    - A Network Resource Manager (NRM) to provision the network
 - There is no Business Support System (BSS) yet
 
 This NREN decided on a phased introduction of automation in their
@@ -173,16 +172,15 @@ organisation, only automating some of the procedures and flows of
 information while leaving others unautomated for the moment:
 
 - Automated administration and provisioning of:
-- Network nodes including loopback IP addresses
-- Core links in between network nodes including point-to-point IP
-addresses
-- Customer ports
-- Customer L2VPN’s
+    - Network nodes including loopback IP addresses
+    - Core links in between network nodes including point-to-point IP addresses
+    - Customer ports
+    - Customer L2VPN’s
 - Not automated administration and provisioning of:
-- Role, make and model of the network nodes
-- Sites where network nodes are installed
-- Customer sevices like Internet Access, L3VPN, …
-- Internet peering
+    - Role, make and model of the network nodes
+    - Sites where network nodes are installed
+    - Customer sevices like Internet Access, L3VPN, …
+    - Internet peering
 
 NetBox[^3] is used as IMS and IPAM, and serves as the source of truth
 for the complete IP address administration and physical and logical
