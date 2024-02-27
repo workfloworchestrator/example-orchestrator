@@ -107,7 +107,7 @@ def free_port_selector(node_subscription_id: UUIDstr, speed: int, enum: str = "P
     interfaces = {
         str(interface.id): interface.name
         for interface in netbox.get_interfaces(
-            device=netbox.get_device(id=node.node.ims_id), speed=speed * 1000, enabled=False
+            device=node.node.node_name, speed=speed * 1000, enabled=False
         )
     }
     return Choice(enum, zip(interfaces.keys(), interfaces.items()))  # type:ignore
