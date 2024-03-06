@@ -51,6 +51,19 @@ new_products = {
                 "node_type": "Nokia",
             },
         },
+        "node Cumulus": {
+            "product_id": uuid4(),
+            "product_type": "Node",
+            "description": "Network node",
+            "tag": "NODE",
+            "status": "active",
+            "product_blocks": [
+                "Node",
+            ],
+            "fixed_inputs": {
+                "node_type": "Cumulus",
+            },
+        },
     },
     "product_blocks": {
         "Node": {

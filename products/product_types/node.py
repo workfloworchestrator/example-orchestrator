@@ -21,6 +21,7 @@ from products.product_blocks.node import NodeBlock, NodeBlockInactive, NodeBlock
 class Node_Type(strEnum):
     Cisco = "Cisco"
     Nokia = "Nokia"
+    Cumulus = "Cumulus"
 
 
 class NodeInactive(SubscriptionModel, is_base=True):

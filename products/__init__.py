@@ -23,6 +23,7 @@ SUBSCRIPTION_MODEL_REGISTRY.update(
     {
         "node Cisco": Node,
         "node Nokia": Node,
+        "node Cumulus": Node,
         "port 10G": Port,
         "port 100G": Port,
         "core link 10G": CoreLink,
