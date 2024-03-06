@@ -64,6 +64,19 @@ new_products = {
                 "node_type": "Cumulus",
             },
         },
+        "node FRR": {
+            "product_id": uuid4(),
+            "product_type": "Node",
+            "description": "Network node",
+            "tag": "NODE",
+            "status": "active",
+            "product_blocks": [
+                "Node",
+            ],
+            "fixed_inputs": {
+                "node_type": "FRR",
+            },
+        },
     },
     "product_blocks": {
         "Node": {

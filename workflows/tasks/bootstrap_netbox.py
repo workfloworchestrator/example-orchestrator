@@ -34,13 +34,15 @@ initial_objects = [
     cisco := netbox.ManufacturerPayload(name="Cisco", slug="cisco"),
     nokia := netbox.ManufacturerPayload(name="Nokia", slug="nokia"),
     cumulus := netbox.ManufacturerPayload(name="Cumulus", slug="cumulus"),
+    frr := netbox.ManufacturerPayload(name="FRR", slug="frr"),
     netbox.DeviceTypePayload(manufacturer=cisco, model="8812", slug="8812", u_height=21.0),
     netbox.DeviceTypePayload(manufacturer=cisco, model="ASR 903", slug="asr-903", u_height=3.0),
     netbox.DeviceTypePayload(manufacturer=nokia, model="7950 XRS-20", slug="7950-xrs-20", u_height=44.0),
     netbox.DeviceTypePayload(manufacturer=nokia, model="7210 SAS-R6", slug="7210-sas-r6", u_height=3.0),
     netbox.DeviceTypePayload(manufacturer=nokia, model="7220 IXR-D2", slug="7220-ixr-d2", u_height=1.0),
     netbox.DeviceTypePayload(manufacturer=nokia, model="7220 IXR-D2", slug="7220-ixr-d2", u_height=1.0),
-    netbox.DeviceTypePayload(manufacturer=cumulus, model="cVX", slug="cvx", u_height=1.0),
+    netbox.DeviceTypePayload(manufacturer=cumulus, model="cVX VM", slug="cvx", u_height=1.0),
+    netbox.DeviceTypePayload(manufacturer=frr, model="FRR VM", slug="frr", u_height=1.0),
 ]
 
 
