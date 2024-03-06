@@ -4,3 +4,5 @@
 __pycache__/
 lint.sh
 .venv
+clab-*
+*.clab.yml.bak
