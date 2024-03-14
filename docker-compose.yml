@@ -151,6 +151,20 @@ services:
       postgres:
         condition: service_healthy
 
+  #
+  # LSO
+  #
+  lso:
+    image: orchestrator-lso
+    build:
+      context: ./docker/lso/
+      dockerfile: Dockerfile
+    env_file: ./docker/lso/lso.env
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./docker/lso/config.json:/app/config.json
+
 volumes:
   netbox-media-files:
     driver: local
