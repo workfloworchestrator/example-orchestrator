@@ -107,15 +107,6 @@ services:
   #
   # Orchestrator
   #
-  orchestrator-gui:
-    image: "ghcr.io/workfloworchestrator/orchestrator-core-gui:latest"
-    env_file: ./docker/orchestrator-gui/orchestrator-core-gui.env
-    ports:
-      - "4000:8080"
-    depends_on:
-      orchestrator:
-        condition: service_started
-
   orchestrator-ui:
     image: "ghcr.io/workfloworchestrator/example-orchestrator-ui:latest"
     env_file: ./docker/orchestrator-ui/orchestrator-ui.env
