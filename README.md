@@ -36,8 +36,7 @@ Make sure you have docker installed and run:
 docker compose up
 ```
 
-This will start the `orchestrator`, `orchestrator-ui`, `orchestrator-gui`,
-`netbox`, `postgres` and `redis`.
+This will start the `orchestrator`, `orchestrator-ui`, `netbox`, `postgres` and `redis`.
 
 To access the new v2 `orchestrator-ui`, point your browser to:
 
@@ -45,11 +44,6 @@ To access the new v2 `orchestrator-ui`, point your browser to:
 http://localhost:3000/
 ```
 
-To access the old v1 `orchestrator-gui`, point your browser to:
-
-```
-http://localhost:4000/
-```
 
 And to access `netbox` (admin/admin), point your browser to:
 
