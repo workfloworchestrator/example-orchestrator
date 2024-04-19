@@ -1,0 +1,32 @@
+name: orch-demo
+
+mgmt:
+  network: example-orchestrator_default
+
+topology:
+  kinds:
+    srl:
+      type: ixrd2
+      image: ghcr.io/nokia/srlinux
+    # cvx:
+    #   type: cumulus_cvx
+    #   image: networkop/cx:4.3.0
+    # linux:
+    #   type: linux
+    #   image: frrouting/frr:v7.5.1
+
+  nodes:
+    ams-pcore:
+      kind: srl
+      startup-config: configs/ams-pcore.config
+    fco-pcore:
+      kind: srl
+      startup-config: configs/fco-pcore.config
+    lhr-pcore:
+      kind: srl
+      startup-config: configs/lhr-pcore.config
+
+  links:
+    - endpoints: ["ams-pcore:e1-1", "lhr-pcore:e1-2"]
+    - endpoints: ["lhr-pcore:e1-1", "fco-pcore:e1-2"]
+    - endpoints: ["fco-pcore:e1-1", "ams-pcore:e1-2"]
