@@ -356,7 +356,7 @@ port.
 When this example orchestrator is deployed, it can create a growing
 graph of product blocks as is shown below.
 
-#### Example
+### Product Hiearchy Diagram
 <center><img src=".pictures/subscriptions.png" alt="Product block graph" width=75% height=75%></center>
 
 ### How to use
