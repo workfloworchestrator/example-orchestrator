@@ -12,6 +12,7 @@
    - name: Dump subscripion
      ansible.builtin.debug:
        msg: "{{node}}"
+     when: debug|ansible.builtin.bool is true
    - name: Build the queries
      ansible.builtin.set_fact:
         api_v4_filter: "id={{node.node.ipv4_ipam_id}}" 
@@ -50,7 +51,19 @@
                    admin-state: enable
                    address:
                      - ip-prefix: "{{loopback_ipv6_address}}"
+         - path: "/network-instance[name=default]"
+           value:
+             interface: 
+               name: lo1.0
          - path: "/network-instance[name=default]/protocols/isis/instance[name=default]"
+           value:
+             admin-state: enable
+             net: [ 49.0001.0000.0000.0001.00 ]
+             ipv4-unicast:
+                admin-state: enable
+             ipv6-unicast:
+                admin-state: enable
+         - path: "/network-instance[name=default]/protocols/isis/instance[name=default]/interface[interface-name=lo1.0]"
            value:
              admin-state: enable
      register: response
@@ -61,3 +74,4 @@
    - name: Fail so we can retry
      ansible.builtin.fail:
         msg: Now you can hit retry
+     when: debug|ansible.builtin.bool is true
