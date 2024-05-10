@@ -26,7 +26,7 @@ services:
   # Shared
   #
   postgres:
-    image: 'postgres:13'
+    image: 'postgres:14'
     ports:
       - "5432:5432"
     environment:
@@ -164,6 +164,8 @@ services:
       - "8001:8000"
     volumes:
       - ./docker/lso/config.json:/app/config.json
+      - ./ansible/plays_and_roles:/app/wfo/ansible
+      - ./ansible/inventory:/opt/ansible_inventory
 
 volumes:
   netbox-media-files:

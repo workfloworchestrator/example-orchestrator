@@ -1,0 +1,63 @@
+- name: test
+  hosts: all
+  connection: local
+  vars:
+   ansible_network_os: nokia.srlinux.srlinux
+   ansible_connection: ansible.netcommon.httpapi
+   ansible_user: admin
+   ansible_password: NokiaSrl1!
+   netbox_url: "http://localhost:8000"
+   netbox_token: "e744057d755255a31818bf74df2350c26eeabe54"
+  tasks:
+   - name: Dump subscripion
+     ansible.builtin.debug:
+       msg: "{{node}}"
+   - name: Build the queries
+     ansible.builtin.set_fact:
+        api_v4_filter: "id={{node.node.ipv4_ipam_id}}" 
+        api_v6_filter: "id={{node.node.ipv6_ipam_id}}" 
+   - name: Get loopback addresses from netbox
+     ansible.builtin.set_fact:
+        loopback_ipv4_address_object: "{{ query('netbox.netbox.nb_lookup', 'ip-addresses', 
+                                      api_endpoint=netbox_url, api_filter=api_v4_filter , 
+                                      token=netbox_token) }}" 
+        loopback_ipv6_address_object: "{{ query('netbox.netbox.nb_lookup', 'ip-addresses', 
+                                      api_endpoint=netbox_url, api_filter=api_v6_filter , 
+                                      token=netbox_token) }}" 
+   - name: Assign addresses to variables
+     ansible.builtin.set_fact:
+        loopback_ipv4_address: "{{loopback_ipv4_address_object[0].address}}"
+        loopback_ipv6_address: "{{loopback_ipv6_address_object[0].address}}"
+   - name: Show IP addresses for loopback
+     ansible.builtin.debug:
+       msg: " LOOPBACK IPV4_ADDRESS IS {{loopback_ipv4_address}} - LOOPBACK IPV6_ADDRESS IS {{loopback_ipv6_address}} "
+   - name: Configure nokia device with basic stuff
+     nokia.srlinux.config:
+       update: 
+         - path: "/interface[name=lo1]"
+           value:
+             admin-state: enable
+             description: "Loopback Interface"
+             subinterface:
+               - index: 0
+                 admin-state: enable
+                 description: "Loopback interface - unit 0 "
+                 ipv4:
+                   admin-state: enable
+                   address:
+                     - ip-prefix: "{{loopback_ipv4_address}}"
+                 ipv6:
+                   admin-state: enable
+                   address:
+                     - ip-prefix: "{{loopback_ipv6_address}}"
+         - path: "/network-instance[name=default]/protocols/isis/instance[name=default]"
+           value:
+             admin-state: enable
+     register: response
+
+   - debug:
+       var: response
+
+   - name: Fail so we can retry
+     ansible.builtin.fail:
+        msg: Now you can hit retry

@@ -13,6 +13,7 @@
 
 
 import uuid
+import json
 from random import randrange
 from typing import TypeAlias, cast
 
@@ -22,6 +23,7 @@ from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
+from orchestrator.utils.json import json_dumps
 from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State
@@ -32,6 +34,7 @@ from products.product_types.node import NodeInactive, NodeProvisioning
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
+from services.lso_client import execute_playbook, lso_interaction
 from workflows.node.shared.forms import NodeStatusChoice, node_role_selector, node_type_selector, site_selector
 from workflows.node.shared.steps import update_node_in_ims
 from workflows.shared import create_summary_form
@@ -115,6 +118,25 @@ def reserve_loopback_addresses(subscription: NodeProvisioning) -> State:
     )
     return {"subscription": subscription}
 
+@step("Install node config")
+def provision_node(
+    subscription: NodeProvisioning,
+    callback_route: str,
+    process_id: UUIDstr,
+) -> State:
+    """Perform a dry run of deploying configuration on both sides of the trunk."""
+    extra_vars = {
+        "node": json.loads(json_dumps(subscription)),
+    }
+
+    execute_playbook(
+        playbook_name="create_node.yaml",
+        callback_route=callback_route,
+        inventory=f"{subscription.node.node_name}\n",
+        extra_vars=extra_vars,
+    )
+
+    return {"subscription": subscription}
 
 @step("Provision node in NRM")
 def provision_node_in_nrm(subscription: NodeProvisioning) -> State:
@@ -131,6 +153,7 @@ def create_node() -> StepList:
         >> store_process_subscription(Target.CREATE)
         >> create_node_in_ims
         >> reserve_loopback_addresses
+        >> lso_interaction(provision_node)
         >> update_node_in_ims
         >> provision_node_in_nrm
     )
