@@ -23,7 +23,8 @@ from products.product_types.node import Node
 from services import netbox
 
 
-def terminate_initial_input_form_generator(subscription_id: UUIDstr, organisation: UUIDstr) -> InputForm:
+#def terminate_initial_input_form_generator(subscription_id: UUIDstr, organisation: UUIDstr) -> InputForm:
+def terminate_initial_input_form_generator(subscription_id: UUIDstr) -> InputForm:
     temp_subscription_id = subscription_id
 
     class TerminateForm(FormPage):
