@@ -1,5 +1,3 @@
-version: "3.9"
-
 x-netbox:
   &netbox
   image: docker.io/netboxcommunity/netbox:${VERSION-v3.4-2.5.2}

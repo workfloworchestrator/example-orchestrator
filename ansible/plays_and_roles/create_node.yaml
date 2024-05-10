@@ -1,13 +1,13 @@
-- name: test
+- name: Deploy config on a nokia node
   hosts: all
-  connection: local
   vars:
    ansible_network_os: nokia.srlinux.srlinux
    ansible_connection: ansible.netcommon.httpapi
    ansible_user: admin
    ansible_password: NokiaSrl1!
-   netbox_url: "http://localhost:8000"
+   netbox_url: "http://netbox:8080"
    netbox_token: "e744057d755255a31818bf74df2350c26eeabe54"
+   debug: false
   tasks:
    - name: Dump subscripion
      ansible.builtin.debug:

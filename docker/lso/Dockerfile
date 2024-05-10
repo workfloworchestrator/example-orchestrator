@@ -4,9 +4,11 @@ WORKDIR /app
 
 RUN apk add --update --no-cache gcc libc-dev libffi-dev
 
-RUN pip install orchestrator-lso=="1.0.2"
+RUN pip install orchestrator-lso=="1.0.2" 
+RUN pip install pynetbox
 
-RUN ansible-galaxy collection install netbox.netbox
+RUN ansible-galaxy collection install netbox.netbox 
+RUN ansible-galaxy collection install nokia.srlinux 
 
 EXPOSE 8000
 ENTRYPOINT []

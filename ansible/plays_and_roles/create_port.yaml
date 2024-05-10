@@ -1,0 +1,42 @@
+- name: Deploy a port on a nokia node
+  hosts: all
+  vars:
+   ansible_network_os: nokia.srlinux.srlinux
+   ansible_connection: ansible.netcommon.httpapi
+   ansible_user: admin
+   ansible_password: NokiaSrl1!
+   netbox_url: "http://netbox:8080"
+   netbox_token: "e744057d755255a31818bf74df2350c26eeabe54"
+   vlan_tagging: false
+   debug: false
+  tasks:
+   - name: Dump subscripion
+     ansible.builtin.debug:
+       msg: "{{port}}"
+     when: debug|ansible.builtin.bool is true
+
+   - name: Set VLAN vlan-tagging
+     ansible.builtin.set_fact:
+      vlan_tagging: true
+     when: port.port.port_mode == "tagged"
+
+   - name: Configure port on nokia device
+     nokia.srlinux.config:
+       update: 
+         - path: "/interface[name={{port.port.port_name}}]"
+           value:
+             admin-state: enable
+             description: "{{port.port.port_description}}"
+             vlan-tagging: "{{vlan_tagging}}"
+         - path: "/network-instance[name=default]/protocols/isis/instance[name=default]/interface[interface-name=lo1.0]"
+           value:
+             admin-state: enable
+     register: response
+
+   - debug:
+       var: response
+
+   - name: Fail so we can retry
+     ansible.builtin.fail:
+        msg: Now you can hit retry
+     when: debug|ansible.builtin.bool is true
