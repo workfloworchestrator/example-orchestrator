@@ -70,7 +70,7 @@
          - path: "/network-instance[name=default]/protocols/isis/instance[name=default]"
            value:
              admin-state: enable
-             net: [ 49.0001.0000.0000.0001.00 ]
+             net: "[ {{iso_address}} ]"
              ipv4-unicast:
                 admin-state: enable
              ipv6-unicast:

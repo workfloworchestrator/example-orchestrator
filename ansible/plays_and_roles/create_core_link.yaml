@@ -58,7 +58,7 @@
            value:
              interface: 
                name: "{{local_port.port_name}}.0"
-         - path: "/network-instance[name=default]/protocols/isis/instance[name=default]/interface[interface-name={{local_port.port_name}}]"
+         - path: "/network-instance[name=default]/protocols/isis/instance[name=default]/interface[interface-name={{local_port.port_name}}.0]"
            value:
              admin-state: enable
      register: response
