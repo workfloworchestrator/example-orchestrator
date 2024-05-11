@@ -29,9 +29,21 @@
      ansible.builtin.set_fact:
         loopback_ipv4_address: "{{loopback_ipv4_address_object[0].address}}"
         loopback_ipv6_address: "{{loopback_ipv6_address_object[0].address}}"
+   - name: Calculate IPv4 loopback last octect - part1 
+     ansible.builtin.set_fact:
+       ipv4_lo_no_slash: "{{ loopback_ipv4_address|split('/') | list() }}"
+   - name: Calculate IPv4 loopback last octect - part2
+     ansible.builtin.set_fact:
+       ipv4_lo_splitted: "{{ ipv4_lo_no_slash[0]|split('.') | list() }}"
+   - name: Calculate IPv4 loopback last octect - part3 
+     ansible.builtin.set_fact:
+       ipv4_lo_last_octect: "{{ ipv4_lo_splitted[3] }}"
+   - name: Calculate ISO address
+     ansible.builtin.set_fact:
+       iso_address: "49.0001.0000.0000.{{ '%04d' % (ipv4_lo_last_octect|int) }}.00"
    - name: Show IP addresses for loopback
      ansible.builtin.debug:
-       msg: " LOOPBACK IPV4_ADDRESS IS {{loopback_ipv4_address}} - LOOPBACK IPV6_ADDRESS IS {{loopback_ipv6_address}} "
+       msg: " ISO ADDRESS IS {{iso_address}} - LOOPBACK IPV4_ADDRESS IS {{loopback_ipv4_address}} - LOOPBACK IPV6_ADDRESS IS {{loopback_ipv6_address}} "
    - name: Configure nokia device with basic stuff
      nokia.srlinux.config:
        update: 
