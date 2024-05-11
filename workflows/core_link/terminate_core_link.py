@@ -11,17 +11,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import json
 from orchestrator.types import InputForm, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import terminate_workflow
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import State
 from pydantic_forms.validators import DisplaySubscription
+from orchestrator.utils.json import json_dumps
 
 from products.product_types.core_link import CoreLink
 from products.services.netbox.netbox import build_payload
 from services import netbox
+from services.lso_client import execute_playbook, lso_interaction
 
 
 #def terminate_initial_input_form_generator(subscription_id: UUIDstr, organisation: UUIDstr) -> InputForm:
@@ -66,12 +68,33 @@ def disable_ports(subscription: CoreLink) -> State:
 
     return {"subscription": subscription, "payload_port_a": payload_port_a, "payload_port_b": payload_port_b}
 
+@step("Remove core-link config")
+def deprovision_core_link(
+    subscription: CoreLink,
+    callback_route: str,
+    process_id: UUIDstr,
+) -> State:
+    """Perform a dry run of deploying configuration on both sides of the trunk."""
+    extra_vars = {
+        "core_link": json.loads(json_dumps(subscription)),
+    }
+
+    execute_playbook(
+        playbook_name="delete_core_link.yaml",
+        callback_route=callback_route,
+        inventory=f"{subscription.core_link.ports[0].node.node_name}\n"
+        f"{subscription.core_link.ports[1].node.node_name}\n",
+        extra_vars=extra_vars,
+    )
+
+    return {"subscription": subscription}
 
 @terminate_workflow("Terminate core_link", initial_input_form=terminate_initial_input_form_generator)
 def terminate_core_link() -> StepList:
     return (
         begin
         >> disconnect_ports
+        >> lso_interaction(deprovision_core_link)
         >> unassign_side_b_ipv6_prefix
         >> unassign_side_a_ipv6_prefix
         >> unassign_ipv6_prefix
