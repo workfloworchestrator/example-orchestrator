@@ -788,7 +788,6 @@ variables, you van imagine how unreadable the function will be. Now consider the
 @step("Good use of the input params functionality")
 def my_beautiful_step(variable_1: int, variable_2: str, subscription: SubscriptionModel) -> State:
     if variable_1 > 42:
-         if variable_1 > 42:
         subscription.product_block_model.variable_1 = -1
         subscription.product_block_model.variable_2 = "Infinity"
     else:
