@@ -757,9 +757,9 @@ type the step function parameters.
 
 #### Example
 Given this function, when a user correctly makes use of the step decorator it is very easy to extract variables and 
-make a calculation. It create readable code, that is easy to understand and reason about. Furthermore the variables 
-become available in the step in their correct type according to the domain model. Logic errors due to types such as in 
-the Domain model example are much less frequent.
+make a calculation. It creates readable code, that is easy to understand and reason about. Furthermore the variables 
+become available in the step in their correct type according to the domain model. Logic errors due wrong type 
+interpretation are much less prone to happen.
 
 **Bad use of the step decorator**
 ```python
