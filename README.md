@@ -802,7 +802,9 @@ decorator does the following:
 * Loads the previous steps state from the database.
 * Inspects the step functions signature
 * Finds the arguments in the state and injects them as function arguments to the step function
-* Finally, it casts them to the correct type by using the type hints of the stepfunction.
+* It casts them to the correct type by using the type hints of the step function.
+* Finally it updates the state of the workflow and persists all model changes to the database upon reaching the 
+  `return` of the step function.
 
 ### Forms
 
