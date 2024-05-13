@@ -725,6 +725,13 @@ while displaying detailed subscription information.
 
 ## Workflows
 
+Workflows are used to orchestrate the lifecycle of a Product Subscription and process the user or systems intent and 
+apply that to the service. As mentioned above a Subscription is created, then modified `N` number of times, after 
+which it is terminated. During it's life a Subscription may also be validated on a regular basis to check whether 
+there is any drift between the state captured in the Orchestrator and actual state on the system. This workflow is 
+slightly different compared to the workflows that process intent and apply that to a system, as it does not modify 
+the system.
+
 Four types of workflows are defined, three lifecycle related ones to
 create, modify and terminate subscriptions, and a fourth one to validate
 subscriptions against the OSS and BSS. The decorators
@@ -732,6 +739,8 @@ subscriptions against the OSS and BSS. The decorators
 `@validate_workflow` are used to define the different types of workflow,
 and the `@step` decorator is used to define workflow steps that can be
 used in any type of workflow.
+
+### Workflow Architecture - Passing information from one step to the next
 
 Information between workflow steps is passed using `State`, which is
 nothing more than a collection of key/value pairs, in Python represented
@@ -745,6 +754,59 @@ merged into the `State` to be consumed by the next step. The
 serialization and deserialization between JSON and the indicated Python
 types is done automatically. That is why it is important to correctly
 type the step function parameters.
+
+#### Example
+Given this function, when a user correctly makes use of the step decorator it is very easy to extract variables and 
+make a calculation. It create readable code, that is easy to understand and reason about. Furthermore the variables 
+become available in the step in their correct type according to the domain model. Logic errors due to types such as in 
+the Domain model example are much less frequent.
+
+**Bad use of the step decorator**
+```python
+
+@step("A Bad example of using input params")
+def my_ugly_step(state: State) -> State:
+    variable_1 = int(state["variable_1"])
+    variable_2 = str(state["varialble_2"])
+    subscription = SubscriptionModel.from_subscription_id(state["subscription_id"])
+    
+    if variable_1 > 42:
+        subscription.product_block_model.variable_1 = -1
+        subscription.product_block_model.variable_2 = "Infinity"
+    else:
+        subscription.product_block_model.variable_1 = variable_1
+        subscription.product_block_model.variable_2 = variable_2
+
+    state["subscription"] = subscription
+    return state
+```
+In the above example you see we do a simple calculation based on `variable_1`. When computing with even more 
+variables, you van imagine how unreadable the function will be. Now consider the next example.
+
+**Good use of the step decorator**
+```python
+@step("Good use of the input params functionality")
+def my_beautiful_step(variable_1: int, variable_2: str, subscription: SubscriptionModel) -> State:
+    if variable_1 > 42:
+         if variable_1 > 42:
+        subscription.product_block_model.variable_1 = -1
+        subscription.product_block_model.variable_2 = "Infinity"
+    else:
+        subscription.product_block_model.variable_1 = variable_1
+        subscription.product_block_model.variable_2 = variable_2
+    
+    return state | {"subscriotion": subscription}
+
+```
+
+As you can see the Orchestrator the orchestrator helps you a lot to condense the logic in your function. The `@step` 
+decorator does the following:
+* Loads the previous steps state from the database.
+* Inspects the step functions signature
+* Finds the arguments in the state and injects them as function arguments to the step function
+* Finally, it casts them to the correct type by using the type hints of the stepfunction.
+
+### Forms
 
 The input form is where a user can enter the details for a subscription
 on a certain product at the start of the workflow, or can enter
@@ -762,6 +824,8 @@ between two nodes, a first input form could ask to choose two nodes from
 a list of active nodes, and the second form will present two lists with
 ports on these two nodes to choose from.
 
+<details>
+<summary><b>Best Practices for writing workflows</b></summary>
 While developing a new product, the workflows can be written in any
 order. For those that use a test-driven development style probably will
 start with the validate workflow. But in general people start with the
@@ -777,6 +841,7 @@ modify is not implemented, a change to a subscription can be carried out
 by terminating the subscription and creating it again with the modified
 input. Finally, the modify workflow is implemented to allow changes to a
 subscription with minimal or no impact to the customer.
+</details>
 
 ### Create workflow
 
@@ -815,6 +880,7 @@ def create_node() -> StepList:
 As long as every step remains as idempotent as possible, the work can be
 divided over fewer or more steps as desired.
 
+#### Input Form
 The input form is created by subclassing the `FormPage` and add the
 input fields together with the type and indication if they are optional
 or not. Additional form settings can be changed via the Config class,
@@ -869,6 +935,7 @@ def ports_selector(number_of_ports: int) -> type[list[Choice]]:
 PortsChoiceList: TypeAlias = cast(type[Choice], ports_selector(2))
 ```
 
+#### Extra Validation between dependant fields
 Validations between multiple fields is also possible by making use of
 the Pydantic `@model_validator` decorator that gives access to all
 fields. To check if the A and B side of a point-to-point service are not
