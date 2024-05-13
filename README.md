@@ -16,7 +16,7 @@ Example workflow orchestrator implementation based on the
 - [Products](#products)
     * [Product types](#product-types)
     * [Product blocks](#product-blocks)
-- [Workflows](#workflows)
+- [Workflows](#workflows---basics)
     * [Create workflow](#create-workflow)
     * [Modify workflow](#modify-workflow)
     * [Terminate workflow](#terminate-workflow)
@@ -723,7 +723,7 @@ other resource type using subscription.port.title. This is not a random
 example, the title of a product block is used by the orchestrator GUI
 while displaying detailed subscription information.
 
-## Workflows
+## Workflows - Basics
 
 Workflows are used to orchestrate the lifecycle of a Product Subscription and process the user or systems intent and 
 apply that to the service. As mentioned above a Subscription is created, then modified `N` number of times, after 
@@ -842,6 +842,11 @@ by terminating the subscription and creating it again with the modified
 input. Finally, the modify workflow is implemented to allow changes to a
 subscription with minimal or no impact to the customer.
 </details>
+
+## Workflow examples
+What follows are a few examples of how workflows implement the best common practices implemented by SURF. It 
+explains in detail what a typical workflow could look like for provision in network element. These examples can be 
+examined in greater detail by exploring the `.workflows.node` directory.
 
 ### Create workflow
 
