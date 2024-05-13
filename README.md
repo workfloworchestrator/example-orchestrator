@@ -801,6 +801,7 @@ def my_beautiful_step(variable_1: int, variable_2: str, subscription: Subscripti
 
 As you can see the Orchestrator the orchestrator helps you a lot to condense the logic in your function. The `@step` 
 decorator does the following:
+
 * Loads the previous steps state from the database.
 * Inspects the step functions signature
 * Finds the arguments in the state and injects them as function arguments to the step function
