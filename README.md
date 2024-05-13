@@ -429,40 +429,101 @@ is not supported.
 
 ## Products
 
-Products are described in Domain Models that are designed to help the
+The Orchestrator uses the concept of a Product to describe what can be built to the end user. When
+a user runs a workflow to create a Product, this results in a unique instance of that product called a Subscription.
+A Subscription is always tied to a certain lifecycle state (eg. Initial, Provisioning, Active, Terminated, etc) and 
+is unique per customer. In other words a Subscription contains all the information needed to uniquely identify a certain 
+resource owned by a user/customer that conforms to a certain definition, namely a Product.
+
+### Product description in Python
+Products are described in Python classes called Domain Models. These classes are designed to help the
 developer manage complex subscription models and interact with the
-objects in a user-friendly way. Domain models use Pydantic[^6] with some
+objects in a developer-friendly way. Domain models use Pydantic[^6] with some
 additional functionality to dynamically cast variables from the
 database, where they are stored as a string, to their correct type in
 Python at runtime. Pydantic uses Python type hints to validate that the
 correct type is assigned. The use of typing, when used together with
-type checkers, already helps to make the code more robust, and now
-everything assigned to the model is also checked at runtime which
-greatly improves reliability.
+type checkers, already helps to make the code more robust, furthermore the use of Pydantic makes it possible to check 
+variables at runtime which greatly improves reliability.
 
-The definition of a product is divided into describing the product type
-and the product blocks. The product type describes the fixed inputs and
-the top-level product blocks. The fixed inputs are used to differentiate
-between variants of the same product, for example the speed of a network
+#### Example of "Runtime typecasting/safety"
+In the example below we attempt to access a resource that has been stored in an instance of a product 
+(subscription instance). It shows how it can be done directly through the ORM and it shows the added value of Domain 
+Models on top of the ORM.
+
+**Serialisation direct from the database**
+
+```python
+>>> some_subscription_instance_value = SubscriptionInstanceValueTable.get("ID")
+>>> instance_value_from_db = some_subscription_instance_value.value
+>>> instance_value_from_db
+"False"
+>>> if instance_value_from_db is True:
+...    print("True")
+... else:
+...    print("False")
+"True"
+```
+
+**Serialisation using domain models**
+```python
+>>> class ProductBlock(ProductBlockModel):
+...     instance_from_db: bool
+...
+>>> some_subscription_instance_value = SubscriptionInstanceValueTable.get("ID")
+>>> instance_value_from_db = some_subscription_instance_value.value
+>>> type(instance_value_from_db)
+<class str>
+>>>
+>>> subscription_model = SubscriptionModel.from_subscription("ID")
+>>> type(subscription_model.product_block.instance_from_db)
+<class bool>
+>>>
+>>> subscription_model.product_block.instance_from_db
+False
+>>>
+>>> if subscription_model.product_block.instance_from_db is True:
+...    print("True")
+... else:
+...    print("False")
+"False"
+```
+As you can see in the example above, interacting with the data stored in the database rows, helps with some of the heavy
+lifting, and makes sure the database remains generic and it's schema remains stable.
+
+#### Product Structure
+A Product definition has two parts in its structure. The Higher order product type that contains information describing
+the product in a more general sense, and multiple layers of product blocks that logically describe the set of resources
+that make up the product definition. The product type describes the fixed inputs and the top-level product blocks. 
+The fixed inputs are used to differentiate between variants of the same product, for example the speed of a network
 port. There is always at least one top level product block that contains
 the resource types to administer the customer facing input. Beside
 resource types, the product blocks usually contain links to other
 product blocks as well. If a fixed input needs a custom type, then it is
 defined here together with fixed input definition.
 
+#### Terminology
+ * **Product:** A definition of what can be instantiated through a Subscription.
+ * **Product Type:** The higher order definition of a Product. Many different Products can exist within a Product Type.
+ * **Fixed Input:** Product attributes that discriminate the different Products that adhere to the same Product Type definition.
+ * **Product Block:** A (logical) construct that contain references to other Product Blocks or Resource Types. It gives
+   structure to the product definition and defines what resources are related to other resources
+ * **Resource Types:** Customer facing attributes that are the result of choices made by the user whilst filling an
+   input form. This can be a value the user chose, or an identifier towards a different system.
+
 ### Product types
 
-The product types in the code are upper camel cased, like all other type
-definitions. Per default, the product type is declared for the inactive,
-provisioning and active lifecycle states, and the product type name is
+The product types in the code are upper camel cased. Per default, the product type is declared for the _inactive_,
+_provisioning_ and _active_ lifecycle states, and the product type name is
 suffixed with the state if the lifecycle is not active. Usually, the
 lifecycle state starts with inactive, and then transitions through
-provisioning to active, and finally to terminated. During its live, the
+provisioning to active, and finally to terminated. During its life, the
 subscription, an instantiation of a product for a particular customer,
 can transition from active to provisioning and back again many times,
 before it ends up terminated. The terminated state does not have its own
-type definition.
+type definition, but will default to initial unless otherwise defined.
 
+#### Domain Model a.k.a Product Type Definition
 ```python
 class PortInactive(SubscriptionModel, is_base=True):
     speed: PortSpeed
@@ -486,6 +547,7 @@ product, for example, the PortInactive product has a PortBlockInactive
 product block, but it is totally fine to use product blocks from
 different lifecycle states if that suits your use case.
 
+#### Fixed Input
 Because a port is only available in a limited number of speeds, a
 separate type is declared with the allowed values, see below.
 
@@ -505,6 +567,14 @@ take these values, but is also used in user input forms to limit the
 choices, and in the database migration to register the speed variant of
 this product.
 
+#### Wiring it up in the Orchestrator
+<details>
+<summary>This section contains advanced information about how to configure the Orchestrator. It is also possible to use 
+a more user friendly tool available <a href="https://workfloworchestrator.org/orchestrator-core/reference-docs/cli/#generate">here</a>
+which uses a configuration file to generate the boilerplate, migrations and configuration necessary to make use of the 
+product straight away.
+</summary>
+
 Products need to be registered in two places. All product variants have
 to be added to the `SUBSCRIPTION_MODEL_REGISTRY`, in
 `products/__init__.py`, as shown below.
@@ -520,7 +590,6 @@ SUBSCRIPTION_MODEL_REGISTRY.update(
     }
 )
 ```
-
 And all variants also have to entered into the database using a
 migration. The migration uses the create helper function from
 `orchestrator.migrations.helpers` that takes the following dictionary as
@@ -552,11 +621,12 @@ def upgrade() -> None:
     conn = op.get_bind()
     create(conn, new_products)
 ```
+</details>
 
 ### Product blocks
 
-Like product types, the product blocks are declared for the inactive,
-provisioning and active lifecycle states. The name of the product block
+Like product types, the product blocks are declared for the _inactive_,
+_provisioning_ and _active_ lifecycle states. The name of the product block
 is suffixed with the word Block, to clearly distinguish them from the
 product types, and again suffixed by the state if the lifecycle is not
 active.
@@ -565,7 +635,10 @@ Every time a subscription is transitioned from one lifecycle to another,
 an automatic check is performed to ensure that resource types that are
 not optional are in fact present on that instantiation of the product
 block. This safeguards for incomplete administration for that lifecycle
-state. The resource types on an inactive product block are usually all
+state. 
+
+#### Resource Type lifecycle. When to use `None`
+The resource types on an inactive product block are usually all
 optional to allow the creation of an empty product block instance. All
 resource types that are used to hold the user input for the subscription
 is stored using resource types that are not optional anymore in the
@@ -575,6 +648,8 @@ stored using resource types that are optional while provisioning but are
 not optional anymore for the active lifecycle state. Resource types that
 are still optional in the active state are used to store non-mandatory
 information.
+
+#### Example
 
 ```python
 class NodeBlockInactive(ProductBlockModel, product_block_name="Node"):
@@ -614,6 +689,7 @@ These checks ensure that information that is necessary for a particular
 state is present so that the actions that are performed in that state do
 not fail.
 
+#### Product Block customisation
 Sometimes there are resource types that depend on information stored on
 other product blocks, even on linked product blocks that do not belong
 to the same subscription. This kind of types need to be calculated at
