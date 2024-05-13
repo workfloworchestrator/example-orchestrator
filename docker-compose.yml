@@ -137,6 +137,7 @@ services:
       - ./requirements.txt:/home/orchestrator/requirements.txt
       - ./alembic.ini:/home/orchestrator/alembic.ini
       - ./translations:/home/orchestrator/translations
+      - ./templates:/home/orchestrator/templates
     entrypoint: [ "/home/orchestrator/etc/orchestrator/entrypoint.sh" ]
     depends_on:
       postgres:
