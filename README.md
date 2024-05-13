@@ -763,7 +763,6 @@ interpretation are much less prone to happen.
 
 **Bad use of the step decorator**
 ```python
-
 @step("A Bad example of using input params")
 def my_ugly_step(state: State) -> State:
     variable_1 = int(state["variable_1"])
@@ -795,7 +794,6 @@ def my_beautiful_step(variable_1: int, variable_2: str, subscription: Subscripti
         subscription.product_block_model.variable_2 = variable_2
     
     return state | {"subscriotion": subscription}
-
 ```
 
 As you can see the Orchestrator the orchestrator helps you a lot to condense the logic in your function. The `@step` 
