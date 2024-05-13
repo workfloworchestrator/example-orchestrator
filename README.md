@@ -843,6 +843,19 @@ input. Finally, the modify workflow is implemented to allow changes to a
 subscription with minimal or no impact to the customer.
 </details>
 
+#### Form _Magic_
+As mentioned before, forms are dynamically created from the backend. This means, **little to no** frontend coding is 
+needed to make complex wizard like input forms available to the user. When selecting an action in the UI. The first 
+thing the frontend does is make an api call to load a form from the backend. The resulting `JSONschema` is parsed 
+and the correct widgets are loaded in the frontend. Upon submit this is posted to the backend that does all 
+validation and signals to the user if there are any errors. The following forms are supported:
+
+* Multiselect
+* Drop-down
+* Text field (restricted)
+* Number (float and dec)
+* Radio
+
 ## Workflow examples
 What follows are a few examples of how workflows implement the best common practices implemented by SURF. It 
 explains in detail what a typical workflow could look like for provision in network element. These examples can be 
