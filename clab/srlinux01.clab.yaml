@@ -16,17 +16,17 @@ topology:
     #   image: frrouting/frr:v7.5.1
 
   nodes:
-    ams-pcore:
+    ams-pe:
       kind: srl
-      startup-config: configs/ams-pcore.config
-    fco-pcore:
+        #startup-config: configs/ams-pcore.config
+    par-p:
       kind: srl
-      startup-config: configs/fco-pcore.config
-    lhr-pcore:
+        #startup-config: configs/fco-pcore.config
+    lon-pe:
       kind: srl
-      startup-config: configs/lhr-pcore.config
+        #startup-config: configs/lhr-pcore.config
 
   links:
-    - endpoints: ["ams-pcore:e1-1", "lhr-pcore:e1-2"]
-    - endpoints: ["lhr-pcore:e1-1", "fco-pcore:e1-2"]
-    - endpoints: ["fco-pcore:e1-1", "ams-pcore:e1-2"]
+    - endpoints: ["ams-pe:e1-1", "par-p:e1-2"]
+    - endpoints: ["par-p:e1-1", "lon-pe:e1-2"]
+
