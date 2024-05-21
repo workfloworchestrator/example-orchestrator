@@ -127,6 +127,8 @@ services:
     &orchestrator
     image: "ghcr.io/workfloworchestrator/orchestrator-core:latest"
     env_file: ./docker/orchestrator/orchestrator.env
+    environment:
+      LSO_ENABLED: ${COMPOSE_PROFILES:+True}
     ports:
       - "8080:8080"
       - "5678:5678" #Enable Python debugger
@@ -154,6 +156,8 @@ services:
   #
   lso:
     image: orchestrator-lso
+    profiles:
+      - lso
     build:
       context: ./docker/lso/
       dockerfile: Dockerfile

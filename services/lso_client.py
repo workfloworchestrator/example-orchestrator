@@ -25,7 +25,7 @@ from orchestrator import step
 from orchestrator.config.assignee import Assignee
 from orchestrator.types import State
 from orchestrator.utils.errors import ProcessFailureError
-from orchestrator.workflow import Step, StepList, begin, callback_step, inputstep
+from orchestrator.workflow import conditional, Step, StepList, begin, callback_step, inputstep
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator
 from pydantic_forms.validators import LongText
@@ -156,14 +156,18 @@ def lso_interaction(provisioning_step: Step) -> StepList:
     :return: A list of steps that is executed as part of the workflow.
     :rtype: :class:`StepList`
     """
+    lso_is_enabled = conditional(lambda _: getenv("LSO_ENABLED") is True)
     return (
         begin
-        >> callback_step(
-            name=provisioning_step.name,
-            action_step=provisioning_step,
-            validate_step=_evaluate_results,
+        >> lso_is_enabled(
+            begin
+            >> callback_step(
+                name=provisioning_step.name,
+                action_step=provisioning_step,
+                validate_step=_evaluate_results,
+            )
+            >> _show_results
         )
-        >> _show_results
     )
 
 
@@ -183,7 +187,10 @@ def indifferent_lso_interaction(provisioning_step: Step) -> StepList:
     :return: A list of steps that is executed as part of the workflow.
     :rtype: :class:`StepList`
     """
+    lso_is_enabled = conditional(lambda _: getenv("LSO_ENABLED") is True)
     return (
+        begin
+        >> lso_is_enabled(
             begin
             >> callback_step(
                 name=provisioning_step.name,
@@ -191,4 +198,5 @@ def indifferent_lso_interaction(provisioning_step: Step) -> StepList:
                 validate_step=_ignore_results,
             )
             >> _show_results
+        )
     )
