@@ -156,7 +156,7 @@ def lso_interaction(provisioning_step: Step) -> StepList:
     :return: A list of steps that is executed as part of the workflow.
     :rtype: :class:`StepList`
     """
-    lso_is_enabled = conditional(lambda _: getenv("LSO_ENABLED") is True)
+    lso_is_enabled = conditional(lambda _: getenv("LSO_ENABLED") == "True")
     return (
         begin
         >> lso_is_enabled(
@@ -187,7 +187,7 @@ def indifferent_lso_interaction(provisioning_step: Step) -> StepList:
     :return: A list of steps that is executed as part of the workflow.
     :rtype: :class:`StepList`
     """
-    lso_is_enabled = conditional(lambda _: getenv("LSO_ENABLED") is True)
+    lso_is_enabled = conditional(lambda _: getenv("LSO_ENABLED") == "True")
     return (
         begin
         >> lso_is_enabled(
