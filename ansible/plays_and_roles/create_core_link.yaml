@@ -1,0 +1,72 @@
+- name: Deploy config on a nokia node
+  hosts: all
+  vars:
+   ansible_network_os: nokia.srlinux.srlinux
+   ansible_connection: ansible.netcommon.httpapi
+   ansible_user: admin
+   ansible_password: NokiaSrl1!
+   netbox_url: "http://netbox:8080"
+   netbox_token: "e744057d755255a31818bf74df2350c26eeabe54"
+   debug: false
+  tasks:
+   - name: Dump subscripion
+     ansible.builtin.debug:
+       msg: "{{core_link}}"
+     when: debug|ansible.builtin.bool is true
+   - name: Adjust variables when I am targeting the first node
+     ansible.builtin.set_fact:
+      local_port: "{{core_link.core_link.ports[0]}}"
+     when: core_link.core_link.ports[0].node.node_name == inventory_hostname
+   - name: Adjust variables when I am targeting the second node
+     ansible.builtin.set_fact:
+      local_port: "{{core_link.core_link.ports[1]}}"
+     when: core_link.core_link.ports[1].node.node_name == inventory_hostname
+   - name: Dump local_port
+     ansible.builtin.debug:
+       msg: "{{local_port}}"
+     when: debug|ansible.builtin.bool is true
+   - name: Build the queries
+     ansible.builtin.set_fact:
+        api_v6_filter: "id={{local_port.ipv6_ipam_id}}" 
+   - name: Get the addresses from netbox
+     ansible.builtin.set_fact:
+        port_ipv6_address_object: "{{ query('netbox.netbox.nb_lookup', 'ip-addresses', 
+                                      api_endpoint=netbox_url, api_filter=api_v6_filter , 
+                                      token=netbox_token) }}" 
+   - name: Assign addresses to variables
+     ansible.builtin.set_fact:
+        port_ipv6_address: "{{port_ipv6_address_object[0].address}}"
+   - name: Show IP addresses 
+     ansible.builtin.debug:
+       msg: " PORT {{local_port.port_name}} IPV6_ADDRESS IS {{port_ipv6_address}} "
+   - name: Configure nokia device 
+     nokia.srlinux.config:
+       update: 
+         - path: "/interface[name={{local_port.port_name}}]"
+           value:
+             admin-state: enable
+             description: "{{local_port.title}}"
+             subinterface:
+               - index: 0
+                 admin-state: enable
+                 description: "{{local_port.title}} - unit 0 "
+                 ipv6:
+                   admin-state: enable
+                   address:
+                     - ip-prefix: "{{port_ipv6_address}}"
+         - path: "/network-instance[name=default]"
+           value:
+             interface: 
+               name: "{{local_port.port_name}}.0"
+         - path: "/network-instance[name=default]/protocols/isis/instance[name=default]/interface[interface-name={{local_port.port_name}}.0]"
+           value:
+             admin-state: enable
+     register: response
+
+   - debug:
+       var: response
+
+   - name: Fail so we can retry
+     ansible.builtin.fail:
+        msg: Now you can hit retry
+     when: debug|ansible.builtin.bool is true

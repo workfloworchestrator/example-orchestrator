@@ -13,6 +13,7 @@
 
 
 import uuid
+import json
 from random import randrange
 from typing import TypeAlias, cast
 
@@ -22,6 +23,7 @@ from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
+from orchestrator.utils.json import json_dumps
 from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State
@@ -32,6 +34,7 @@ from products.product_types.node import Node
 from products.product_types.port import PortInactive, PortProvisioning
 from products.services.description import description
 from services import netbox
+from services.lso_client import execute_playbook, lso_interaction
 from workflows.port.shared.forms import PortModeChoice
 from workflows.port.shared.steps import update_port_in_ims
 from workflows.shared import create_summary_form, free_port_selector, node_selector
@@ -126,6 +129,25 @@ def provision_port_in_nrm(subscription: PortProvisioning) -> State:
     subscription.port.nrm_id = randrange(2**16)
     return {"subscription": subscription}
 
+@step("Install port config")
+def provision_port(
+    subscription: PortProvisioning,
+    callback_route: str,
+    process_id: UUIDstr,
+) -> State:
+    """Perform a dry run of deploying configuration on both sides of the trunk."""
+    extra_vars = {
+        "port": json.loads(json_dumps(subscription)),
+    }
+
+    execute_playbook(
+        playbook_name="create_port.yaml",
+        callback_route=callback_route,
+        inventory=f"{subscription.port.node.node_name}\n",
+        extra_vars=extra_vars,
+    )
+
+    return {"subscription": subscription}
 
 @create_workflow("Create port", initial_input_form=initial_input_form_generator)
 def create_port() -> StepList:
@@ -135,5 +157,6 @@ def create_port() -> StepList:
         >> store_process_subscription(Target.CREATE)
         >> enable_port
         >> update_port_in_ims
+        >> lso_interaction(provision_port)
         >> provision_port_in_nrm
     )

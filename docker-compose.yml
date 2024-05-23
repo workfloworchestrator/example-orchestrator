@@ -1,5 +1,3 @@
-version: "3.9"
-
 x-netbox:
   &netbox
   image: docker.io/netboxcommunity/netbox:${VERSION-v3.4-2.5.2}
@@ -120,6 +118,8 @@ services:
     &orchestrator
     image: "ghcr.io/workfloworchestrator/orchestrator-core:latest"
     env_file: ./docker/orchestrator/orchestrator.env
+    environment:
+      LSO_ENABLED: ${COMPOSE_PROFILES:+True}
     ports:
       - "8080:8080"
       - "5678:5678" #Enable Python debugger
@@ -142,6 +142,24 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+  #
+  # LSO
+  #
+  lso:
+    image: orchestrator-lso
+    profiles:
+      - lso
+    build:
+      context: ./docker/lso/
+      dockerfile: Dockerfile
+    env_file: ./docker/lso/lso.env
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./docker/lso/config.json:/app/config.json
+      - ./ansible/plays_and_roles:/app/wfo/ansible
+      - ./ansible/inventory:/opt/ansible_inventory
 
 volumes:
   netbox-media-files:

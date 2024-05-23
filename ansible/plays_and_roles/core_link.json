@@ -1,0 +1,92 @@
+{
+    "note": null,
+    "speed": 10000,
+    "insync": true,
+    "status": "active",
+    "product": {
+      "tag": "CORE_LINK",
+      "name": "core link 10G",
+      "status": "active",
+      "end_date": null,
+      "created_at": "2024-05-08T10:35:55+00:00",
+      "product_id": "3de1f729-c710-49f1-85e4-6ad1ce1d4624",
+      "description": "Core link",
+      "product_type": "CoreLink"
+    },
+    "end_date": null,
+    "core_link": {
+      "name": "CoreLink",
+      "label": null,
+      "ports": [
+        {
+          "name": "CorePort",
+          "node": {
+            "name": "Node",
+            "label": null,
+            "title": "node clab-orch-demo-fco-pcore status planned",
+            "ims_id": 14,
+            "nrm_id": 41047,
+            "role_id": 5,
+            "site_id": 14,
+            "type_id": 17,
+            "node_name": "clab-orch-demo-fco-pcore",
+            "node_status": "planned",
+            "ipv4_ipam_id": 27,
+            "ipv6_ipam_id": 28,
+            "node_description": null,
+            "owner_subscription_id": "1ad5c12f-c9a6-4dd1-846a-4edfb86398d3",
+            "subscription_instance_id": "27d31eb0-d81a-4058-9675-d4a31c7cbb91"
+          },
+          "label": null,
+          "title": "core port ethernet-1/1 on clab-orch-demo-fco-pcore",
+          "ims_id": 298,
+          "nrm_id": 33861,
+          "enabled": true,
+          "port_name": "ethernet-1/1",
+          "ipv6_ipam_id": 29,
+          "owner_subscription_id": "2bfcf7ed-443b-435b-ae91-fbd8047f07d4",
+          "subscription_instance_id": "84f4532f-ae8c-4789-bc14-b9a29cbc5488"
+        },
+        {
+          "name": "CorePort",
+          "node": {
+            "name": "Node",
+            "label": null,
+            "title": "node clab-orch-demo-ams-pcore status planned",
+            "ims_id": 13,
+            "nrm_id": 51514,
+            "role_id": 5,
+            "site_id": 11,
+            "type_id": 17,
+            "node_name": "clab-orch-demo-ams-pcore",
+            "node_status": "planned",
+            "ipv4_ipam_id": 25,
+            "ipv6_ipam_id": 26,
+            "node_description": null,
+            "owner_subscription_id": "2340c31c-4437-4bb9-a11a-d85c56007952",
+            "subscription_instance_id": "ca9f30a4-b032-4ff9-8ee8-01e3097994b2"
+          },
+          "label": null,
+          "title": "core port ethernet-1/1 on clab-orch-demo-ams-pcore",
+          "ims_id": 241,
+          "nrm_id": 61844,
+          "enabled": true,
+          "port_name": "ethernet-1/1",
+          "ipv6_ipam_id": 30,
+          "owner_subscription_id": "2bfcf7ed-443b-435b-ae91-fbd8047f07d4",
+          "subscription_instance_id": "715c9b30-a14e-4d58-a7d6-dd964ca9ab13"
+        }
+      ],
+      "title": "core link between clab-orch-demo-fco-pcore and clab-orch-demo-ams-pcore",
+      "ims_id": 1,
+      "nrm_id": 13630,
+      "under_maintenance": false,
+      "ipv6_prefix_ipam_id": 13,
+      "owner_subscription_id": "2bfcf7ed-443b-435b-ae91-fbd8047f07d4",
+      "subscription_instance_id": "35342557-b0cd-42bc-acc3-1c642ee5bfd1"
+    },
+    "start_date": "2024-05-10T20:57:55+00:00",
+    "customer_id": "ea911d10-d5f6-462f-a0f8-997983917ffb",
+    "description": "core link 10G clab-orch-demo-fco-pcore ethernet-1/1 <-> ethernet-1/1 clab-orch-demo-ams-pcore",
+    "subscription_id": "2bfcf7ed-443b-435b-ae91-fbd8047f07d4"
+  }

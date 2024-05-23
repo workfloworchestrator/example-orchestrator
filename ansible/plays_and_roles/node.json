@@ -1,0 +1,39 @@
+"node": {
+        "customer_id": "4b17e020-54fa-4919-8360-36c3abc46d48",
+        "description": "node clab-orch-demo-fco-pcore (planned)",
+        "end_date": null,
+        "insync": false,
+        "node": {
+            "ims_id": 7,
+            "ipv4_ipam_id": 13,
+            "ipv6_ipam_id": 14,
+            "label": null,
+            "name": "Node",
+            "node_description": null,
+            "node_name": "clab-orch-demo-fco-pcore",
+            "node_status": "planned",
+            "nrm_id": null,
+            "owner_subscription_id": "f4877147-fa04-4101-acc8-cda5ac7101e4",
+            "role_id": 1,
+            "site_id": 3,
+            "subscription_instance_id": "2930bad2-9b3e-4b83-9673-306806c4c1af",
+            "title": "node clab-orch-demo-fco-pcore status planned",
+            "type_id": 3
+        },
+        "node_type": "Nokia",
+        "note": null,
+        "product": {
+            "created_at": "2024-05-08T10:35:55+00:00",
+            "description": "Network node",
+            "end_date": null,
+            "name": "node Nokia",
+            "product_id": "5cd21d09-87d0-48d1-a414-683cc591212d",
+            "product_type": "Node",
+            "status": "active",
+            "tag": "NODE"
+        },
+        "start_date": null,
+        "status": "provisioning",
+        "subscription_id": "f4877147-fa04-4101-acc8-cda5ac7101e4"
+    }
+

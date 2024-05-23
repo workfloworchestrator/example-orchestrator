@@ -3,3 +3,6 @@
 .idea/
 __pycache__/
 lint.sh
+.venv
+clab-*
+*.clab.yml.bak

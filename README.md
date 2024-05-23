@@ -38,6 +38,14 @@ docker compose up
 
 This will start the `orchestrator`, `orchestrator-ui`, `netbox`, `postgres` and `redis`.
 
+To include LSO, run the following command instead:
+
+```
+COMPOSE_PROFILES=lso docker compose up 
+```
+
+This will build the Docker image for LSO locally, and make the orchestrator use the included Ansible playbooks.
+
 To access the new v2 `orchestrator-ui`, point your browser to:
 
 ```

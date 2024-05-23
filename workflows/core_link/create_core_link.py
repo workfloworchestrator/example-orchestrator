@@ -13,6 +13,7 @@
 
 
 import uuid
+import json
 from random import randrange
 from typing import TypeAlias, cast
 
@@ -22,6 +23,7 @@ from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
+from orchestrator.utils.json import json_dumps
 from pydantic import ConfigDict, model_validator
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State
@@ -32,6 +34,7 @@ from products.product_types.node import Node
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
+from services.lso_client import execute_playbook, lso_interaction
 from settings import settings
 from workflows.shared import free_port_selector, node_selector
 
@@ -188,6 +191,26 @@ def provision_core_link_in_nrm(subscription: CoreLinkProvisioning) -> State:
     subscription.core_link.nrm_id = randrange(2**16)
     return {"subscription": subscription}
 
+@step("Install core-link config")
+def provision_core_link(
+    subscription: CoreLinkProvisioning,
+    callback_route: str,
+    process_id: UUIDstr,
+) -> State:
+    """Perform a dry run of deploying configuration on both sides of the trunk."""
+    extra_vars = {
+        "core_link": json.loads(json_dumps(subscription)),
+    }
+
+    execute_playbook(
+        playbook_name="create_core_link.yaml",
+        callback_route=callback_route,
+        inventory=f"{subscription.core_link.ports[0].node.node_name}\n"
+        f"{subscription.core_link.ports[1].node.node_name}\n",
+        extra_vars=extra_vars,
+    )
+
+    return {"subscription": subscription}
 
 @create_workflow("Create core_link", initial_input_form=initial_input_form_generator)
 def create_core_link() -> StepList:
@@ -201,4 +224,5 @@ def create_core_link() -> StepList:
         >> connect_ports
         >> enable_ports
         >> provision_core_link_in_nrm
+        >> lso_interaction(provision_core_link)
     )
