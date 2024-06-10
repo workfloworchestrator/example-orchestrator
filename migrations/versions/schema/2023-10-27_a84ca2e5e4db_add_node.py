@@ -31,9 +31,7 @@ new_products = {
             "description": "Network node",
             "tag": "NODE",
             "status": "active",
-            "product_blocks": [
-                "Node",
-            ],
+            "root_product_block": "Node",
             "fixed_inputs": {
                 "node_type": "Cisco",
             },
@@ -44,9 +42,7 @@ new_products = {
             "description": "Network node",
             "tag": "NODE",
             "status": "active",
-            "product_blocks": [
-                "Node",
-            ],
+            "root_product_block": "Node",
             "fixed_inputs": {
                 "node_type": "Nokia",
             },
