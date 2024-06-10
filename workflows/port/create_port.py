@@ -66,7 +66,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
         port_settings: Label
 
         port_ims_id: FreePortChoice
-        port_description: str | None = None
+        port_description: str
         port_mode: PortModeChoice
         auto_negotiation: bool | None = False
         lldp: bool | None = False
