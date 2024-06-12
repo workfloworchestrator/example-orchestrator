@@ -36,12 +36,12 @@ Make sure you have docker installed and run:
 docker compose up
 ```
 
-This will start the `orchestrator`, `orchestrator-ui`, `netbox`, `postgres` and `redis`.
+This will start the `orchestrator`, `orchestrator-ui`, `netbox`, `federation`, `postgres` and `redis`.
 
 To include LSO, run the following command instead:
 
 ```
-COMPOSE_PROFILES=lso docker compose up 
+COMPOSE_PROFILES=lso docker compose up
 ```
 
 This will build the Docker image for LSO locally, and make the orchestrator use the included Ansible playbooks.
@@ -302,7 +302,7 @@ to define the helper functions as locally as possible.
 The `main.py` can be as simple as shown below, and can be deployed by a
 ASGI server like Uvicorn[^5].
 
-```python	
+```python
 from orchestrator import OrchestratorCore
 from orchestrator.cli.main import app as core_cli
 from orchestrator.settings import AppSettings
@@ -439,8 +439,8 @@ is not supported.
 
 The Orchestrator uses the concept of a Product to describe what can be built to the end user. When
 a user runs a workflow to create a Product, this results in a unique instance of that product called a Subscription.
-A Subscription is always tied to a certain lifecycle state (eg. Initial, Provisioning, Active, Terminated, etc) and 
-is unique per customer. In other words a Subscription contains all the information needed to uniquely identify a certain 
+A Subscription is always tied to a certain lifecycle state (eg. Initial, Provisioning, Active, Terminated, etc) and
+is unique per customer. In other words a Subscription contains all the information needed to uniquely identify a certain
 resource owned by a user/customer that conforms to a certain definition, namely a Product.
 
 ### Product description in Python
@@ -451,12 +451,12 @@ additional functionality to dynamically cast variables from the
 database, where they are stored as a string, to their correct type in
 Python at runtime. Pydantic uses Python type hints to validate that the
 correct type is assigned. The use of typing, when used together with
-type checkers, already helps to make the code more robust, furthermore the use of Pydantic makes it possible to check 
+type checkers, already helps to make the code more robust, furthermore the use of Pydantic makes it possible to check
 variables at runtime which greatly improves reliability.
 
 #### Example of "Runtime typecasting/safety"
-In the example below we attempt to access a resource that has been stored in an instance of a product 
-(subscription instance). It shows how it can be done directly through the ORM and it shows the added value of Domain 
+In the example below we attempt to access a resource that has been stored in an instance of a product
+(subscription instance). It shows how it can be done directly through the ORM and it shows the added value of Domain
 Models on top of the ORM.
 
 **Serialisation direct from the database**
@@ -502,7 +502,7 @@ lifting, and makes sure the database remains generic and it's schema remains sta
 #### Product Structure
 A Product definition has two parts in its structure. The Higher order product type that contains information describing
 the product in a more general sense, and multiple layers of product blocks that logically describe the set of resources
-that make up the product definition. The product type describes the fixed inputs and the top-level product blocks. 
+that make up the product definition. The product type describes the fixed inputs and the top-level product blocks.
 The fixed inputs are used to differentiate between variants of the same product, for example the speed of a network
 port. There is always at least one top level product block that contains
 the resource types to administer the customer facing input. Beside
@@ -577,10 +577,10 @@ this product.
 
 #### Wiring it up in the Orchestrator
 <details>
-<summary>This section contains advanced information about how to configure the Orchestrator. It is also possible to use 
+<summary>This section contains advanced information about how to configure the Orchestrator. It is also possible to use
 a more user friendly tool available <a href="https://workfloworchestrator.
 org/orchestrator-core/reference-docs/cli/#generate">here</a>.
-This tool uses a configuration file to generate the boilerplate, migrations and configuration necessary to make use of 
+This tool uses a configuration file to generate the boilerplate, migrations and configuration necessary to make use of
 the product straight away.
 </summary>
 
@@ -644,7 +644,7 @@ Every time a subscription is transitioned from one lifecycle to another,
 an automatic check is performed to ensure that resource types that are
 not optional are in fact present on that instantiation of the product
 block. This safeguards for incomplete administration for that lifecycle
-state. 
+state.
 
 #### Resource Type lifecycle. When to use `None`
 The resource types on an inactive product block are usually all
@@ -733,11 +733,11 @@ while displaying detailed subscription information.
 
 ## Workflows - Basics
 
-Workflows are used to orchestrate the lifecycle of a Product Subscription and process the user or systems intent and 
-apply that to the service. As mentioned above a Subscription is created, then modified `N` number of times, after 
-which it is terminated. During it's life a Subscription may also be validated on a regular basis to check whether 
-there is any drift between the state captured in the Orchestrator and actual state on the system. This workflow is 
-slightly different compared to the workflows that process intent and apply that to a system, as it does not modify 
+Workflows are used to orchestrate the lifecycle of a Product Subscription and process the user or systems intent and
+apply that to the service. As mentioned above a Subscription is created, then modified `N` number of times, after
+which it is terminated. During it's life a Subscription may also be validated on a regular basis to check whether
+there is any drift between the state captured in the Orchestrator and actual state on the system. This workflow is
+slightly different compared to the workflows that process intent and apply that to a system, as it does not modify
 the system.
 
 Four types of workflows are defined, three lifecycle related ones to
@@ -764,9 +764,9 @@ types is done automatically. That is why it is important to correctly
 type the step function parameters.
 
 #### Example
-Given this function, when a user correctly makes use of the step decorator it is very easy to extract variables and 
-make a calculation. It creates readable code, that is easy to understand and reason about. Furthermore the variables 
-become available in the step in their correct type according to the domain model. Logic errors due wrong type 
+Given this function, when a user correctly makes use of the step decorator it is very easy to extract variables and
+make a calculation. It creates readable code, that is easy to understand and reason about. Furthermore the variables
+become available in the step in their correct type according to the domain model. Logic errors due wrong type
 interpretation are much less prone to happen.
 
 **Bad use of the step decorator**
@@ -776,7 +776,7 @@ def my_ugly_step(state: State) -> State:
     variable_1 = int(state["variable_1"])
     variable_2 = str(state["varialble_2"])
     subscription = SubscriptionModel.from_subscription_id(state["subscription_id"])
-    
+
     if variable_1 > 42:
         subscription.product_block_model.variable_1 = -1
         subscription.product_block_model.variable_2 = "Infinity"
@@ -787,7 +787,7 @@ def my_ugly_step(state: State) -> State:
     state["subscription"] = subscription
     return state
 ```
-In the above example you see we do a simple calculation based on `variable_1`. When computing with even more 
+In the above example you see we do a simple calculation based on `variable_1`. When computing with even more
 variables, you van imagine how unreadable the function will be. Now consider the next example.
 
 **Good use of the step decorator**
@@ -800,18 +800,18 @@ def my_beautiful_step(variable_1: int, variable_2: str, subscription: Subscripti
     else:
         subscription.product_block_model.variable_1 = variable_1
         subscription.product_block_model.variable_2 = variable_2
-    
+
     return state | {"subscriotion": subscription}
 ```
 
-As you can see the Orchestrator the orchestrator helps you a lot to condense the logic in your function. The `@step` 
+As you can see the Orchestrator the orchestrator helps you a lot to condense the logic in your function. The `@step`
 decorator does the following:
 
 * Loads the previous steps state from the database.
 * Inspects the step functions signature
 * Finds the arguments in the state and injects them as function arguments to the step function
 * It casts them to the correct type by using the type hints of the step function.
-* Finally it updates the state of the workflow and persists all model changes to the database upon reaching the 
+* Finally it updates the state of the workflow and persists all model changes to the database upon reaching the
   `return` of the step function.
 
 ### Forms
@@ -852,10 +852,10 @@ subscription with minimal or no impact to the customer.
 </details>
 
 #### Form _Magic_
-As mentioned before, forms are dynamically created from the backend. This means, **little to no** frontend coding is 
-needed to make complex wizard like input forms available to the user. When selecting an action in the UI. The first 
-thing the frontend does is make an api call to load a form from the backend. The resulting `JSONschema` is parsed 
-and the correct widgets are loaded in the frontend. Upon submit this is posted to the backend that does all 
+As mentioned before, forms are dynamically created from the backend. This means, **little to no** frontend coding is
+needed to make complex wizard like input forms available to the user. When selecting an action in the UI. The first
+thing the frontend does is make an api call to load a form from the backend. The resulting `JSONschema` is parsed
+and the correct widgets are loaded in the frontend. Upon submit this is posted to the backend that does all
 validation and signals to the user if there are any errors. The following forms are supported:
 
 * Multiselect
@@ -865,8 +865,8 @@ validation and signals to the user if there are any errors. The following forms 
 * Radio
 
 ## Workflow examples
-What follows are a few examples of how workflows implement the best common practices implemented by SURF. It 
-explains in detail what a typical workflow could look like for provision in network element. These examples can be 
+What follows are a few examples of how workflows implement the best common practices implemented by SURF. It
+explains in detail what a typical workflow could look like for provision in network element. These examples can be
 examined in greater detail by exploring the `.workflows.node` directory.
 
 ### Create workflow

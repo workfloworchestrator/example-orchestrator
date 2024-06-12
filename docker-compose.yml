@@ -59,6 +59,36 @@ services:
     volumes:
       - netbox-redis-cache-data:/data
 
+  rover-compose:
+    image: alpine
+    build:
+      context: docker/federation
+      dockerfile: rover.Dockerfile
+    depends_on:
+      orchestrator:
+        condition: service_started
+      netbox:
+        condition: service_healthy
+    environment:
+      - APOLLO_ELV2_LICENSE=accept
+      - APOLLO_TELEMETRY_DISABLED=true
+    command: supergraph compose --config /app/supergraph-config.yaml --output /app/supergraph.graphql --skip-update-check
+    volumes:
+      - ./docker/federation:/app
+
+  federation:
+    image: ghcr.io/apollographql/router:v1.47.0
+    ports:
+      - "4000:4000"
+    depends_on:
+      rover-compose:
+        condition: service_completed_successfully
+    environment:
+      - APOLLO_TELEMETRY_DISABLED=true
+    command: --config /app/router-config.yaml --supergraph /app/supergraph.graphql
+    volumes:
+      - ./docker/federation:/app
+
   #
   # Netbox
   #
@@ -116,7 +146,7 @@ services:
 
   orchestrator:
     &orchestrator
-    image: "ghcr.io/workfloworchestrator/orchestrator-core:latest"
+    image: "ghcr.io/workfloworchestrator/orchestrator-core:edge"  # TODO latest points to 2.2.0 - need 2.3.0rcX with graphql schema fixes
     env_file: ./docker/orchestrator/orchestrator.env
     environment:
       LSO_ENABLED: ${COMPOSE_PROFILES:+True}

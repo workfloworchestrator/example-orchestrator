@@ -1,0 +1,13 @@
+cors:
+  allow_any_origin: true
+
+supergraph:
+  introspection: true
+  # The socket address and port to listen on
+  listen: 0.0.0.0:4000
+
+homepage:
+  enabled: false
+
+sandbox:
+  enabled: true
