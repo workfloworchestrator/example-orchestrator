@@ -27,7 +27,7 @@ def build_node_payload(model: NodeBlockProvisioning, subscription: SubscriptionM
            "name": "asd001a",
            "status": "active",
            "site": 17,
-           "device_role": 11,
+           "role": 11,
            "device_type": 23,
            "primary_ip4": 8,
            "primary_ip6": 15
@@ -43,7 +43,7 @@ def build_node_payload(model: NodeBlockProvisioning, subscription: SubscriptionM
     return netbox.DevicePayload(
         site=model.site_id,  # not yet administrated in orchestrator
         device_type=model.type_id,  # not yet administrated in orchestrator
-        device_role=model.role_id,  # not yet administrated in orchestrator
+        role=model.role_id,  # not yet administrated in orchestrator
         name=model.node_name,
         status=model.node_status,
         primary_ip4=model.ipv4_ipam_id,

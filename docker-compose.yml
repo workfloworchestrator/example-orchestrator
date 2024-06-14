@@ -1,6 +1,8 @@
 x-netbox:
   &netbox
-  image: docker.io/netboxcommunity/netbox:${VERSION-v3.4-2.5.2}
+  build:
+    context: docker/netbox
+    dockerfile: Dockerfile
   depends_on:
     - postgres
     - redis
