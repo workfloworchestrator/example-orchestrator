@@ -62,7 +62,6 @@ services:
       - netbox-redis-cache-data:/data
 
   rover-compose:
-    image: alpine
     build:
       context: docker/federation
       dockerfile: rover.Dockerfile
