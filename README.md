@@ -53,10 +53,17 @@ http://localhost:3000/
 ```
 
 
-And to access `netbox` (admin/admin), point your browser to:
+To access `netbox` (admin/admin), point your browser to:
 
 ```
 http://localhost:8000/
+```
+
+
+To access `federation`, point your browser to:
+
+```
+http://localhost:4000
 ```
 
 ### Using the example orchestrator
@@ -186,6 +193,8 @@ NetBox[^3] is used as IMS and IPAM, and serves as the source of truth
 for the complete IP address administration and physical and logical
 network infrastructure. It has a REST based API that makes it easy to
 integrate with the Workflow Orchestrator.
+
+The GraphQL APIs of WFO and NetBox support Federation[^8] through the GraphQL framework Strawberry[^9].
 
 ## Example orchestrator
 
@@ -1363,6 +1372,112 @@ nodes.
 
 <center><img src=".pictures/netbox_node_port_l2vpn.png" alt="Node, port and L2VPN type mapping" width=40% height=40%></center>
 
+### Federation
+
+WFO and NetBox both use the GraphQL framework Strawberry[^9] which supports Apollo Federation[^8]. This allows to expose both GraphQL backends as a single *supergraph*. WFO can be integrated with any other GraphQL backend that supports[^10] federation and of which you can modify the code. In case of NetBox we don't have direct control over the source code, so we patched it for purposes of demonstration.
+
+#### Requirements
+
+The following is required to facilitate GraphQL federation on top of WFO and other GraphQL backend(s):
+
+* WFO must be configured with `FEDERATION_ENABLED=True`
+  * [`docker/orchestrator/orchestrator.env`](docker/orchestrator/orchestrator.env)
+* The other backend must also enable federation
+  * NetBox: [`docker/netbox/Dockerfile`](docker/netbox/Dockerfile)
+* In both backends set a federation key on the GraphQL types to join
+  * WFO: [`graphql_federation.py`](graphql_federation.py)
+  * NetBox: [`docker/netbox/patch_federation.py`](docker/netbox/patch_federation.py)
+* Define the supergraph config with both backends
+  * [`docker/federation/supergraph-config.yaml`](docker/federation/supergraph-config.yaml)
+* Compile the supergraph schema with rover[^12]
+  * `rover-compose` startup service in [`docker-compose.yml`](docker-compose.yml)
+* Run Apollo Router to serve the supergraph
+  * `federation` service in [`docker-compose.yml`](docker-compose.yml)
+
+For more information on federating new GraphQL types, or the existing WFO GraphQL types, please refer to our reference documentation[^11].
+
+#### Example queries
+
+The following queries assume a running docker-compose environment with 2 configured Nodes. We'll demonstrate how 2 separate GraphQL queries can now be performed in 1 federated query.
+
+**NetBox**: NetBox device details can be queried from the NetBox GraphQL endpoint at http://localhost:8000/graphql/ (be sure to authenticate first with admin/admin)
+
+```graphql
+query GetNetboxDevices {
+  device_list {
+    id
+    name
+    device_type {
+      manufacturer {
+        name
+      }
+    }
+    site {
+      name
+    }
+  }
+}
+```
+
+<img src=".pictures/graphql_netbox.png" alt="netbox query" width="75%" height="auto">
+
+**WFO**: Node subscriptions can be queried from the WFO GraphQL endpoint at http://localhost:8080/api/graphql
+
+```graphql
+query GetSubscriptions {
+  subscriptions(filterBy:
+    	{field: "product", value: "Node"}
+  ) {
+    page {
+      ... on NodeSubscription {
+        subscriptionId
+        description
+        node {
+          imsId
+          nodeName
+        }
+      }
+    }
+  }
+}
+```
+
+<img src=".pictures/graphql_wfo.png" alt="wfo query" width="75%" height="auto">
+
+**Federation**: Node subscriptions enriched with NetBox device details can be queried from the Federation endpoint at http://localhost:4000
+
+```graphql
+query GetEnrichedSubscriptions {
+  subscriptions(filterBy:
+    {field: "product", value: "Node"}
+  ) {
+    page {
+      ... on NodeSubscription {
+        subscriptionId
+        description
+        node {
+          imsId
+          nodeName
+          netboxDevice {
+            name
+            device_type {
+              manufacturer {
+                name
+              }
+            }
+            site {
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+<img src=".pictures/graphql_federation.png" alt="federated query" width="75%" height="auto">
+
 ## Glossary
 
 <dl>
@@ -1404,3 +1519,13 @@ https://www.sqlalchemy.org
 https://pydantic.dev/
 
 [^7]: Pynetbox Python API - https://github.com/netbox-community/pynetbox
+
+[^8]: Apollo Federation - https://www.apollographql.com/docs/federation/
+
+[^9]: Strawberry Federation - https://strawberry.rocks/docs/federation/introduction
+
+[^10]: Apollo Federation support - https://www.apollographql.com/docs/federation/building-supergraphs/supported-subgraphs
+
+[^11]: WFO GraphQL Documentation - https://workfloworchestrator.org/orchestrator-core/reference-docs/graphql/
+
+[^12]: Apollo Rover - https://www.apollographql.com/docs/rover/
