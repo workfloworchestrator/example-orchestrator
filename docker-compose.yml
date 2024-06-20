@@ -147,7 +147,7 @@ services:
 
   orchestrator:
     &orchestrator
-    image: "ghcr.io/workfloworchestrator/orchestrator-core:edge"  # TODO latest points to 2.2.0 - need 2.3.0rcX with graphql schema fixes
+    image: "ghcr.io/workfloworchestrator/orchestrator-core:latest"
     env_file: ./docker/orchestrator/orchestrator.env
     environment:
       LSO_ENABLED: ${COMPOSE_PROFILES:+True}
