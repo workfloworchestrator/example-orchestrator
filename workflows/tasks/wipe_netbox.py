@@ -35,8 +35,8 @@ endpoints = [
     netbox.api.ipam.prefixes,
     netbox.api.ipam.ip_addresses,
     netbox.api.ipam.vlans,
-    netbox.api.ipam.l2vpns,
-    netbox.api.ipam.l2vpn_terminations,
+    netbox.api.vpn.l2vpns,
+    netbox.api.vpn.l2vpn_terminations,
 ]
 
 

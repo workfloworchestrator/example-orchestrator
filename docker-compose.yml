@@ -1,6 +1,8 @@
 x-netbox:
   &netbox
-  image: docker.io/netboxcommunity/netbox:${VERSION-v3.4-2.5.2}
+  build:
+    context: docker/netbox
+    dockerfile: Dockerfile
   depends_on:
     - postgres
     - redis
@@ -58,6 +60,35 @@ services:
     env_file: ./docker/redis/redis.env
     volumes:
       - netbox-redis-cache-data:/data
+
+  rover-compose:
+    build:
+      context: docker/federation
+      dockerfile: rover.Dockerfile
+    depends_on:
+      orchestrator:
+        condition: service_started
+      netbox:
+        condition: service_healthy
+    environment:
+      - APOLLO_ELV2_LICENSE=accept
+      - APOLLO_TELEMETRY_DISABLED=true
+    command: supergraph compose --config /app/supergraph-config.yaml --output /app/supergraph.graphql --skip-update-check
+    volumes:
+      - ./docker/federation:/app
+
+  federation:
+    image: ghcr.io/apollographql/router:v1.47.0
+    ports:
+      - "4000:4000"
+    depends_on:
+      rover-compose:
+        condition: service_completed_successfully
+    environment:
+      - APOLLO_TELEMETRY_DISABLED=true
+    command: --config /app/router-config.yaml --supergraph /app/supergraph.graphql
+    volumes:
+      - ./docker/federation:/app
 
   #
   # Netbox
@@ -132,6 +163,7 @@ services:
       - ./docker:/home/orchestrator/etc
       - ./main.py:/home/orchestrator/main.py
       - ./settings.py:/home/orchestrator/settings.py
+      - ./graphql_federation.py:/home/orchestrator/graphql_federation.py
       - ./utils:/home/orchestrator/utils
       - ./services:/home/orchestrator/services
       - ./requirements.txt:/home/orchestrator/requirements.txt

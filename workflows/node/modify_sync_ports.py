@@ -48,7 +48,7 @@ def update_interfaces(
     device = netbox.get_device(name=subscription.node.node_name)
     netbox_interfaces = set(
         (interface.name, interface.type.value, interface.speed)
-        for interface in netbox.get_interfaces(device=device)
+        for interface in netbox.get_interfaces(device_id=device.id)
         if "Loopback" not in interface.name
     )
     interfaces_added = sorted(node_interfaces - netbox_interfaces)

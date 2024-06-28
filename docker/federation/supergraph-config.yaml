@@ -1,0 +1,10 @@
+federation_version: =2.7.1
+subgraphs:
+  orchestrator:
+    routing_url: http://orchestrator:8080/api/graphql
+    schema:
+      subgraph_url: http://orchestrator:8080/api/graphql
+  netbox:
+    routing_url: http://netbox:8080/graphql/
+    schema:
+      subgraph_url: http://netbox:8080/graphql/

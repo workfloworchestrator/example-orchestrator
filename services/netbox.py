@@ -14,6 +14,7 @@
 
 from dataclasses import asdict, dataclass, field
 from functools import singledispatch
+from ipaddress import IPv4Interface, IPv6Interface
 from typing import Any, List, Tuple
 
 import structlog
@@ -69,7 +70,7 @@ class DeviceTypePayload(NetboxPayload):
 class DevicePayload(NetboxPayload):
     site: int
     device_type: int
-    device_role: int
+    role: int
     name: str | None
     status: str | None
     primary_ip4: int | None = None
@@ -196,19 +197,19 @@ def get_cable(**kwargs):
 
 
 def get_l2vpns(**kwargs):
-    return api.ipam.l2vpns.filter(**kwargs)
+    return api.vpn.l2vpns.filter(**kwargs)
 
 
 def get_l2vpn(**kwargs):
-    return api.ipam.l2vpns.get(**kwargs)
+    return api.vpn.l2vpns.get(**kwargs)
 
 
 def get_l2vpn_terminations(**kwargs):
-    return api.ipam.l2vpn_terminations.filter(**kwargs)
+    return api.vpn.l2vpn_terminations.filter(**kwargs)
 
 
 def get_l2vpn_termination(**kwargs):
-    return api.ipam.l2vpn_terminations.get(**kwargs)
+    return api.vpn.l2vpn_terminations.get(**kwargs)
 
 
 def get_vlans(**kwargs):
@@ -264,28 +265,56 @@ def delete_ip_address(**kwargs) -> None:
 
 
 def delete_l2vpn(**kwargs) -> None:
-    delete_from_netbox(api.ipam.l2vpns, **kwargs)
+    delete_from_netbox(api.vpn.l2vpns, **kwargs)
 
 
 def delete_vlan(**kwargs) -> None:
     delete_from_netbox(api.ipam.vlans, **kwargs)
 
 
+def skip_network_address(ip_prefix: Prefixes) -> None:
+    """Assign placeholders for network address(es) in available IPS of the prefix.
+
+    Helper function for reserve_loopback_addresses().
+    Ensures that the first available ip from the prefix is not a network address.
+    """
+    def is_network_address(address: IpAddresses) -> bool:
+        addr = IPv4Interface(address) if address.family == 4 else IPv6Interface(address)
+        return addr.ip == addr.network.network_address
+
+    while True:
+        if not (address := next(iter(ip_prefix.available_ips.list()), None)):
+            raise ValueError(f"Prefix {ip_prefix} has no available addresses")
+
+        if not is_network_address(address):
+            return
+
+        ip_prefix.available_ips.create({"description": "placeholder"})
+
+
+
+
 def reserve_loopback_addresses(device_id: int) -> Tuple:
     """Reserve IP IPv4/IPv6 loopback addresses, assign to Loopback0, and return address id."""
     device = get_device(id=device_id)
     interface_id = create(InterfacePayload(device=device_id, name="Loopback0", type="virtual", enabled=True))
-    return tuple(
-        get_ip_prefix(prefix=prefix)
-        .available_ips.create(
+
+    def reserve_loopback_address(ip_version: str, prefix: str) -> int:
+        ip_prefix = get_ip_prefix(prefix=prefix)
+        # The netbox v3 API incorrectly allowed assigning the network address to an interface.
+        #
+        # The netbox v4 API now rejects this. But that raises the question of how to skip the non-network
+        # address(es). There might be a better way, but for now we assign placeholders for the network address(es).
+        skip_network_address(ip_prefix)
+        address = ip_prefix.available_ips.create(
             asdict(
-                AvailableIpPayload(
-                    description=f"{ip_version} loopback {device.name}",
-                    assigned_object_id=interface_id,
-                )
+                AvailableIpPayload(description=f"{ip_version} loopback {device.name}", assigned_object_id=interface_id)
             )
         )
-        .id
+        return address.id
+
+    return tuple(
+        reserve_loopback_address(ip_version, prefix)
         for ip_version, prefix in (("IPv4", settings.IPv4_LOOPBACK_PREFIX), ("IPv6", settings.IPv6_LOOPBACK_PREFIX))
     )
 
@@ -390,12 +419,12 @@ def _(payload: VlanPayload, **kwargs: Any) -> int:
 
 @create.register
 def _(payload: L2vpnPayload, **kwargs: Any) -> int:
-    return _create_object(payload, endpoint=api.ipam.l2vpns)
+    return _create_object(payload, endpoint=api.vpn.l2vpns)
 
 
 @create.register
 def _(payload: L2vpnTerminationPayload, **kwargs: Any) -> int:
-    return _create_object(payload, endpoint=api.ipam.l2vpn_terminations)
+    return _create_object(payload, endpoint=api.vpn.l2vpn_terminations)
 
 
 @singledispatch
