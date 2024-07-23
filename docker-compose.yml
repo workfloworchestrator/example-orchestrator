@@ -175,6 +175,33 @@ services:
       postgres:
         condition: service_healthy
 
+  orchestrator-worker:
+    <<: *orchestrator
+    ports:
+      # - "8080:8080"
+      - "5679:5678" #Enable Python debugger
+    expose:
+      - 5679 #Enable Python debugger
+    volumes:  # CLEANUP if it works
+      - ./workflows:/home/orchestrator/workflows
+      - ./products:/home/orchestrator/products
+      - ./migrations:/home/orchestrator/migrations
+      - ./docker:/home/orchestrator/etc
+      - ./main.py:/home/orchestrator/main.py
+      - ./graphql_federation.py:/home/orchestrator/graphql_federation.py
+      - ./settings.py:/home/orchestrator/settings.py
+      - ./tasks.py:/home/orchestrator/tasks.py
+      - ./utils:/home/orchestrator/utils
+      - ./services:/home/orchestrator/services
+      - ./requirements.txt:/home/orchestrator/requirements.txt
+      - ./requirements-worker.txt:/home/orchestrator/requirements-worker.txt
+      - ./translations:/home/orchestrator/translations
+      - ./templates:/home/orchestrator/templates
+    entrypoint: [ "/home/orchestrator/etc/orchestrator/entrypoint_worker.sh" ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   #
   # LSO
   #
