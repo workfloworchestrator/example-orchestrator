@@ -2,3 +2,4 @@ orchestrator-core
 deepdiff
 rich
 pynetbox
+celery

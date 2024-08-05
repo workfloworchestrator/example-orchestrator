@@ -12,6 +12,7 @@
 # limitations under the License.
 
 
+from orchestrator.settings import app_settings
 from pydantic_settings import BaseSettings
 
 
@@ -25,3 +26,7 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+backend = str(app_settings.CACHE_URI)
+broker = str(app_settings.CACHE_URI)

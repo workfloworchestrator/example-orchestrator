@@ -1,0 +1,3 @@
+-r requirements.txt
+
+watchdog  # Optional, used for hot reloading in development
