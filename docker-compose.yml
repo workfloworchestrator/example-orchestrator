@@ -1,5 +1,4 @@
-x-netbox:
-  &netbox
+x-netbox: &netbox
   build:
     context: docker/netbox
     dockerfile: Dockerfile
@@ -7,7 +6,7 @@ x-netbox:
     - postgres
     - redis
   env_file: ./docker/netbox/netbox.env
-  user: 'unit:root'
+  user: "unit:root"
   healthcheck:
     start_period: 360s
     timeout: 3s
@@ -23,7 +22,7 @@ x-netbox:
 
 services:
   postgres:
-    image: 'postgres:14'
+    image: "postgres:14"
     ports:
       - "5432:5432"
     environment:
@@ -41,7 +40,7 @@ services:
           "--username",
           "nwa",
           "--dbname",
-          "orchestrator-core"
+          "orchestrator-core",
         ]
       interval: "3s"
       timeout: "2s"
@@ -54,6 +53,12 @@ services:
       - sh
       - -c # this is to evaluate the $REDIS_PASSWORD from the env
       - redis-server --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+    healthcheck:
+      test: '[ $$(redis-cli --pass "$${REDIS_PASSWORD}" ping) = ''PONG'' ]'
+      start_period: 5s
+      timeout: 3s
+      interval: 1s
+      retries: 5
     env_file: ./docker/redis/redis.env
     volumes:
       - netbox-redis-cache-data:/data
@@ -94,10 +99,7 @@ services:
     ports:
       - "8000:8080"
     entrypoint:
-      [
-        "/opt/netbox/docker-entrypoint.sh",
-        "/etc/netbox/entrypoint.sh"
-      ]
+      ["/opt/netbox/docker-entrypoint.sh", "/etc/netbox/entrypoint.sh"]
 
   netbox-worker:
     <<: *netbox
@@ -137,7 +139,7 @@ services:
         condition: service_started
 
   orchestrator-api:
-    image: "ghcr.io/workfloworchestrator/orchestrator-core:2.8.0"
+    image: "ghcr.io/workfloworchestrator/orchestrator-core:latest"
     env_file: ./docker/orchestrator/orchestrator.env
     environment:
       LSO_ENABLED: ${COMPOSE_PROFILES:+True}
@@ -160,9 +162,11 @@ services:
       - ./alembic.ini:/home/orchestrator/alembic.ini
       - ./translations:/home/orchestrator/translations
       - ./templates:/home/orchestrator/templates
-    entrypoint: [ "/home/orchestrator/etc/orchestrator/entrypoint.sh" ]
+    entrypoint: ["/home/orchestrator/etc/orchestrator/entrypoint.sh"]
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   lso:
