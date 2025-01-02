@@ -1,14 +1,14 @@
-FROM python:3.12-alpine
+FROM python:3.12.7-alpine
 
 WORKDIR /app
 
 RUN apk add --update --no-cache gcc libc-dev libffi-dev
 
-RUN pip install orchestrator-lso=="1.0.2" 
+RUN pip install orchestrator-lso=="2.0.1"
 
 RUN pip install pynetbox
 
-RUN ansible-galaxy collection install nokia.srlinux -p /usr/local/lib/python3.12/site-packages/ansible_collections
+RUN ansible-galaxy collection install nokia.srlinux -p /app/demo/ansible
 
 EXPOSE 8000
 ENTRYPOINT []

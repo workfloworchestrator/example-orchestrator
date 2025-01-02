@@ -21,9 +21,6 @@ x-netbox: &netbox
     - ./docker/netbox/data.json:/etc/netbox/data.json
 
 services:
-  #
-  # Shared
-  #
   postgres:
     image: "postgres:14"
     ports:
@@ -71,7 +68,7 @@ services:
       context: docker/federation
       dockerfile: rover.Dockerfile
     depends_on:
-      orchestrator:
+      orchestrator-api:
         condition: service_started
       netbox:
         condition: service_healthy
@@ -95,9 +92,6 @@ services:
     volumes:
       - ./docker/federation:/app
 
-  #
-  # Netbox
-  #
   netbox:
     <<: *netbox
     expose:
@@ -135,19 +129,16 @@ services:
       interval: 15s
       test: "ps -aux | grep -v grep | grep -q housekeeping || exit 1"
 
-  #
-  # Orchestrator
-  #
   orchestrator-ui:
-    image: "ghcr.io/workfloworchestrator/example-orchestrator-ui:latest"
+    image: "ghcr.io/workfloworchestrator/example-orchestrator-ui:2.14.0"
     env_file: ./docker/orchestrator-ui/orchestrator-ui.env
     ports:
       - "3000:3000"
     depends_on:
-      orchestrator:
+      orchestrator-api:
         condition: service_started
 
-  orchestrator: &orchestrator
+  orchestrator-api:
     image: "ghcr.io/workfloworchestrator/orchestrator-core:latest"
     env_file: ./docker/orchestrator/orchestrator.env
     environment:
@@ -178,9 +169,6 @@ services:
       redis:
         condition: service_healthy
 
-  #
-  # LSO
-  #
   lso:
     image: orchestrator-lso
     profiles:
@@ -192,9 +180,16 @@ services:
     ports:
       - "8001:8000"
     volumes:
-      - ./docker/lso/config.json:/app/config.json
       - ./ansible/plays_and_roles:/app/wfo/ansible
       - ./ansible/inventory:/opt/ansible_inventory
+
+  nginx:
+    image: "nginx:1.27-alpine"
+    ports:
+      - "80:80"
+    volumes:
+      - "./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro"
+    restart: always
 
 volumes:
   netbox-media-files:
