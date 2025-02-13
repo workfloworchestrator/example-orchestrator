@@ -14,7 +14,7 @@ x-netbox: &netbox
     start_period: 360s
     timeout: 3s
     interval: 15s
-    test: "curl -f http://localhost:8080/api/ || exit 1"
+    test: "curl -w '%{http_code}' -o /dev/null -s http://127.0.0.1:8080/api/ | grep -Eq '200|403'"
   volumes:
     - ./docker/netbox/configuration:/etc/netbox/config:z,ro
     - ./docker/netbox/reports:/etc/netbox/reports:z,ro
