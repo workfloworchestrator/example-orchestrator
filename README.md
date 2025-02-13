@@ -3,34 +3,71 @@
 Example workflow orchestrator implementation based on the
 [orchestrator-core](https://workfloworchestrator.org/orchestrator-core/) framework.
 
-- [Quickstart](#quickstart)
-    * [Start application](#start-application)
-    * [Using the example orchestrator](#using-the-example-orchestrator)
-- [Summary](#summary)
-- [Introduction](#introduction)
-- [Example orchestrator](#example-orchestrator)
-    * [Folder layout](#folder-layout)
-    * [Main application](#main-application)
-    * [Implemented products](#implemented-products)
-    * [Product Hiearchy Diagram](#product-hiearchy-diagram)
-    * [How to use](#how-to-use)
-- [Products](#products)
-    * [Product description in Python](#product-description-in-python)
-    * [Product types](#product-types)
-    * [Product blocks](#product-blocks)
-- [Workflows - Basics](#workflows---basics)
-    * [Workflow Architecture - Passing information from one step to the next](#workflow-architecture---passing-information-from-one-step-to-the-next)
-    * [Forms](#forms)
-- [Workflow examples](#workflow-examples)
-    * [Create workflow](#create-workflow)
-    * [Modify workflow](#modify-workflow)
-    * [Terminate workflow](#terminate-workflow)
-    * [Validate workflows](#validate-workflows)
-- [Services](#services)
-    * [Subscription descriptions](#subscription-descriptions)
-    * [Netbox](#netbox)
-    * [Federation](#federation)
-- [Glossary](#glossary)
+- [Example Workflow Orchestrator](#example-workflow-orchestrator)
+  - [Quickstart](#quickstart)
+    - [Start application](#start-application)
+    - [Using the example orchestrator](#using-the-example-orchestrator)
+  - [Summary](#summary)
+  - [Introduction](#introduction)
+  - [Example orchestrator](#example-orchestrator)
+    - [Folder layout](#folder-layout)
+      - [migrations/versions/schema](#migrationsversionsschema)
+      - [products/product\_types](#productsproduct_types)
+      - [products/product\_blocks](#productsproduct_blocks)
+      - [products/services](#productsservices)
+      - [services](#services)
+      - [templates](#templates)
+      - [translations](#translations)
+      - [utils](#utils)
+      - [workflows](#workflows)
+      - [shared](#shared)
+    - [Main application](#main-application)
+    - [Implemented products](#implemented-products)
+    - [Product Hiearchy Diagram](#product-hiearchy-diagram)
+    - [How to use](#how-to-use)
+      - [Node](#node)
+      - [CoreLink](#corelink)
+      - [Port](#port)
+      - [L2vpn](#l2vpn)
+  - [Products](#products)
+    - [Product description in Python](#product-description-in-python)
+      - [Example of "Runtime typecasting/safety"](#example-of-runtime-typecastingsafety)
+      - [Product Structure](#product-structure)
+      - [Terminology](#terminology)
+    - [Product types](#product-types)
+      - [Domain Model a.k.a Product Type Definition](#domain-model-aka-product-type-definition)
+      - [Fixed Input](#fixed-input)
+      - [Wiring it up in the Orchestrator](#wiring-it-up-in-the-orchestrator)
+    - [Product blocks](#product-blocks)
+      - [Resource Type lifecycle. When to use `None`](#resource-type-lifecycle-when-to-use-none)
+      - [Example](#example)
+      - [Product Block customisation](#product-block-customisation)
+  - [Workflows - Basics](#workflows---basics)
+    - [Workflow Architecture - Passing information from one step to the next](#workflow-architecture---passing-information-from-one-step-to-the-next)
+      - [Example](#example-1)
+    - [Forms](#forms)
+      - [Form _Magic_](#form-magic)
+  - [Workflow examples](#workflow-examples)
+    - [Create workflow](#create-workflow)
+      - [Input Form](#input-form)
+      - [Extra Validation between dependant fields](#extra-validation-between-dependant-fields)
+    - [Modify workflow](#modify-workflow)
+    - [Terminate workflow](#terminate-workflow)
+    - [Validate workflows](#validate-workflows)
+  - [Services](#services-1)
+    - [Subscription descriptions](#subscription-descriptions)
+    - [Netbox](#netbox)
+      - [Payload](#payload)
+      - [Create](#create)
+      - [Update](#update)
+      - [Get](#get)
+      - [Delete](#delete)
+      - [Product block to Netbox object mapping](#product-block-to-netbox-object-mapping)
+    - [Federation](#federation)
+      - [Requirements](#requirements)
+      - [Example queries](#example-queries)
+  - [Configuration](#configuration)
+  - [Glossary](#glossary)
 
 ## Quickstart
 
@@ -384,7 +421,7 @@ graph of product blocks as is shown below.
 
 ### How to use
 
-human workflows regarding the delivery of products to customers are
+Human workflows regarding the delivery of products to customers are
 often comprehensive. To limit the scope of this example orchestrator,
 but still show the BCP while automating procedures, only inventory
 management and provisioning are modeled. The implemented products and
@@ -1483,6 +1520,10 @@ query GetEnrichedSubscriptions {
 ```
 
 <img src=".pictures/graphql_federation.png" alt="federated query" width="75%" height="auto">
+
+## Configuration
+
+Environment variables and orchestrator-core can be overridden for development purposes. Please refer to [this documentation](./docker/overrides/configuration.md) for more details.
 
 ## Glossary
 

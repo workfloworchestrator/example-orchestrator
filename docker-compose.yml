@@ -5,13 +5,16 @@ x-netbox: &netbox
   depends_on:
     - postgres
     - redis
-  env_file: ./docker/netbox/netbox.env
+  env_file:
+    - ./docker/netbox/netbox.env
+    - path: ./docker/overrides/netbox/netbox.env
+      required: false
   user: "unit:root"
   healthcheck:
     start_period: 360s
     timeout: 3s
     interval: 15s
-    test: "curl -f http://localhost:8080/api/ || exit 1"
+    test: "curl -w '%{http_code}' -o /dev/null -s http://127.0.0.1:8080/api/ | grep -Eq '200|403'"
   volumes:
     - ./docker/netbox/configuration:/etc/netbox/config:z,ro
     - ./docker/netbox/reports:/etc/netbox/reports:z,ro
@@ -22,6 +25,7 @@ x-netbox: &netbox
 
 services:
   postgres:
+    container_name: postgres
     image: "postgres:14"
     ports:
       - "5432:5432"
@@ -48,6 +52,7 @@ services:
       start_period: "5s"
 
   redis:
+    container_name: redis
     image: docker.io/redis:7-alpine
     command:
       - sh
@@ -59,17 +64,21 @@ services:
       timeout: 3s
       interval: 1s
       retries: 5
-    env_file: ./docker/redis/redis.env
+    env_file:
+      - ./docker/redis/redis.env
+      - path: ./docker/overrides/redis/redis.env
+        required: false
     volumes:
       - netbox-redis-cache-data:/data
 
   rover-compose:
+    container_name: rover-compose
     build:
       context: docker/federation
       dockerfile: rover.Dockerfile
     depends_on:
-      orchestrator-api:
-        condition: service_started
+      orchestrator:
+        condition: service_healthy
       netbox:
         condition: service_healthy
     environment:
@@ -80,6 +89,7 @@ services:
       - ./docker/federation:/app
 
   federation:
+    container_name: federation
     image: ghcr.io/apollographql/router:v1.47.0
     ports:
       - "4000:4000"
@@ -94,6 +104,7 @@ services:
 
   netbox:
     <<: *netbox
+    container_name: netbox
     expose:
       - "8080"
     ports:
@@ -103,6 +114,7 @@ services:
 
   netbox-worker:
     <<: *netbox
+    container_name: netbox-worker
     depends_on:
       netbox:
         condition: service_healthy
@@ -118,6 +130,7 @@ services:
 
   netbox-housekeeping:
     <<: *netbox
+    container_name: netbox-housekeeping
     depends_on:
       netbox:
         condition: service_healthy
@@ -130,17 +143,25 @@ services:
       test: "ps -aux | grep -v grep | grep -q housekeeping || exit 1"
 
   orchestrator-ui:
-    image: "ghcr.io/workfloworchestrator/example-orchestrator-ui:2.14.0"
-    env_file: ./docker/orchestrator-ui/orchestrator-ui.env
+    container_name: orchestrator-ui
+    image: "ghcr.io/workfloworchestrator/example-orchestrator-ui:2.14.0"  # TODO make it possible to override the tag
+    env_file:
+      - ./docker/orchestrator-ui/orchestrator-ui.env
+      - path: ./docker/overrides/orchestrator-ui/orchestrator-ui.env
+        required: false
     ports:
       - "3000:3000"
     depends_on:
-      orchestrator-api:
+      orchestrator:
         condition: service_started
 
-  orchestrator-api:
-    image: "ghcr.io/workfloworchestrator/orchestrator-core:latest"
-    env_file: ./docker/orchestrator/orchestrator.env
+  orchestrator:
+    container_name: orchestrator
+    image: "ghcr.io/workfloworchestrator/orchestrator-core:latest"  # TODO make it possible to override the tag
+    env_file:
+      - ./docker/orchestrator/orchestrator.env
+      - path: ./docker/overrides/orchestrator/orchestrator.env
+        required: false
     environment:
       LSO_ENABLED: ${COMPOSE_PROFILES:+True}
     ports:
@@ -162,21 +183,33 @@ services:
       - ./alembic.ini:/home/orchestrator/alembic.ini
       - ./translations:/home/orchestrator/translations
       - ./templates:/home/orchestrator/templates
+      - ./docker/orchestrator/.bashrc:/home/orchestrator/.bashrc
+      - ${CORE_DIR:-./docker/overrides/orchestrator-core}:/home/orchestrator/orchestrator-core
     entrypoint: ["/home/orchestrator/etc/orchestrator/entrypoint.sh"]
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      start_period: 15s
+      timeout: 5s
+      interval: 5s
+      retries: 20
+      test: /home/orchestrator/etc/orchestrator/is_healthy.py
 
   lso:
+    container_name: orchestrator-lso
     image: orchestrator-lso
     profiles:
       - lso
     build:
       context: ./docker/lso/
       dockerfile: Dockerfile
-    env_file: ./docker/lso/lso.env
+    env_file:
+      - ./docker/lso/lso.env
+      - path: ./docker/overrides/lso/lso.env
+        required: false
     ports:
       - "8001:8000"
     volumes:
@@ -184,12 +217,18 @@ services:
       - ./ansible/inventory:/opt/ansible_inventory
 
   nginx:
+    container_name: nginx
     image: "nginx:1.27-alpine"
     ports:
       - "80:80"
     volumes:
       - "./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro"
     restart: always
+    depends_on:
+      orchestrator:
+        condition: service_started
+      orchestrator-ui:
+        condition: service_started
 
 volumes:
   netbox-media-files:

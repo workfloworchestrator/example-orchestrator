@@ -6,3 +6,4 @@ lint.sh
 .venv
 clab-*
 *.clab.yml.bak
+.env
