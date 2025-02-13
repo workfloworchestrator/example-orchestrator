@@ -25,6 +25,7 @@ x-netbox: &netbox
 
 services:
   postgres:
+    container_name: postgres
     image: "postgres:14"
     ports:
       - "5432:5432"
@@ -51,6 +52,7 @@ services:
       start_period: "5s"
 
   redis:
+    container_name: redis
     image: docker.io/redis:7-alpine
     command:
       - sh
@@ -70,6 +72,7 @@ services:
       - netbox-redis-cache-data:/data
 
   rover-compose:
+    container_name: rover-compose
     build:
       context: docker/federation
       dockerfile: rover.Dockerfile
@@ -86,6 +89,7 @@ services:
       - ./docker/federation:/app
 
   federation:
+    container_name: federation
     image: ghcr.io/apollographql/router:v1.47.0
     ports:
       - "4000:4000"
@@ -100,6 +104,7 @@ services:
 
   netbox:
     <<: *netbox
+    container_name: netbox
     expose:
       - "8080"
     ports:
@@ -109,6 +114,7 @@ services:
 
   netbox-worker:
     <<: *netbox
+    container_name: netbox-worker
     depends_on:
       netbox:
         condition: service_healthy
@@ -124,6 +130,7 @@ services:
 
   netbox-housekeeping:
     <<: *netbox
+    container_name: netbox-housekeeping
     depends_on:
       netbox:
         condition: service_healthy
@@ -136,6 +143,7 @@ services:
       test: "ps -aux | grep -v grep | grep -q housekeeping || exit 1"
 
   orchestrator-ui:
+    container_name: orchestrator-ui
     image: "ghcr.io/workfloworchestrator/example-orchestrator-ui:2.14.0"  # TODO make it possible to override the tag
     env_file:
       - ./docker/orchestrator-ui/orchestrator-ui.env
@@ -148,6 +156,7 @@ services:
         condition: service_started
 
   orchestrator:
+    container_name: orchestrator
     image: "ghcr.io/workfloworchestrator/orchestrator-core:latest"  # TODO make it possible to override the tag
     env_file:
       - ./docker/orchestrator/orchestrator.env
@@ -190,6 +199,7 @@ services:
       test: /home/orchestrator/etc/orchestrator/is_healthy.py
 
   lso:
+    container_name: orchestrator-lso
     image: orchestrator-lso
     profiles:
       - lso
@@ -207,6 +217,7 @@ services:
       - ./ansible/inventory:/opt/ansible_inventory
 
   nginx:
+    container_name: nginx
     image: "nginx:1.27-alpine"
     ports:
       - "80:80"
