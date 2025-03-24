@@ -17,7 +17,7 @@ from orchestrator.services.products import get_product_by_id
 from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
-from orchestrator.workflows.utils import modify_workflow
+from orchestrator.workflows.utils import modify_workflow, ensure_provisioning_status
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State
 from pydantic_forms.validators import Choice, Label
@@ -61,6 +61,7 @@ def initial_input_form_generator(subscription_id: UUIDstr, product: UUIDstr) -> 
     return user_input_dict | {"subscription": subscription}
 
 
+@ensure_provisioning_status
 @step("Update subscription")
 def update_subscription(
     subscription: NodeProvisioning,
@@ -92,9 +93,7 @@ def update_node_in_nrm(subscription: NodeProvisioning) -> State:
 def modify_node() -> StepList:
     return (
         begin
-        >> set_status(SubscriptionLifecycle.PROVISIONING)
         >> update_subscription
         >> update_node_in_ims
         >> update_node_in_nrm
-        >> set_status(SubscriptionLifecycle.ACTIVE)
     )
