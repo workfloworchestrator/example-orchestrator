@@ -10,6 +10,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from pydantic_forms.types import UUIDstr
+from pydantic_forms.types import SummaryData
 from pprint import pformat
 from typing import Annotated, Generator, List, TypeAlias, cast
 
@@ -23,7 +25,7 @@ from orchestrator.db import (
     SubscriptionTable,
 )
 from orchestrator.domain.base import ProductBlockModel
-from orchestrator.types import SubscriptionLifecycle, SummaryData, UUIDstr
+from orchestrator.types import SubscriptionLifecycle
 from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
 from pydantic_forms.validators import Choice, MigrationSummary, migration_summary
@@ -106,9 +108,7 @@ def free_port_selector(node_subscription_id: UUIDstr, speed: int, enum: str = "P
     node = Node.from_subscription(node_subscription_id)
     interfaces = {
         str(interface.id): interface.name
-        for interface in netbox.get_interfaces(
-            device=node.node.node_name, speed=speed * 1000, enabled=False
-        )
+        for interface in netbox.get_interfaces(device=node.node.node_name, speed=speed * 1000, enabled=False)
     }
     return Choice(enum, zip(interfaces.keys(), interfaces.items()))  # type:ignore
 

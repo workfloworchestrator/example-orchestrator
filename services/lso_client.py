@@ -15,6 +15,7 @@
 :term:`LSO` is responsible for executing Ansible playbooks, that deploy subscriptions.
 """
 
+from pydantic_forms.types import State
 import json
 import logging
 from os import getenv
@@ -23,7 +24,6 @@ from typing import Any
 import requests
 from orchestrator import step
 from orchestrator.config.assignee import Assignee
-from orchestrator.types import State
 from orchestrator.utils.errors import ProcessFailureError
 from orchestrator.workflow import conditional, Step, StepList, begin, callback_step, inputstep
 from pydantic_forms.core import FormPage

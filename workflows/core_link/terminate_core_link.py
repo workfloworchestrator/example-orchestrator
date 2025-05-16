@@ -11,8 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from pydantic_forms.types import UUIDstr
+from pydantic_forms.types import InputForm
 import json
-from orchestrator.types import InputForm, UUIDstr
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import terminate_workflow
 from pydantic_forms.core import FormPage
@@ -68,6 +69,7 @@ def disable_ports(subscription: CoreLink) -> State:
 
     return {"subscription": subscription, "payload_port_a": payload_port_a, "payload_port_b": payload_port_b}
 
+
 @step("Remove core-link config")
 def deprovision_core_link(
     subscription: CoreLink,
@@ -88,6 +90,7 @@ def deprovision_core_link(
     )
 
     return {"subscription": subscription}
+
 
 @terminate_workflow("Terminate core_link", initial_input_form=terminate_initial_input_form_generator)
 def terminate_core_link() -> StepList:

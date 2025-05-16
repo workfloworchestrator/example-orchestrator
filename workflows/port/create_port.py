@@ -12,6 +12,7 @@
 # limitations under the License.
 
 
+from pydantic_forms.types import UUIDstr
 import uuid
 import json
 from random import randrange
@@ -19,7 +20,7 @@ from typing import TypeAlias, cast
 
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
-from orchestrator.types import SubscriptionLifecycle, UUIDstr
+from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
@@ -129,6 +130,7 @@ def provision_port_in_nrm(subscription: PortProvisioning) -> State:
     subscription.port.nrm_id = randrange(2**16)
     return {"subscription": subscription}
 
+
 @step("Install port config")
 def provision_port(
     subscription: PortProvisioning,
@@ -148,6 +150,7 @@ def provision_port(
     )
 
     return {"subscription": subscription}
+
 
 @create_workflow("Create port", initial_input_form=initial_input_form_generator)
 def create_port() -> StepList:

@@ -278,6 +278,7 @@ def skip_network_address(ip_prefix: Prefixes) -> None:
     Helper function for reserve_loopback_addresses().
     Ensures that the first available ip from the prefix is not a network address.
     """
+
     def is_network_address(address: IpAddresses) -> bool:
         addr = IPv4Interface(address) if address.family == 4 else IPv6Interface(address)
         return addr.ip == addr.network.network_address
@@ -290,8 +291,6 @@ def skip_network_address(ip_prefix: Prefixes) -> None:
             return
 
         ip_prefix.available_ips.create({"description": "placeholder"})
-
-
 
 
 def reserve_loopback_addresses(device_id: int) -> Tuple:

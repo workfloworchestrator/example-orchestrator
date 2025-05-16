@@ -12,10 +12,10 @@
 # limitations under the License.
 
 
+from pydantic_forms.types import State
 import structlog
 from orchestrator import workflow
 from orchestrator.targets import Target
-from orchestrator.types import State
 from orchestrator.workflow import StepList, done, init, step
 
 from services import netbox

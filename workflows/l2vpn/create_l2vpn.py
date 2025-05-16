@@ -12,12 +12,13 @@
 # limitations under the License.
 
 
+from pydantic_forms.types import UUIDstr
 import uuid
 from random import randrange
 from typing import TypeAlias, cast
 
 from orchestrator.targets import Target
-from orchestrator.types import SubscriptionLifecycle, UUIDstr
+from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status, store_process_subscription
 from orchestrator.workflows.utils import create_workflow
