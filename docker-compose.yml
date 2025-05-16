@@ -218,7 +218,7 @@ services:
 
   nginx:
     container_name: nginx
-    image: "nginx:1.27-alpine"
+    image: "nginx:1.27.3-alpine"
     ports:
       - "80:80"
     volumes:
