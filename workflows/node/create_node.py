@@ -12,6 +12,7 @@
 # limitations under the License.
 
 
+from pydantic_forms.types import UUIDstr
 import uuid
 import json
 from random import randrange
@@ -19,7 +20,7 @@ from typing import TypeAlias, cast
 
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
-from orchestrator.types import SubscriptionLifecycle, UUIDstr
+from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
@@ -118,6 +119,7 @@ def reserve_loopback_addresses(subscription: NodeProvisioning) -> State:
     )
     return {"subscription": subscription}
 
+
 @step("Install node config")
 def provision_node(
     subscription: NodeProvisioning,
@@ -137,6 +139,7 @@ def provision_node(
     )
 
     return {"subscription": subscription}
+
 
 @step("Provision node in NRM")
 def provision_node_in_nrm(subscription: NodeProvisioning) -> State:

@@ -12,7 +12,8 @@
 # limitations under the License.
 
 
-from orchestrator.types import SubscriptionLifecycle, UUIDstr
+from pydantic_forms.types import UUIDstr
+from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import modify_workflow

@@ -12,7 +12,8 @@
 # limitations under the License.
 
 
-from orchestrator.types import InputForm, UUIDstr
+from pydantic_forms.types import UUIDstr
+from pydantic_forms.types import InputForm
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import terminate_workflow
 from pydantic_forms.core import FormPage

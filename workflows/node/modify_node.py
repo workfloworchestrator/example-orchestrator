@@ -10,13 +10,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from pydantic_forms.types import UUIDstr
 from typing import TypeAlias, cast
 
 import structlog
 from orchestrator.services.products import get_product_by_id
-from orchestrator.types import SubscriptionLifecycle, UUIDstr
 from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import modify_workflow, ensure_provisioning_status
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State

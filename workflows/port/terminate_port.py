@@ -12,7 +12,9 @@
 # limitations under the License.
 
 
-from orchestrator.types import InputForm, SubscriptionLifecycle, UUIDstr
+from pydantic_forms.types import UUIDstr
+from pydantic_forms.types import InputForm
+from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import terminate_workflow

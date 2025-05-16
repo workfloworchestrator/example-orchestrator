@@ -12,10 +12,11 @@
 # limitations under the License.
 
 
+from pydantic_forms.types import State
 from typing import List, Tuple
 
 import structlog
-from orchestrator.types import State, SubscriptionLifecycle
+from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import modify_initial_input_form_generator, modify_workflow
