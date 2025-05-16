@@ -53,7 +53,7 @@ services:
 
   redis:
     container_name: redis
-    image: docker.io/redis:7-alpine
+    image: docker.io/redis:7.4.2-alpine
     command:
       - sh
       - -c # this is to evaluate the $REDIS_PASSWORD from the env
