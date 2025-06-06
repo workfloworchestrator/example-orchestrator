@@ -19,7 +19,7 @@ from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import modify_workflow
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State
-from pydantic_forms.validators import Label, ReadOnlyField
+from pydantic_forms.validators import Label, read_only_field
 
 from products.product_types.port import Port, PortProvisioning
 from products.services.description import description
@@ -36,10 +36,10 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
 
         port_settings: Label
 
-        node_name: ReadOnlyField(port.node.node_name)
-        port_name: ReadOnlyField(port.port_name)
-        port_type: ReadOnlyField(port.port_type)
-        port_mode: ReadOnlyField(port.port_mode)
+        node_name: read_only_field(port.node.node_name)
+        port_name: read_only_field(port.port_name)
+        port_type: read_only_field(port.port_type)
+        port_mode: read_only_field(port.port_mode)
         port_description: str = port.port_description
         auto_negotiation: bool = port.auto_negotiation
         lldp: bool = port.lldp
