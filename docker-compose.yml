@@ -144,7 +144,7 @@ services:
 
   orchestrator-ui:
     container_name: orchestrator-ui
-    image: "ghcr.io/workfloworchestrator/example-orchestrator-ui:3.4.0"  # TODO make it possible to override the tag
+    image: ${ORCH_UI_TAG:-ghcr.io/workfloworchestrator/example-orchestrator-ui:5.3.4}
     env_file:
       - ./docker/orchestrator-ui/orchestrator-ui.env
       - path: ./docker/overrides/orchestrator-ui/orchestrator-ui.env
@@ -157,7 +157,7 @@ services:
 
   orchestrator:
     container_name: orchestrator
-    image: "ghcr.io/workfloworchestrator/orchestrator-core:latest"  # TODO make it possible to override the tag
+    image: "ghcr.io/workfloworchestrator/orchestrator-core:latest" # TODO make it possible to override the tag
     env_file:
       - ./docker/orchestrator/orchestrator.env
       - path: ./docker/overrides/orchestrator/orchestrator.env

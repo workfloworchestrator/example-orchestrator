@@ -1,3 +1,14 @@
+[project]
+name = "example-orchestrator"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "deepdiff==8.0.1",
+  "orchestrator-core==4.0.4",
+  "pynetbox==7.4.1",
+  "rich==13.9.4",
+]
+
 [tool.black]
 line-length = 120
 
