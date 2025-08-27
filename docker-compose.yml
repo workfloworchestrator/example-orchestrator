@@ -35,7 +35,7 @@ services:
       POSTGRES_DB: orchestrator-core
     volumes:
       - db-data:/var/lib/postgresql/data/
-      - ./docker/postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/postgresql:/docker-entrypoint-initdb.d
     healthcheck:
       test:
         [
@@ -157,7 +157,7 @@ services:
 
   orchestrator:
     container_name: orchestrator
-    image: "ghcr.io/workfloworchestrator/orchestrator-core:latest" # TODO make it possible to override the tag
+    image: ${ORCH_BACKEND_TAG:-ghcr.io/workfloworchestrator/orchestrator-core:latest}
     env_file:
       - ./docker/orchestrator/orchestrator.env
       - path: ./docker/overrides/orchestrator/orchestrator.env
