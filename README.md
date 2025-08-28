@@ -1047,7 +1047,7 @@ A modify workflow also follows a general pattern, like described below.
 The `@modify_workflow` decorator adds some additional steps to the
 workflow that are always needed.
 
-```pyrhon
+```python
 @modify_workflow("Modify node", initial_input_form=initial_input_form_generator)
 def modify_node() -> StepList:
     return (
@@ -1190,6 +1190,55 @@ L2VPNs administered in IMS that do not have a matching subscription in
 the orchestrator, a task (a workflow with `Target.SYSTEM`) can be
 written that will retrieve a list of all L2VPNs from IMS and compare it
 against a list of all L2VPN subscription from the orchestrator.
+
+### Reconcile workflow
+
+A reconcile workflow is similar to a modify workflow but without requiring user input via forms.
+This makes the reconcile workflow useful for synchronization the existing configuration of
+subscriptions with OSS and/or BSS.
+
+The `@reconcile_workflow` removes the need for user input forms by basically running a
+`modify_workflow` where the `initial_input_form` is automatically set to `None`.
+
+```python
+@reconcile_workflow("Reconcile l2vpn")
+def reconcile_l2vpn() -> StepList:
+    return begin >> update_l2vpn_in_external_systems
+```
+
+1. Minimal required information of the subscription is collected and consists of the subscriptions
+existing configuration.
+2. Necessary subscription administration (`@reconcile_workflow`):
+    1. Register reconcile process for this subscription
+    2. Set subscription ‘out of sync’ to prevent the start of other processes
+3. Interact with OSS and/or BSS, in this example
+    1. Update subscription in external systems (OSS and/or BSS) (`update_l2vpn_in_external_systems`)
+4. Set subscription ‘in sync’ (`@reconcile_workflow`)
+
+Because both a `@modify_workflows` and `@reconcile_workflow` need to have the same update steps for
+a similar product (e.g. `l2vpn`), these update steps can be extracted into a separate variable:
+
+```python
+# variable containing update steps which are both used in modify and reconcile workflows
+update_l2vpn_in_external_systems = begin >> update_l2vpn_in_nrm
+
+
+@modify_workflow("Modify l2vpn", initial_input_form=initial_input_form_generator)
+def modify_l2vpn() -> StepList:
+    return (
+        begin
+        >> set_status(SubscriptionLifecycle.PROVISIONING)
+        >> update_subscription
+        >> update_subscription_description
+        >> set_status(SubscriptionLifecycle.ACTIVE)
+        >> update_l2vpn_in_external_systems
+    )
+
+
+@reconcile_workflow("Reconcile l2vpn")
+def reconcile_l2vpn() -> StepList:
+    return begin >> update_l2vpn_in_external_systems
+```
 
 ## Services
 

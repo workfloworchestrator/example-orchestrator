@@ -67,6 +67,7 @@ def update_l2vpn_in_nrm(subscription: L2vpnProvisioning) -> State:
     return {"subscription": subscription}
 
 
+# variable containing update steps which are both used in modify and reconcile workflows
 update_l2vpn_in_external_systems = begin >> update_l2vpn_in_nrm
 
 
@@ -82,6 +83,6 @@ def modify_l2vpn() -> StepList:
     )
 
 
-@reconcile_workflow("Reconcile SN8 L2Vpn")
+@reconcile_workflow("Reconcile l2vpn")
 def reconcile_l2vpn() -> StepList:
     return begin >> update_l2vpn_in_external_systems
