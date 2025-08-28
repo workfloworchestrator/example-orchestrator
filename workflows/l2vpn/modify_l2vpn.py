@@ -12,13 +12,12 @@
 # limitations under the License.
 
 
-from pydantic_forms.types import UUIDstr
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
-from orchestrator.workflows.utils import modify_workflow
+from orchestrator.workflows.utils import modify_workflow, reconcile_workflow
 from pydantic_forms.core import FormPage
-from pydantic_forms.types import FormGenerator, State
+from pydantic_forms.types import FormGenerator, State, UUIDstr
 
 from products.product_types.l2vpn import L2vpn, L2vpnProvisioning
 from products.services.description import description
@@ -37,7 +36,9 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
     user_input_dict = user_input.model_dump()
 
     summary_fields = ["speed", "speed_policer"]
-    yield from modify_summary_form(user_input_dict, subscription.virtual_circuit, summary_fields)
+    yield from modify_summary_form(
+        user_input_dict, subscription.virtual_circuit, summary_fields
+    )
 
     return user_input_dict | {"subscription": subscription}
 
@@ -66,6 +67,9 @@ def update_l2vpn_in_nrm(subscription: L2vpnProvisioning) -> State:
     return {"subscription": subscription}
 
 
+update_l2vpn_in_external_systems = begin >> update_l2vpn_in_nrm
+
+
 @modify_workflow("Modify l2vpn", initial_input_form=initial_input_form_generator)
 def modify_l2vpn() -> StepList:
     return (
@@ -73,6 +77,11 @@ def modify_l2vpn() -> StepList:
         >> set_status(SubscriptionLifecycle.PROVISIONING)
         >> update_subscription
         >> update_subscription_description
-        >> update_l2vpn_in_nrm
         >> set_status(SubscriptionLifecycle.ACTIVE)
+        >> update_l2vpn_in_external_systems
     )
+
+
+@reconcile_workflow("Reconcile SN8 L2Vpn")
+def reconcile_l2vpn() -> StepList:
+    return begin >> update_l2vpn_in_external_systems
