@@ -56,13 +56,13 @@ Example workflow orchestrator implementation based on the
     - [Validate workflows](#validate-workflows)
   - [Services](#services-1)
     - [Subscription descriptions](#subscription-descriptions)
-    - [Netbox](#netbox)
+    - [NetBox](#netbox)
       - [Payload](#payload)
       - [Create](#create)
       - [Update](#update)
       - [Get](#get)
       - [Delete](#delete)
-      - [Product block to Netbox object mapping](#product-block-to-netbox-object-mapping)
+      - [Product block to NetBox object mapping](#product-block-to-netbox-object-mapping)
     - [Federation](#federation)
       - [Requirements](#requirements)
       - [Example queries](#example-queries)
@@ -113,26 +113,26 @@ http://localhost:4000
 
 Use the following steps to see the example orchestrator in action:
 
-1. bootstrap Netbox
+1. Bootstrap NetBox
     1. from the `Tasks` page click `New Task`
-    2. select `Netbox Bootstrap` and click `Start task`
+    2. select `NetBox Bootstrap` and click `Start task`
     3. select `Expand all` on the following page to see the step details
-2. create a network node (need at least two to create a core link)
+2. Create a network node (need at least two to create a core link)
     1. in the left-above corner, click on `New subscription`
     2. select either the `Node Cisco` or `Node Nokia`
     3. fill in the needed fields, click `Start workflow` and view the summary form
     4. click `Start workflow` again to start the workflow, or click `Previous` to modify fields
-3. add interfaces to a node (needed by the other products)
+3. Add interfaces to a node (needed by the other products)
     1. on the `Subscriptions` page, click on the subscription description of the node to show the details
     2. select `Update node interfaces` from the `Actions` pulldown
-4. create a core link
+4. Create a core link
     1. in the left-above corner, click on `New subscription`
     2. select either the `core link 10G` or `core link 100G`
     3. fill in the forms and finally click on `Start workflow` to start the workflow
-5. create a customer port (need at least two **tagged** ports to create a l2vpn)
+5. Create a customer port (need at least two **tagged** ports to create a l2vpn)
     1. use `New subscription` for either a `port 10G` or a `port 100G`
     3. fill in the forms and click on `Start workflow` to start the workflow
-6. create a l2vpn
+6. Create a l2vpn
     1. use `New subscription` for a `l2vpn`, fill in the forms, and `Start workflow`
 
 While running the different workflows, have a look at the following
@@ -183,12 +183,12 @@ implementation of a service. A service can be as simple as the
 generation of a description based on the product block domain model, or
 a complete interface to query, create, update or delete objects in an
 OSS or BSS. In the example orchestrator, a service is implemented to
-interface with Netbox that is being used as IMS and IPAM. The mapping
-between the product blocks and the objects in Netbox are described, and
+interface with NetBox that is being used as IMS and IPAM. The mapping
+between the product blocks and the objects in NetBox are described, and
 the interface is fully implemented for the supported products.
 
 The example orchestrator is fully functional and showcases how the WFO
-can be integrated with Netbox.
+can be integrated with NetBox.
 
 ## Introduction
 
@@ -436,11 +436,11 @@ orchestrator:
 - IPv4 and IPv6 prefix for node loopback addresses
 - IPv4 and IPv6 prefix for core link addressing
 
-The task Netbox Bootstrap takes care of initializing Netbox with a
-default set of this information. For convenience, a task Netbox Wipe is
-added as well, that will remove all object from Netbox again, including
+The task NetBox Bootstrap takes care of initializing NetBox with a
+default set of this information. For convenience, a task NetBox Wipe is
+added as well, that will remove all object from NetBox again, including
 the ones that are created by the different workflows. Tasks can be found
-in the orchestrator UI in the `New tasks` pulldown on the `tasks` page.
+in the orchestrator UI in the `New task` pulldown on the `Tasks` page.
 
 #### Node
 
@@ -741,7 +741,7 @@ of the node are supplied by the user and stored on the
 and a check is performed to ensure that both pieces of information are
 present on the product block. During the provisioning phase the node is
 administered in IMS and the handle to that information is stored on the
-`NodeBlockProvsioning`. Next, the node is provisioned in the NRM and the
+`NodeBlockProvisioning`. Next, the node is provisioned in the NRM and the
 handle is also stored. If both of these two actions were successful, the
 subscription is transitioned to Active and it is checked that the type
 and node name, and the IMS and NRM ID, are present on the product block.
@@ -826,7 +826,7 @@ interpretation are much less prone to happen.
 @step("A Bad example of using input params")
 def my_ugly_step(state: State) -> State:
     variable_1 = int(state["variable_1"])
-    variable_2 = str(state["varialble_2"])
+    variable_2 = str(state["variable_2"])
     subscription = SubscriptionModel.from_subscription_id(state["subscription_id"])
 
     if variable_1 > 42:
@@ -853,7 +853,7 @@ def my_beautiful_step(variable_1: int, variable_2: str, subscription: Subscripti
         subscription.product_block_model.variable_1 = variable_1
         subscription.product_block_model.variable_2 = variable_2
 
-    return state | {"subscriotion": subscription}
+    return state | {"subscription": subscription}
 ```
 
 As you can see the Orchestrator the orchestrator helps you a lot to condense the logic in your function. The `@step`
@@ -985,7 +985,7 @@ Vlan = Annotated[int, Ge(2), Le(4094), doc("Allowed VLAN ID range.")]
 
 The node role is defined as type Choice and will be rendered as a
 dropdown that is filled with a mapping between the role IDs and names as
-defined in Netbox.
+defined in NetBox.
 
 ```python
 def node_role_selector() -> Choice:
@@ -1243,20 +1243,20 @@ def _(product: NodeProvisioning) -> str:
     return f"node {product.node.node_name} ({product.node.node_status})"
 ```
 
-### Netbox
+### NetBox
 
-The Netbox service is an interplay between several single dispatch
+The NetBox service is an interplay between several single dispatch
 functions, one to generate the payload for a specific product block, and
-two others that create or modify an object in Netbox based on the type
+two others that create or modify an object in NetBox based on the type
 of payload. The Pynetbox[^7] Python API client library is used to
-interface with Netbox.
+interface with NetBox.
 
 #### Payload
 
 The `build_payload()` single dispatch allows a first argument of type
 product block model, and a subscription model parameter that is used
 when related information is needed from other parts of the subscription.
-The specified return type is the base class that is used for all Netbox
+The specified return type is the base class that is used for all NetBox
 payload definitions.
 
 ```python
@@ -1268,7 +1268,7 @@ def build_payload(model: ProductBlockModel, subscription: SubscriptionModel, **k
 When the payload is generated from a product block, the correct mapping
 is made between the types used in the orchestrator and the types used in
 the OSS or BSS. For example, the Port product block maps on the
-Interface type in Netbox, as can be seen below.
+Interface type in NetBox, as can be seen below.
 
 ```python
 @build_payload.register
@@ -1290,13 +1290,13 @@ def build_port_payload(model: PortBlockProvisioning, subscription: SubscriptionM
 
 The values from the product block are copied to the appropriate place in
 the Interface payload. The interface payload field names match the ones
-that are expected by Netbox. The speed of the interface is taken from
+that are expected by NetBox. The speed of the interface is taken from
 the fixed input speed with the same name on the subscription, the
 multiplication by 1000 is to convert between Mbit/s and Kbit/s.
 
 #### Create
 
-To create an object in Netbox based on the type of Netbox payload, the
+To create an object in NetBox based on the type of NetBox payload, the
 single dispatch `create()` is used:
 
 ```python
@@ -1306,7 +1306,7 @@ def create(payload: NetboxPayload, **kwargs: Any) -> int:
 ```
 
 When registering the payload type, a keyword argument is used to inject
-the matching endpoint on the Netbox API that is used to create the
+the matching endpoint on the NetBox API that is used to create the
 desired object. In the example below can be seen that interface payload
 is to be used against the `api.dcim.interfaces` endpoint.
 
@@ -1317,9 +1317,9 @@ def _(payload: InterfacePayload, **kwargs: Any) -> int:
 ```
 
 Finally, the payload is used to generate a dictionary as expected by
-that Netbox API endpoint. Notice that the names of the fields of the
-Netbox payload have to match the names of the fields that are expected
-by the Netbox API.
+that NetBox API endpoint. Notice that the names of the fields of the
+NetBox payload have to match the names of the fields that are expected
+by the NetBox API.
 
 ```python
 def _create_object(payload: NetboxPayload, endpoint: Endpoint) -> int:
@@ -1327,7 +1327,7 @@ def _create_object(payload: NetboxPayload, endpoint: Endpoint) -> int:
     return object.id
 ```
 
-The ID of the object that is created in Netbox is returned so that it
+The ID of the object that is created in NetBox is returned so that it
 can be registered in the subscription for later reference, e.q. when the
 object needs to be modified or deleted.
 
@@ -1335,7 +1335,7 @@ object needs to be modified or deleted.
 
 The single dispatch `update()` is defined in a similar way, the only
 difference is that an additional argument is used to specify the ID of
-the object in Netbox that needs to be updated.
+the object in NetBox that needs to be updated.
 
 ```python
 @update.register
@@ -1343,9 +1343,9 @@ def _(payload: InterfacePayload, id: int, **kwargs: Any) -> bool:
     return _update_object(payload, id, endpoint=api.dcim.interfaces)
 ```
 
-The ID is used to fetch the object from the Netbox API, update the
+The ID is used to fetch the object from the NetBox API, update the
 object with the dictionary created from the supplied payload, and send
-the update to Netbox.
+the update to NetBox.
 
 ```python
 def _update_object(payload: NetboxPayload, id: int, endpoint: Endpoint) -> bool:
@@ -1356,8 +1356,8 @@ def _update_object(payload: NetboxPayload, id: int, endpoint: Endpoint) -> bool:
 
 #### Get
 
-The Netbox service defines other helpers as well. For example, to get an
-single object, or a list of objects, of a specific type from Netbox.
+The NetBox service defines other helpers as well. For example, to get an
+single object, or a list of objects, of a specific type from NetBox.
 
 ```python
 def get_interfaces(**kwargs) -> List:
@@ -1368,15 +1368,15 @@ def get_interface(**kwargs):
 ```
 
 Both types of helpers accept keyword arguments that can be used to
-specify the object(s) that are wanted. For example `get_inteface(id=3)`
-will fetch the single interface object with ID equal to 3 from Netbox.
+specify the object(s) that are wanted. For example `get_interface(id=3)`
+will fetch the single interface object with ID equal to 3 from NetBox.
 And `get_interfaces(speed=1000000)` will get a list of all interface
-objects from Netbox that have a speed of 1Gbit/s.
+objects from NetBox that have a speed of 1Gbit/s.
 
 #### Delete
 
-Another set of helpers is defined to delete objects from Netbox. For
-example, to delete an Interface object from Netbox, see below.
+Another set of helpers is defined to delete objects from NetBox. For
+example, to delete an Interface object from NetBox, see below.
 
 ```python
 def delete_interface(**kwargs) -> None:
@@ -1392,7 +1392,7 @@ def delete_from_netbox(endpoint, **kwargs) -> None:
     object.delete()
 ```
 
-#### Product block to Netbox object mapping
+#### Product block to NetBox object mapping
 
 The modeling used in the orchestrator does not necessarily have to
 match exactly with the modeling in your OSS or BSS. In many cases,
@@ -1404,13 +1404,12 @@ external systems as much as possible.
 
 The diagram below shows the product blocks and relations as used in a
 core link between two nodes, and how they map to the objects as
-administered in Netbox. The product blocks are in orange and the Netbox
-objects are in green.
+administered in NetBox. The product blocks are in orange and the NetBox objects are in green.
 
 <center><img src=".pictures/netbox_node_core_link.png" alt="Node and core link type mapping" width=45% height=45%></center>
 
 And the following diagram shows the mapping and relation between product
-blocks and Netbox objects for a L2VPN on customer ports between two
+blocks and NetBox objects for a L2VPN on customer ports between two
 nodes.
 
 <center><img src=".pictures/netbox_node_port_l2vpn.png" alt="Node, port and L2VPN type mapping" width=40% height=40%></center>
@@ -1441,9 +1440,17 @@ For more information on federating new GraphQL types, or the existing WFO GraphQ
 
 #### Example queries
 
-The following queries assume a running docker-compose environment with 2 configured Nodes. We'll demonstrate how 2 separate GraphQL queries can now be performed in 1 federated query.
+> **Note:**  
+> The following queries assume a running `docker-compose` environment with:  
+> - Initial seed of NetBox via running a `Netbox bootstrap` Task  
+> - Two newly configured nodes  
+> 
+> See section [Using the example orchestrator](#using-the-example-orchestrator) on how to run Tasks and create nodes in the [Workflow Orchestrator UI](http://localhost:3000/)
+ 
+We'll demonstrate how two separate GraphQL queries can now be performed in one federated query.
 
-**NetBox**: NetBox device details can be queried from the NetBox GraphQL endpoint at http://localhost:8000/graphql/ (be sure to authenticate first with admin/admin)
+**NetBox**: NetBox device details can be queried from the NetBox GraphQL endpoint at 
+http://localhost:8000/graphql/ (be sure to authenticate first with admin/admin in [NetBox](http://localhost:8000/))
 
 ```graphql
 query GetNetboxDevices {
@@ -1469,7 +1476,7 @@ query GetNetboxDevices {
 ```graphql
 query GetSubscriptions {
   subscriptions(filterBy:
-    	{field: "product", value: "Node"}
+    	{field: "Product type", value: "Node"}
   ) {
     page {
       ... on NodeSubscription {
@@ -1492,7 +1499,7 @@ query GetSubscriptions {
 ```graphql
 query GetEnrichedSubscriptions {
   subscriptions(filterBy:
-    {field: "product", value: "Node"}
+    {field: "Product type", value: "Node"}
   ) {
     page {
       ... on NodeSubscription {
@@ -1554,7 +1561,7 @@ https://resources.geant.org/wp-content/uploads/2023/06/M7.3_Common-NREN-Network-
 [^2]: Workflow Orchestrator website -
 https://workfloworchestrator.org/orchestrator-core/
 
-[^3]: Netbox is a tool for data center infrastructure management and IP
+[^3]: NetBox is a tool for data center infrastructure management and IP
 address management - https://netbox.dev
 
 [^4]: The Python SQL Toolkit and Object Relational Mapper -
