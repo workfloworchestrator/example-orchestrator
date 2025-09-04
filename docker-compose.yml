@@ -213,7 +213,7 @@ services:
     ports:
       - "8001:8000"
     volumes:
-      - ./ansible/plays_and_roles:/app/wfo/ansible
+      - ./ansible/plays_and_roles:/app/demo/ansible/playbooks
       - ./ansible/inventory:/opt/ansible_inventory
 
   nginx:
