@@ -1,8 +1,32 @@
-[tool.black]
-line-length = 120
-
 [tool.isort]
 profile = "black"
 
+[tool.black]
+line-length = 120
+target-version = ["py311", ]
+exclude = '''
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | venv
+  )/
+)
+'''
+
 [tool.flake8]
 max-line-length = 120
+
+[tool.coverage.report]
+omit = [
+  "migrations/*",
+  "settings.py"
+]
+
+[tool.ruff]
+line-length = 120
+exclude = ["venv", ".venv", ".vscode", ".ruff_cache", ".pytest_cache"]

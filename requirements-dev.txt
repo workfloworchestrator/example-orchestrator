@@ -1,0 +1,16 @@
+-r requirements.txt
+
+# linting
+black
+ruff
+isort
+
+# testing
+pytest
+pytest-asyncio
+pytest-cov
+pytest-env
+pytest-xdist
+pytest-httpx  # pinned due to auth-lib deps
+pytest-postgresql
+pytest-mock
