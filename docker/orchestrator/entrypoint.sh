@@ -15,7 +15,13 @@ if [ -f ${CORE_OVERRIDE}/pyproject.toml ]; then
     # Run any missing migrations on the database
     python main.py db upgrade heads
 
-    uvicorn --host 0.0.0.0 --port 8080 $UVICORN_ARGS main:app --reload --proxy-headers --reload-dir $CORE_OVERRIDE
+    uvicorn --host 0.0.0.0 --port 8080 $UVICORN_ARGS main:app --reload --proxy-headers \
+        --reload-dir $CORE_OVERRIDE \
+        --reload-dir products \
+        --reload-dir services \
+        --reload-dir translations \
+        --reload-dir utils \
+        --reload-dir workflows
 else
     # Run any missing migrations on the database
     python main.py db upgrade heads
