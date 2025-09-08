@@ -1,7 +1,7 @@
 """Update validate targets.
 
 Revision ID: bc54616fefcf
-Revises: d946c20663d3
+Revises: 0e8d17ce0f06
 Create Date: 2025-08-26 22:55:28.955536
 
 """
@@ -11,7 +11,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "bc54616fefcf"
-down_revision = "d946c20663d3"
+down_revision = "0e8d17ce0f06"
 branch_labels = None
 depends_on = None
 
