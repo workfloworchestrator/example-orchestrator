@@ -26,3 +26,18 @@ CORE_DIR=/path/to/my/orchestrator-core
 This orchestrator-core version is then installed into the container with hot reloading enabled.
 
 **Note**: before changing CORE_DIR, any new database migrations should be manually reverted.
+
+## Orchestrator UI & backend docker image overrides
+
+In [docker-compose.yml](../../docker-compose.yml), the `orchestrator` and
+`orchestrator-ui` services use pre-built images to spin up their respective
+applications (i.e., there is no `build:` directive specified). The docker image
+tag defaults to use the artifacts built in the workfloworchestrator project's
+Github Container Registry, but can be overridden by setting environment
+variables.
+
+### For Example
+
+```bash
+ORCH_UI_IMAGE=my-local-image:tag docker compose up -d --force-recreate
+```
