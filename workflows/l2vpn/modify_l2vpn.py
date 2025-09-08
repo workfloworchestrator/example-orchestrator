@@ -62,7 +62,7 @@ def update_subscription_description(subscription: L2vpn) -> State:
 
 
 @step("Update L2VPN in NRM")
-def update_l2vpn_in_nrm(subscription: L2vpnProvisioning) -> State:
+def update_l2vpn_in_nrm(subscription: L2vpn) -> State:
     """Dummy step, replace with actual call to NRM."""
     return {"subscription": subscription}
 

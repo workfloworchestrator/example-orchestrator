@@ -1,0 +1,19 @@
+name: Check uv.lock
+
+on:
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'pyproject.toml'
+      - 'uv.lock'
+
+jobs:
+  check-uv-lock:
+    runs-on: ubuntu-latest
+    container: ghcr.io/astral-sh/uv:python3.13-bookworm-slim
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check uv.lock
+        run: |
+          uv lock --check
