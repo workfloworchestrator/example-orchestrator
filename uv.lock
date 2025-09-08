@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.13'",
@@ -41,6 +41,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f1/b4/636b3b65173d3ce9a38ef5f0522789614e590dab6a8d505340a4efe4c567/anyio-4.10.0.tar.gz", hash = "sha256:3f3fae35c96039744587aa5b8371e7e8e603c0702999535961dd336026973ba6", size = 213252, upload-time = "2025-08-04T08:54:26.451Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6f/12/e5e0282d673bb9746bacfb6e2dba8719989d3660cdb2ea79aee9a9651afb/anyio-4.10.0-py3-none-any.whl", hash = "sha256:60e474ac86736bbfd6f210f7a61218939c318f43f9972497381f1c5e930ed3d1", size = 107213, upload-time = "2025-08-04T08:54:24.882Z" },
+]
+
+[[package]]
+name = "apscheduler"
+version = "3.11.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tzlocal" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4e/00/6d6814ddc19be2df62c8c898c4df6b5b1914f3bd024b780028caa392d186/apscheduler-3.11.0.tar.gz", hash = "sha256:4c622d250b0955a65d5d0eb91c33e6d43fd879834bf541e0a18661ae60460133", size = 107347, upload-time = "2024-11-24T19:39:26.463Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d0/ae/9a053dd9229c0fde6b1f1f33f609ccff1ee79ddda364c756a924c6d8563b/APScheduler-3.11.0-py3-none-any.whl", hash = "sha256:fc134ca32e50f5eadcc4938e3a4545ab19131435e851abb40b34d63d5141c6da", size = 64004, upload-time = "2024-11-24T19:39:24.442Z" },
 ]
 
 [[package]]
@@ -273,7 +285,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "deepdiff", specifier = "==8.0.1" },
-    { name = "orchestrator-core", specifier = "==4.0.4" },
+    { name = "orchestrator-core", specifier = "==4.4.0rc3" },
     { name = "pynetbox", specifier = "==7.4.1" },
     { name = "rich", specifier = "==13.9.4" },
 ]
@@ -601,11 +613,12 @@ wheels = [
 
 [[package]]
 name = "orchestrator-core"
-version = "4.0.4"
+version = "4.4.0rc3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "alembic" },
     { name = "anyio" },
+    { name = "apscheduler" },
     { name = "click" },
     { name = "deepmerge" },
     { name = "deprecated" },
@@ -626,7 +639,6 @@ dependencies = [
     { name = "python-rapidjson" },
     { name = "pytz" },
     { name = "redis" },
-    { name = "schedule" },
     { name = "semver" },
     { name = "sentry-sdk", extra = ["fastapi"] },
     { name = "sqlalchemy" },
@@ -637,9 +649,9 @@ dependencies = [
     { name = "typer" },
     { name = "uvicorn", extra = ["standard"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/49/5a/3cbf21fa70442d48262b707cac2256a60828cd533212a03636b63e227031/orchestrator_core-4.0.4.tar.gz", hash = "sha256:999984db8c75dfe47a129ee5c5974dde92d4889dcbcba61b9ab2e7c9886a5bec", size = 2673275, upload-time = "2025-06-03T07:01:04.709Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/65/18/47714f43d98757a3064a2595c22271f3234abf73b535b37106f94af6a522/orchestrator_core-4.4.0rc3.tar.gz", hash = "sha256:cc96fe8c82815a288618928683890dbad1dcd6fad166b29c1b164907fbfb0a45", size = 254097, upload-time = "2025-09-08T10:17:38.142Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a7/56/2a85f6bf842de3ae3a71f44242a45a3bbec253bf45781983505e0c4143b3/orchestrator_core-4.0.4-py3-none-any.whl", hash = "sha256:594f82698a5477663acf6dbd0a3b3352cc179dd2be160415aba65e8fcde9aa1d", size = 409251, upload-time = "2025-06-03T07:01:02.692Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/e0/944612bf29dc4c9515c7d81867033124e7f22961e763e1b767e2190204fd/orchestrator_core-4.4.0rc3-py3-none-any.whl", hash = "sha256:eb8cd0d3a8079012a22e8d48ca4a2009bec98b9f9d2ff4ca65de3bc3c04ec276", size = 426680, upload-time = "2025-09-08T10:17:36.224Z" },
 ]
 
 [[package]]
@@ -700,11 +712,11 @@ wheels = [
 
 [[package]]
 name = "prometheus-client"
-version = "0.22.0"
+version = "0.22.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5b/5a/3fa1fa7e91a203759aaf316be394f70f2ef598d589b9785a8611b6094c00/prometheus_client-0.22.0.tar.gz", hash = "sha256:18da1d2241ac2d10c8d2110f13eedcd5c7c0c8af18c926e8731f04fc10cd575c", size = 74443, upload-time = "2025-05-16T20:50:18.333Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5e/cf/40dde0a2be27cc1eb41e333d1a674a74ce8b8b0457269cc640fd42b07cf7/prometheus_client-0.22.1.tar.gz", hash = "sha256:190f1331e783cf21eb60bca559354e0a4d4378facecf78f5428c39b675d20d28", size = 69746, upload-time = "2025-06-02T14:29:01.152Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/50/c7/cee159ba3d7192e84a4c166ec1752f44a5fa859ac0eeda2d73a1da65ab47/prometheus_client-0.22.0-py3-none-any.whl", hash = "sha256:c8951bbe64e62b96cd8e8f5d917279d1b9b91ab766793f33d4dce6c228558713", size = 62658, upload-time = "2025-05-16T20:50:16.978Z" },
+    { url = "https://files.pythonhosted.org/packages/32/ae/ec06af4fe3ee72d16973474f122541746196aaa16cea6f66d18b963c6177/prometheus_client-0.22.1-py3-none-any.whl", hash = "sha256:cca895342e308174341b2cbf99a56bef291fbc0ef7b9e5412a0f26d653ba7094", size = 58694, upload-time = "2025-06-02T14:29:00.068Z" },
 ]
 
 [[package]]
@@ -989,15 +1001,6 @@ wheels = [
 ]
 
 [[package]]
-name = "schedule"
-version = "1.1.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a8/b5/a291a4c0faa491fd5baefa6d89011ece581cff47b23c0a39b42a63383358/schedule-1.1.0.tar.gz", hash = "sha256:e6ca13585e62c810e13a08682e0a6a8ad245372e376ba2b8679294f377dfc8e4", size = 18290, upload-time = "2021-04-10T10:48:20.598Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/3b/040bd180eaef427dd160562ee66adc9f4f67088185c272edcdb899c609c7/schedule-1.1.0-py2.py3-none-any.whl", hash = "sha256:617adce8b4bf38c360b781297d59918fbebfb2878f1671d189f4f4af5d0567a4", size = 10589, upload-time = "2021-04-10T10:48:19.5Z" },
-]
-
-[[package]]
 name = "semver"
 version = "3.0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1172,6 +1175,27 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f8/b1/0c11f5058406b3af7609f121aaa6b609744687f1d158b3c3a5bf4cc94238/typing_inspection-0.4.1.tar.gz", hash = "sha256:6ae134cc0203c33377d43188d4064e9b357dba58cff3185f22924610e70a9d28", size = 75726, upload-time = "2025-05-21T18:55:23.885Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/17/69/cd203477f944c353c31bade965f880aa1061fd6bf05ded0726ca845b6ff7/typing_inspection-0.4.1-py3-none-any.whl", hash = "sha256:389055682238f53b04f7badcb49b989835495a96700ced5dab2d8feae4b26f51", size = 14552, upload-time = "2025-05-21T18:55:22.152Z" },
+]
+
+[[package]]
+name = "tzdata"
+version = "2025.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/95/32/1a225d6164441be760d75c2c42e2780dc0873fe382da3e98a2e1e48361e5/tzdata-2025.2.tar.gz", hash = "sha256:b60a638fcc0daffadf82fe0f57e53d06bdec2f36c4df66280ae79bce6bd6f2b9", size = 196380, upload-time = "2025-03-23T13:54:43.652Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5c/23/c7abc0ca0a1526a0774eca151daeb8de62ec457e77262b66b359c3c7679e/tzdata-2025.2-py2.py3-none-any.whl", hash = "sha256:1a403fada01ff9221ca8044d701868fa132215d84beb92242d9acd2147f667a8", size = 347839, upload-time = "2025-03-23T13:54:41.845Z" },
+]
+
+[[package]]
+name = "tzlocal"
+version = "5.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8b/2e/c14812d3d4d9cd1773c6be938f89e5735a1f11a9f184ac3639b93cef35d5/tzlocal-5.3.1.tar.gz", hash = "sha256:cceffc7edecefea1f595541dbd6e990cb1ea3d19bf01b2809f362a03dd7921fd", size = 30761, upload-time = "2025-03-05T21:17:41.549Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c2/14/e2a54fabd4f08cd7af1c07030603c3356b74da07f7cc056e600436edfa17/tzlocal-5.3.1-py3-none-any.whl", hash = "sha256:eb1a66c3ef5847adf7a834f1be0800581b683b5608e74f86ecbcef8ab91bb85d", size = 18026, upload-time = "2025-03-05T21:17:39.857Z" },
 ]
 
 [[package]]

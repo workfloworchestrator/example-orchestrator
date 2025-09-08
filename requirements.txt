@@ -1,4 +1,0 @@
-orchestrator-core==4.0.4
-deepdiff==8.0.1
-rich==13.9.4
-pynetbox==7.4.1
