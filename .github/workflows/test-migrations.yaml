@@ -1,0 +1,48 @@
+name: Test migrations
+
+on:
+  push:
+    branches: [master]
+  workflow_call:
+  pull_request:
+
+env:
+  UV_FROZEN: true  # Do not update the lockfile
+
+jobs:
+  test_migrations:
+    name: Test migrations
+    runs-on: ubuntu-latest
+    container: ghcr.io/astral-sh/uv:python3.13-bookworm-slim
+    env:
+      DATABASE_URI: postgresql://nwa:nwa@postgres/orchestrator-core
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: nwa
+          POSTGRES_USER: nwa
+          POSTGRES_DB: orchestrator-core
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Test migrations
+        run: uv run main.py db upgrade heads
+
+      - name: Verify number of heads
+        run: |
+          num_heads=$(uv run main.py db heads | grep -c '(head)')
+          if [ "$num_heads" -ne 2 ]; then
+            echo "Found $num_heads DB heads instead of 2, check for duplicate down_revisions"
+            exit 1
+          fi
