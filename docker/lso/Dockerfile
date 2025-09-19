@@ -4,7 +4,7 @@ WORKDIR /app
 
 RUN apk add --update --no-cache gcc libc-dev libffi-dev
 
-RUN pip install orchestrator-lso=="2.0.1"
+RUN pip install orchestrator-lso=="2.2.0"
 
 RUN pip install pynetbox
 

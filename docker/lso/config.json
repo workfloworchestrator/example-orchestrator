@@ -1,0 +1,3 @@
+{
+  "ansible_playbooks_root_dir": "/app/ansible"
+}
