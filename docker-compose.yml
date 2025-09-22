@@ -26,7 +26,7 @@ x-netbox: &netbox
 services:
   postgres:
     container_name: postgres
-    image: "postgres:14"
+    image: "postgres:17-alpine"
     ports:
       - "5432:5432"
     environment:
@@ -53,7 +53,7 @@ services:
 
   redis:
     container_name: redis
-    image: docker.io/redis:7.4.2-alpine
+    image: docker.io/redis:8-alpine
     command:
       - sh
       - -c # this is to evaluate the $REDIS_PASSWORD from the env
@@ -90,7 +90,7 @@ services:
 
   federation:
     container_name: federation
-    image: ghcr.io/apollographql/router:v1.47.0
+    image: ghcr.io/apollographql/router:v2.6.2
     ports:
       - "4000:4000"
     depends_on:
@@ -200,7 +200,7 @@ services:
 
   lso:
     container_name: orchestrator-lso
-    image: orchestrator-lso
+    #image: orchestrator-lso
     profiles:
       - lso
     build:
@@ -215,6 +215,7 @@ services:
     volumes:
       - ./ansible/plays_and_roles:/app/wfo/ansible
       - ./ansible/inventory:/opt/ansible_inventory
+      - ./docker/lso/config.json:/app/config.json
 
   nginx:
     container_name: nginx

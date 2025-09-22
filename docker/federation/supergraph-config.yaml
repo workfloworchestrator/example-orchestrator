@@ -1,4 +1,4 @@
-federation_version: =2.7.1
+federation_version: =2.9.3
 subgraphs:
   orchestrator:
     routing_url: http://orchestrator:8080/api/graphql

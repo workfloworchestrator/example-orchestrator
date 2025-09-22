@@ -1,4 +1,4 @@
-FROM netboxcommunity/netbox:v4.0-2.9.1
+FROM netboxcommunity/netbox:v4.4.1
 
 
 # Patch strawberry schema to enable federation
