@@ -6,7 +6,9 @@ RUN apk add --update --no-cache gcc libc-dev libffi-dev
 
 RUN pip install orchestrator-lso=="2.0.1"
 
-RUN pip install pynetbox
+RUN pip install pynetbox ansible
+
+RUN mkdir -p $ANSIBLE_COLLECTIONS_PATH
 
 RUN ansible-galaxy collection install nokia.srlinux
 
