@@ -1,5 +1,6 @@
 - name: Deploy config on a nokia node
   hosts: all
+  gather_facts: no
   vars:
    ansible_network_os: nokia.srlinux.srlinux
    ansible_connection: ansible.netcommon.httpapi

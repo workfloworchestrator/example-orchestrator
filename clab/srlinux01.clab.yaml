@@ -7,7 +7,7 @@ topology:
   kinds:
     srl:
       type: ixrd2
-      image: ghcr.io/nokia/srlinux
+      image: ghcr.io/nokia/srlinux:25.7.1
     # cvx:
     #   type: cumulus_cvx
     #   image: networkop/cx:4.3.0
