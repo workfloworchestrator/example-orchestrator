@@ -8,7 +8,7 @@ RUN pip install orchestrator-lso=="2.0.1"
 
 RUN pip install pynetbox
 
-RUN ansible-galaxy collection install nokia.srlinux -p /app/demo/ansible
+RUN ansible-galaxy collection install nokia.srlinux
 
 EXPOSE 8000
 ENTRYPOINT []
