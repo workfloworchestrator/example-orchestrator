@@ -1525,7 +1525,7 @@ query GetNetboxDevices {
 ```graphql
 query GetSubscriptions {
   subscriptions(filterBy:
-    	{field: "Product type", value: "Node"}
+    	{field: "type", value: "Node"}
   ) {
     page {
       ... on NodeSubscription {
@@ -1548,7 +1548,7 @@ query GetSubscriptions {
 ```graphql
 query GetEnrichedSubscriptions {
   subscriptions(filterBy:
-    {field: "Product type", value: "Node"}
+    {field: "type", value: "Node"}
   ) {
     page {
       ... on NodeSubscription {
