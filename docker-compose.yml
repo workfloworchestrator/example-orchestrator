@@ -26,7 +26,7 @@ x-netbox: &netbox
 services:
   postgres:
     container_name: postgres
-    image: "pgvector/pgvector:pg14"
+    image: "pgvector/pgvector:pg17"
     ports:
       - "5432:5432"
     environment:
@@ -35,7 +35,7 @@ services:
       POSTGRES_DB: orchestrator-core
     volumes:
       - db-data:/var/lib/postgresql/data/
-      - ./docker/postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/postgresql:/docker-entrypoint-initdb.d
     healthcheck:
       test:
         [
@@ -53,7 +53,7 @@ services:
 
   redis:
     container_name: redis
-    image: docker.io/redis:7.4.2-alpine
+    image: docker.io/redis:8-alpine
     command:
       - sh
       - -c # this is to evaluate the $REDIS_PASSWORD from the env
@@ -90,7 +90,7 @@ services:
 
   federation:
     container_name: federation
-    image: ghcr.io/apollographql/router:v1.47.0
+    image: ghcr.io/apollographql/router:v2.6.2
     ports:
       - "4000:4000"
     depends_on:
@@ -144,7 +144,7 @@ services:
 
   orchestrator-ui:
     container_name: orchestrator-ui
-    image: "ghcr.io/workfloworchestrator/example-orchestrator-ui:3.4.0" # TODO make it possible to override the tag
+    image: ${ORCH_UI_TAG:-ghcr.io/workfloworchestrator/example-orchestrator-ui:5.3.4}
     env_file:
       - ./docker/orchestrator-ui/orchestrator-ui.env
       - path: ./docker/overrides/orchestrator-ui/orchestrator-ui.env
@@ -157,7 +157,7 @@ services:
 
   orchestrator:
     container_name: orchestrator
-    image: "ghcr.io/workfloworchestrator/orchestrator-core:latest" # TODO make it possible to override the tag
+    image: ${ORCH_BACKEND_TAG:-ghcr.io/workfloworchestrator/orchestrator-core:latest}
     env_file:
       - ./docker/orchestrator/orchestrator.env
       - path: ./docker/overrides/orchestrator/orchestrator.env
@@ -202,7 +202,7 @@ services:
 
   lso:
     container_name: orchestrator-lso
-    image: orchestrator-lso
+    #image: orchestrator-lso
     profiles:
       - lso
     build:
@@ -215,8 +215,9 @@ services:
     ports:
       - "8001:8000"
     volumes:
-      - ./ansible/plays_and_roles:/app/wfo/ansible
+      - ./ansible/plays_and_roles:/app/demo/ansible/playbooks
       - ./ansible/inventory:/opt/ansible_inventory
+      - ./docker/lso/config.json:/app/config.json
 
   nginx:
     container_name: nginx

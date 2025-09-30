@@ -12,7 +12,7 @@
 # limitations under the License.
 #
 #
-# This file describes the "Port" product
+# This file describes the "Node" product
 #
 config:
   summary_forms: true

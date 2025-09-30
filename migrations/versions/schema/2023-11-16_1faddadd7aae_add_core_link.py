@@ -33,10 +33,7 @@ new_products = {
             "description": "Core link",
             "tag": "CORE_LINK",
             "status": "active",
-            "product_blocks": [
-                "CoreLink",
-                "CorePort",
-            ],
+            "root_product_block": "CoreLink",
             "fixed_inputs": {
                 "speed": CoreLinkSpeed._10000.value,
             },
@@ -47,30 +44,13 @@ new_products = {
             "description": "Core link",
             "tag": "CORE_LINK",
             "status": "active",
-            "product_blocks": [
-                "CoreLink",
-                "CorePort",
-            ],
+            "root_product_block": "CoreLink",
             "fixed_inputs": {
                 "speed": CoreLinkSpeed._100000.value,
             },
         },
     },
     "product_blocks": {
-        "CoreLink": {
-            "product_block_id": uuid4(),
-            "description": "core link product block",
-            "tag": "CORE_LINK",
-            "status": "active",
-            "resources": {
-                "ports": "core ports",
-                "ims_id": "ID of the core link in the inventory management system",
-                "ipv6_prefix_ipam_id": "IPAM ID of IP prefix used to number ports of this core link",
-                "nrm_id": "ID of the core link in the network resource manager",
-                "under_maintenance": "core link under maintenance?",
-            },
-            "depends_on_block_relations": [],
-        },
         "CorePort": {
             "product_block_id": uuid4(),
             "description": "core port product block",
@@ -81,10 +61,26 @@ new_products = {
                 "enabled": "is port enabled in inventory management system?",
                 "ims_id": "ID of the port in the inventory management system",
                 "nrm_id": "ID of the port in the network resource manager",
-                "node": "link to the Node product block the port is residing on",
                 "ipv6_ipam_id": "ID of the port&#39;s IPv6 address in IPAM",
             },
-            "depends_on_block_relations": [],
+            "depends_on_block_relations": [
+                "Node",
+            ],
+        },
+        "CoreLink": {
+            "product_block_id": uuid4(),
+            "description": "core link product block",
+            "tag": "CORE_LINK",
+            "status": "active",
+            "resources": {
+                "ims_id": "ID of the core link in the inventory management system",
+                "ipv6_prefix_ipam_id": "IPAM ID of IP prefix used to number ports of this core link",
+                "nrm_id": "ID of the core link in the network resource manager",
+                "under_maintenance": "core link under maintenance?",
+            },
+            "depends_on_block_relations": [
+                "CorePort",
+            ],
         },
     },
     "workflows": {},

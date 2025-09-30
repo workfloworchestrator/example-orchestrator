@@ -1,9 +1,12 @@
 [project]
 name = "example-orchestrator"
-version = "1.0.0"
-requires-python = ">=3.11"
+version = "0.1.0"
+requires-python = ">=3.12"
 dependencies = [
-    "orchestrator-core==4.4.0rc3",
+  "deepdiff==8.6.1",
+  "orchestrator-core==4.0.4",
+  "pynetbox==7.4.1",
+  "rich==13.9.4",
 ]
 
 [tool.black]
