@@ -1,0 +1,106 @@
+# workflows/nsistp/modify_nsistp.py
+import structlog
+from orchestrator.domain import SubscriptionModel
+from orchestrator.forms import FormPage
+from orchestrator.forms.validators import CustomerId, Divider
+from orchestrator.types import SubscriptionLifecycle
+from orchestrator.workflow import StepList, begin, step
+from orchestrator.workflows.steps import set_status
+from orchestrator.workflows.utils import modify_workflow
+from pydantic_forms.types import FormGenerator, State, UUIDstr
+from pydantic_forms.validators import read_only_field
+
+from products.product_types.nsistp import Nsistp, NsistpProvisioning
+from workflows.shared import modify_summary_form
+
+
+def subscription_description(subscription: SubscriptionModel) -> str:
+    """The suggested pattern is to implement a subscription service that generates a subscription specific
+    description, in case that is not present the description will just be set to the product name.
+    """
+    return f"{subscription.product.name} subscription"
+
+
+logger = structlog.get_logger(__name__)
+
+
+def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
+    subscription = Nsistp.from_subscription(subscription_id)
+    nsistp = subscription.nsistp
+
+    # TODO fill in additional fields if needed
+
+    class ModifyNsistpForm(FormPage):
+        customer_id: CustomerId = subscription.customer_id  # type: ignore
+
+        divider_1: Divider
+
+        stp_id: read_only_field(nsistp.stp_id)
+        topology: str = nsistp.topology
+        stp_description: str | None = nsistp.stp_description
+        is_alias_in: str | None = nsistp.is_alias_in
+        is_alias_out: str | None = nsistp.is_alias_out
+        expose_in_topology: bool | None = nsistp.expose_in_topology
+        bandwidth: int | None = nsistp.bandwidth
+
+    user_input = yield ModifyNsistpForm
+    user_input_dict = user_input.dict()
+
+    summary_fields = [
+        "topology",
+        "stp_id",
+        "stp_description",
+        "is_alias_in",
+        "is_alias_out",
+        "expose_in_topology",
+        "bandwidth",
+    ]
+    yield from modify_summary_form(user_input_dict, subscription.nsistp, summary_fields)
+
+    return user_input_dict | {"subscription": subscription}
+
+
+@step("Update subscription")
+def update_subscription(
+    subscription: NsistpProvisioning,
+    topology: str,
+    stp_description: str | None,
+    is_alias_in: str | None,
+    is_alias_out: str | None,
+    expose_in_topology: bool | None,
+    bandwidth: int | None,
+) -> State:
+    # TODO: get all modified fields
+    subscription.nsistp.topology = topology
+    subscription.nsistp.stp_description = stp_description
+    subscription.nsistp.is_alias_in = is_alias_in
+    subscription.nsistp.is_alias_out = is_alias_out
+    subscription.nsistp.expose_in_topology = expose_in_topology
+    subscription.nsistp.bandwidth = bandwidth
+
+    return {"subscription": subscription}
+
+
+@step("Update subscription description")
+def update_subscription_description(subscription: Nsistp) -> State:
+    subscription.description = subscription_description(subscription)
+    return {"subscription": subscription}
+
+
+additional_steps = begin
+
+
+@modify_workflow(
+    "Modify nsistp",
+    initial_input_form=initial_input_form_generator,
+    additional_steps=additional_steps,
+)
+def modify_nsistp() -> StepList:
+    return (
+        begin
+        >> set_status(SubscriptionLifecycle.PROVISIONING)
+        >> update_subscription
+        >> update_subscription_description
+        # TODO add additional steps if needed
+        >> set_status(SubscriptionLifecycle.ACTIVE)
+    )

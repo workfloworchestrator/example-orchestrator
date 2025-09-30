@@ -1,0 +1,64 @@
+# Copyright 2019-2023 SURF.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+# This file describes the "L2VPN" product
+#
+config:
+  summary_forms: true
+name: nsistp
+type: Nsistp
+tag: NSISTP
+description: "NSISTP"
+product_blocks:
+  - name: nsistp
+    type: Nsistp
+    tag: NSISTP
+    description: "nsistp product block"
+    fields:
+      - name: sap
+        type: list
+        description: "Virtual circuit service access points"
+        list_type: SAP
+        min_items: 2
+        max_items: 8
+        required: provisioning
+      - name: topology
+        description: "Topology type or identifier for the service instance"
+        type: str
+        required: provisioning
+        modifiable:
+      - name: stp_id
+        description: "Unique identifier for the Service Termination Point"
+        type: str
+        required: provisioning
+      - name: stp_description
+        description: "Description of the Service Termination Point"
+        type: str
+        modifiable:
+      - name: is_alias_in
+        description: "Indicates if the incoming SAP is an alias"
+        type: str
+        modifiable:
+      - name: is_alias_out
+        description: "Indicates if the outgoing SAP is an alias"
+        type: str
+        modifiable:
+      - name: expose_in_topology
+        description: "Whether to expose this STP in the topology view"
+        type: bool
+        modifiable:
+      - name: bandwidth
+        description: "Requested bandwidth for the service instance (in Mbps)"
+        type: int
+        modifiable:

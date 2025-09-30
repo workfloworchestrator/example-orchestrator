@@ -32,3 +32,10 @@ SUBSCRIPTION_MODEL_REGISTRY.update(
         "l2vpn": L2vpn,
     }
 )
+from products.product_types.nsistp import Nsistp
+
+SUBSCRIPTION_MODEL_REGISTRY.update(
+    {
+        "nsistp": Nsistp,
+        },
+)  # fmt:skip
