@@ -33,9 +33,7 @@ new_products = {
             "description": "Network port",
             "tag": "PORT",
             "status": "active",
-            "product_blocks": [
-                "Port",
-            ],
+            "root_product_block": "Port",
             "fixed_inputs": {
                 "speed": PortSpeed._10000.value,
             },
@@ -46,9 +44,7 @@ new_products = {
             "description": "Network port",
             "tag": "PORT",
             "status": "active",
-            "product_blocks": [
-                "Port",
-            ],
+            "root_product_block": "Port",
             "fixed_inputs": {
                 "speed": PortSpeed._100000.value,
             },
@@ -68,11 +64,12 @@ new_products = {
                 "auto_negotiation": "is Ethernet auto negotiation enabled or not",
                 "lldp": "is Link Llayer Discovery Protocol enabled or not",
                 "enabled": "is port enabled in inventory management system?",
-                "node": "link to the Node product block the port is residing on",
                 "ims_id": "ID of the node in the inventory management system",
                 "nrm_id": "ID of the node in the network resource manager",
             },
-            "depends_on_block_relations": [],
+            "depends_on_block_relations": [
+                "Node",
+            ],
         },
     },
     "workflows": {},

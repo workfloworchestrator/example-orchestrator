@@ -31,39 +31,38 @@ new_products = {
             "description": "L2VPN",
             "tag": "L2VPN",
             "status": "active",
-            "product_blocks": [
-                "VirtualCircuit",
-                "SAP",
-            ],
+            "root_product_block": "VirtualCircuit",
             "fixed_inputs": {},
         },
     },
     "product_blocks": {
-        "VirtualCircuit": {
-            "product_block_id": uuid4(),
-            "description": "virtual circuit product block",
-            "tag": "VC",
-            "status": "active",
-            "resources": {
-                "saps": "Virtual circuit service access points",
-                "speed": "speed of the L2VPN im Mbit/s",
-                "speed_policer": "speed policer active?",
-                "ims_id": "ID of the L2VPN in the inventory management system",
-                "nrm_id": "ID of the L2VPN in the network resource manager",
-            },
-            "depends_on_block_relations": [],
-        },
         "SAP": {
             "product_block_id": uuid4(),
             "description": "service access point",
             "tag": "SAP",
             "status": "active",
             "resources": {
-                "port": "Link to Port product block",
                 "vlan": "VLAN ID on port",
                 "ims_id": "ID of the SAP in the inventory management system",
             },
-            "depends_on_block_relations": [],
+            "depends_on_block_relations": [
+                "Port",
+            ],
+        },
+        "VirtualCircuit": {
+            "product_block_id": uuid4(),
+            "description": "virtual circuit product block",
+            "tag": "VC",
+            "status": "active",
+            "resources": {
+                "speed": "speed of the L2VPN im Mbit/s",
+                "speed_policer": "speed policer active?",
+                "ims_id": "ID of the L2VPN in the inventory management system",
+                "nrm_id": "ID of the L2VPN in the network resource manager",
+            },
+            "depends_on_block_relations": [
+                "SAP",
+            ],
         },
     },
     "workflows": {},
