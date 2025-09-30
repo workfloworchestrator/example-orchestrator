@@ -26,7 +26,7 @@ x-netbox: &netbox
 services:
   postgres:
     container_name: postgres
-    image: "postgres:14"
+    image: "pgvector/pgvector:pg14"
     ports:
       - "5432:5432"
     environment:
@@ -144,7 +144,7 @@ services:
 
   orchestrator-ui:
     container_name: orchestrator-ui
-    image: "ghcr.io/workfloworchestrator/example-orchestrator-ui:3.4.0"  # TODO make it possible to override the tag
+    image: "ghcr.io/workfloworchestrator/example-orchestrator-ui:3.4.0" # TODO make it possible to override the tag
     env_file:
       - ./docker/orchestrator-ui/orchestrator-ui.env
       - path: ./docker/overrides/orchestrator-ui/orchestrator-ui.env
@@ -157,13 +157,15 @@ services:
 
   orchestrator:
     container_name: orchestrator
-    image: "ghcr.io/workfloworchestrator/orchestrator-core:latest"  # TODO make it possible to override the tag
+    image: "ghcr.io/workfloworchestrator/orchestrator-core:latest" # TODO make it possible to override the tag
     env_file:
       - ./docker/orchestrator/orchestrator.env
       - path: ./docker/overrides/orchestrator/orchestrator.env
         required: false
     environment:
       LSO_ENABLED: ${COMPOSE_PROFILES:+True}
+      AGENT_ENABLED: ${AGENT_ENABLED:-False}
+      SEARCH_ENABLED: ${SEARCH_ENABLED:-False}
     ports:
       - "8080:8080"
       - "5678:5678" #Enable Python debugger
@@ -179,7 +181,7 @@ services:
       - ./graphql_federation.py:/home/orchestrator/graphql_federation.py
       - ./utils:/home/orchestrator/utils
       - ./services:/home/orchestrator/services
-      - ./requirements.txt:/home/orchestrator/requirements.txt
+      - ./pyproject.toml:/home/orchestrator/pyproject.toml
       - ./alembic.ini:/home/orchestrator/alembic.ini
       - ./translations:/home/orchestrator/translations
       - ./templates:/home/orchestrator/templates
