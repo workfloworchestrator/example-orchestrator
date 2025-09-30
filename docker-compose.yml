@@ -71,6 +71,25 @@ services:
     volumes:
       - netbox-redis-cache-data:/data
 
+  embeddings:
+    container_name: embeddings
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.8
+    command: --model-id sentence-transformers/all-MiniLM-L6-v2
+    profiles:
+      - embeddings
+    env_file:
+      - ./docker/embeddings/embeddings.env
+      - path: ./docker/overrides/embeddings/embeddings.env
+        required: false
+    ports:
+      - "8081:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   rover-compose:
     container_name: rover-compose
     build:
@@ -160,6 +179,7 @@ services:
     image: ${ORCH_BACKEND_TAG:-ghcr.io/workfloworchestrator/orchestrator-core:latest}
     env_file:
       - ./docker/orchestrator/orchestrator.env
+      - ./docker/embeddings/embeddings.env
       - path: ./docker/overrides/orchestrator/orchestrator.env
         required: false
     environment:
@@ -193,6 +213,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      embeddings:
+        condition: service_healthy
+        required: false
     healthcheck:
       start_period: 15s
       timeout: 5s
