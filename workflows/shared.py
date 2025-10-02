@@ -10,8 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from pydantic_forms.types import UUIDstr
-from pydantic_forms.types import SummaryData
 from pprint import pformat
 from typing import Annotated, Generator, List, TypeAlias, cast
 
@@ -28,6 +26,7 @@ from orchestrator.domain.base import ProductBlockModel
 from orchestrator.types import SubscriptionLifecycle
 from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
+from pydantic_forms.types import SummaryData, UUIDstr
 from pydantic_forms.validators import Choice, MigrationSummary, migration_summary
 
 from products.product_types.node import Node
@@ -35,10 +34,18 @@ from services import netbox
 
 Vlan = Annotated[int, Ge(2), Le(4094), doc("VLAN ID.")]
 
-AllowedNumberOfL2vpnPorts = Annotated[int, Ge(2), Le(8), doc("Allowed number of L2vpn ports.")]
+AllowedNumberOfL2vpnPorts = Annotated[
+    int, Ge(2), Le(8), doc("Allowed number of L2vpn ports.")
+]
+
+AllowedNumberOfNsistpPorts = Annotated[
+    int, Ge(1), Le(1), doc("Allowed number of Nsistp ports.")
+]
 
 
-def subscriptions_by_product_type(product_type: str, status: List[SubscriptionLifecycle]) -> List[SubscriptionTable]:
+def subscriptions_by_product_type(
+    product_type: str, status: List[SubscriptionLifecycle]
+) -> List[SubscriptionTable]:
     """
     retrieve_subscription_list_by_product This function lets you retreive a
     list of all subscriptions of a given product type. For example, you could
@@ -69,7 +76,10 @@ def subscriptions_by_product_type(product_type: str, status: List[SubscriptionLi
 
 
 def subscriptions_by_product_type_and_instance_value(
-    product_type: str, resource_type: str, value: str, status: List[SubscriptionLifecycle]
+    product_type: str,
+    resource_type: str,
+    value: str,
+    status: List[SubscriptionLifecycle],
 ) -> List[SubscriptionTable]:
     """Retrieve a list of Subscriptions by product_type, resource_type and value.
 
@@ -96,25 +106,35 @@ def subscriptions_by_product_type_and_instance_value(
 
 
 def node_selector(enum: str = "NodesEnum") -> type[Choice]:
-    node_subscriptions = subscriptions_by_product_type("Node", [SubscriptionLifecycle.ACTIVE])
+    node_subscriptions = subscriptions_by_product_type(
+        "Node", [SubscriptionLifecycle.ACTIVE]
+    )
     nodes = {
         str(subscription.subscription_id): subscription.description
-        for subscription in sorted(node_subscriptions, key=lambda node: node.description)
+        for subscription in sorted(
+            node_subscriptions, key=lambda node: node.description
+        )
     }
     return Choice(enum, zip(nodes.keys(), nodes.items()))  # type:ignore
 
 
-def free_port_selector(node_subscription_id: UUIDstr, speed: int, enum: str = "PortsEnum") -> type[Choice]:
+def free_port_selector(
+    node_subscription_id: UUIDstr, speed: int, enum: str = "PortsEnum"
+) -> type[Choice]:
     node = Node.from_subscription(node_subscription_id)
     interfaces = {
         str(interface.id): interface.name
-        for interface in netbox.get_interfaces(device=node.node.node_name, speed=speed * 1000, enabled=False)
+        for interface in netbox.get_interfaces(
+            device=node.node.node_name, speed=speed * 1000, enabled=False
+        )
     }
     return Choice(enum, zip(interfaces.keys(), interfaces.items()))  # type:ignore
 
 
 def summary_form(product_name: str, summary_data: SummaryData) -> Generator:
-    ProductSummary: TypeAlias = cast(type[MigrationSummary], migration_summary(summary_data))
+    ProductSummary: TypeAlias = cast(
+        type[MigrationSummary], migration_summary(summary_data)
+    )
 
     class SummaryForm(FormPage):
         model_config = ConfigDict(title=f"{product_name} summary")
@@ -124,17 +144,23 @@ def summary_form(product_name: str, summary_data: SummaryData) -> Generator:
     yield SummaryForm
 
 
-def create_summary_form(user_input: dict, product_name: str, fields: List[str]) -> Generator:
+def create_summary_form(
+    user_input: dict, product_name: str, fields: List[str]
+) -> Generator:
     columns = [[str(user_input[nm]) for nm in fields]]
     yield from summary_form(product_name, SummaryData(labels=fields, columns=columns))  # type: ignore
 
 
-def modify_summary_form(user_input: dict, block: ProductBlockModel, fields: List[str]) -> Generator:
+def modify_summary_form(
+    user_input: dict, block: ProductBlockModel, fields: List[str]
+) -> Generator:
     before = [str(getattr(block, nm)) for nm in fields]  # type: ignore[attr-defined]
     after = [str(user_input[nm]) for nm in fields]
     yield from summary_form(
         block.subscription.product.name,
-        SummaryData(labels=fields, headers=["Before", "After"], columns=[before, after]),
+        SummaryData(
+            labels=fields, headers=["Before", "After"], columns=[before, after]
+        ),
     )
 
 
