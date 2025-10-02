@@ -193,6 +193,7 @@ services:
       - 5678 #Enable Python debugger
     volumes:
       - ./workflows:/home/orchestrator/workflows
+      - ./forms:/home/orchestrator/forms
       - ./products:/home/orchestrator/products
       - ./migrations:/home/orchestrator/migrations
       - ./docker:/home/orchestrator/etc

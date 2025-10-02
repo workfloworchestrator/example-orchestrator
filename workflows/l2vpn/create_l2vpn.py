@@ -12,7 +12,6 @@
 # limitations under the License.
 
 
-from pydantic_forms.types import UUIDstr
 import uuid
 from random import randrange
 from typing import TypeAlias, cast
@@ -24,7 +23,7 @@ from orchestrator.workflows.steps import set_status, store_process_subscription
 from orchestrator.workflows.utils import create_workflow
 from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
-from pydantic_forms.types import FormGenerator, State
+from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Choice
 
 from products.product_blocks.sap import SAPBlockInactive
@@ -48,7 +47,8 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
     user_input = yield CreateL2vpnForm
     user_input_dict = user_input.model_dump()
     PortsChoiceList: TypeAlias = cast(
-        type[Choice], ports_selector(AllowedNumberOfL2vpnPorts(user_input_dict["number_of_ports"]))  # noqa: F821
+        type[Choice],
+        ports_selector(AllowedNumberOfL2vpnPorts(user_input_dict["number_of_ports"])),  # noqa: F821
     )
 
     class SelectPortsForm(FormPage):
@@ -90,7 +90,9 @@ def construct_l2vpn_model(
 
     subscription.virtual_circuit.saps = [to_sap(port) for port in ports]
 
-    subscription = L2vpnProvisioning.from_other_lifecycle(subscription, SubscriptionLifecycle.PROVISIONING)
+    subscription = L2vpnProvisioning.from_other_lifecycle(
+        subscription, SubscriptionLifecycle.PROVISIONING
+    )
     subscription.description = description(subscription)
 
     return {
@@ -125,7 +127,9 @@ def ims_create_l2vpn_terminations(subscription: L2vpnProvisioning) -> State:
     l2vpn = netbox.get_l2vpn(id=subscription.virtual_circuit.ims_id)
     for sap in subscription.virtual_circuit.saps:
         vlan = netbox.get_vlan(id=sap.ims_id)
-        payload = netbox.L2vpnTerminationPayload(l2vpn=l2vpn.id, assigned_object_id=vlan.id)
+        payload = netbox.L2vpnTerminationPayload(
+            l2vpn=l2vpn.id, assigned_object_id=vlan.id
+        )
         netbox.create(payload)
         payloads.append(payload)
 

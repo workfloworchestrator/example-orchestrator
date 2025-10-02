@@ -1,4 +1,7 @@
 # workflows/nsistp/create_nsistp.py
+# from typing import TypeAlias, cast
+
+
 import structlog
 from orchestrator.domain import SubscriptionModel
 from orchestrator.forms import FormPage
@@ -12,6 +15,17 @@ from pydantic import ConfigDict
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 
 from products.product_types.nsistp import NsistpInactive, NsistpProvisioning
+from products.services.netbox.netbox import build_payload
+from services import netbox
+from workflows.nsistp.shared.forms import (
+    IsAlias,
+    ServiceSpeed,
+    StpDescription,
+    StpId,
+    Topology,
+    nsistp_fill_sap,
+)
+from workflows.nsistp.shared.helpers import FormNsistpPort
 from workflows.shared import create_summary_form
 
 
@@ -33,24 +47,29 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
     class CreateNsistpForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
+        # TODO: check whether this should be removed
         customer_id: CustomerId
 
         nsistp_settings: Label
         divider_1: Divider
 
-        topology: str
-        stp_id: str
-        stp_description: str | None = None
-        is_alias_in: str | None = None
-        is_alias_out: str | None = None
-        expose_in_topology: bool | None = None
-        bandwidth: int | None = None
+        # TODO: could this be multiple service ports??
+        service_port: FormNsistpPort
+
+        topology: Topology
+        stp_id: StpId
+        stp_description: StpDescription | None = None
+        is_alias_in: IsAlias | None = None
+        is_alias_out: IsAlias | None = None
+        expose_in_topology: bool = True
+        bandwidth: ServiceSpeed
 
     user_input = yield CreateNsistpForm
     user_input_dict = user_input.dict()
 
     summary_fields = [
         "topology",
+        # "vlan",
         "stp_id",
         "stp_description",
         "is_alias_in",
@@ -67,6 +86,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 def construct_nsistp_model(
     product: UUIDstr,
     customer_id: UUIDstr,
+    service_port: list[dict],
     topology: str,
     stp_id: str,
     stp_description: str | None,
@@ -75,6 +95,7 @@ def construct_nsistp_model(
     expose_in_topology: bool | None,
     bandwidth: int | None,
 ) -> State:
+    print("service Port in construct", service_port)
     nsistp = NsistpInactive.from_product_id(
         product_id=product,
         customer_id=customer_id,
@@ -88,6 +109,8 @@ def construct_nsistp_model(
     nsistp.nsistp.expose_in_topology = expose_in_topology
     nsistp.nsistp.bandwidth = bandwidth
 
+    nsistp_fill_sap(nsistp, service_port)
+
     nsistp = NsistpProvisioning.from_other_lifecycle(
         nsistp, SubscriptionLifecycle.PROVISIONING
     )
@@ -100,6 +123,14 @@ def construct_nsistp_model(
     }
 
 
+@step("Create VLANs in IMS (Netbox)")
+def ims_create_vlans(subscription: NsistpProvisioning) -> State:
+    payload = build_payload(subscription.nsistp.sap, subscription)
+    subscription.nsistp.sap.ims_id = netbox.create(payload)
+
+    return {"subscription": subscription, "payloads": [payload]}
+
+
 additional_steps = begin
 
 
@@ -110,6 +141,9 @@ additional_steps = begin
 )
 def create_nsistp() -> StepList:
     return (
-        begin >> construct_nsistp_model >> store_process_subscription(Target.CREATE)
+        begin
+        >> construct_nsistp_model
+        >> store_process_subscription(Target.CREATE)
+        >> ims_create_vlans
         # TODO add provision step(s)
     )

@@ -12,8 +12,8 @@ Example workflow orchestrator implementation based on the
   - [Example orchestrator](#example-orchestrator)
     - [Folder layout](#folder-layout)
       - [migrations/versions/schema](#migrationsversionsschema)
-      - [products/product\_types](#productsproduct_types)
-      - [products/product\_blocks](#productsproduct_blocks)
+      - [products/product_types](#productsproduct_types)
+      - [products/product_blocks](#productsproduct_blocks)
       - [products/services](#productsservices)
       - [services](#services)
       - [templates](#templates)
@@ -95,13 +95,11 @@ To access the new v2 `orchestrator-ui`, point your browser to:
 http://localhost:3000/
 ```
 
-
 To access `netbox` (admin/admin), point your browser to:
 
 ```
 http://localhost:8000/
 ```
-
 
 To access `federation`, point your browser to:
 
@@ -114,43 +112,43 @@ http://localhost:4000
 Use the following steps to see the example orchestrator in action:
 
 1. Bootstrap NetBox
-    1. from the `Tasks` page click `New Task`
-    2. select `NetBox Bootstrap` and click `Start task`
-    3. select `Expand all` on the following page to see the step details
+   1. from the `Tasks` page click `New Task`
+   2. select `NetBox Bootstrap` and click `Start task`
+   3. select `Expand all` on the following page to see the step details
 2. Create a network node (need at least two to create a core link)
-    1. in the left-above corner, click on `New subscription`
-    2. select either the `Node Cisco` or `Node Nokia`
-    3. fill in the needed fields, click `Start workflow` and view the summary form
-    4. click `Start workflow` again to start the workflow, or click `Previous` to modify fields
+   1. in the left-above corner, click on `New subscription`
+   2. select either the `Node Cisco` or `Node Nokia`
+   3. fill in the needed fields, click `Start workflow` and view the summary form
+   4. click `Start workflow` again to start the workflow, or click `Previous` to modify fields
 3. Add interfaces to a node (needed by the other products)
-    1. on the `Subscriptions` page, click on the subscription description of the node to show the details
-    2. select `Update node interfaces` from the `Actions` pulldown
+   1. on the `Subscriptions` page, click on the subscription description of the node to show the details
+   2. select `Update node interfaces` from the `Actions` pulldown
 4. Create a core link
-    1. in the left-above corner, click on `New subscription`
-    2. select either the `core link 10G` or `core link 100G`
-    3. fill in the forms and finally click on `Start workflow` to start the workflow
+   1. in the left-above corner, click on `New subscription`
+   2. select either the `core link 10G` or `core link 100G`
+   3. fill in the forms and finally click on `Start workflow` to start the workflow
 5. Create a customer port (need at least two **tagged** ports to create a l2vpn)
-    1. use `New subscription` for either a `port 10G` or a `port 100G`
-    3. fill in the forms and click on `Start workflow` to start the workflow
+   1. use `New subscription` for either a `port 10G` or a `port 100G`
+   2. fill in the forms and click on `Start workflow` to start the workflow
 6. Create a l2vpn
-    1. use `New subscription` for a `l2vpn`, fill in the forms, and `Start workflow`
+   1. use `New subscription` for a `l2vpn`, fill in the forms, and `Start workflow`
 
 While running the different workflows, have a look at the following
 netbox pages to see the orchestrator interact with netbox:
 
 - Devices
-    - Devices
-    - Interfaces
+  - Devices
+  - Interfaces
 - Connections
-    - Cables
-    - Interface Connections
+  - Cables
+  - Interface Connections
 - IPAM
-    - IP Addresses
-    - Prefixes
-    - VLANs
+  - IP Addresses
+  - Prefixes
+  - VLANs
 - Overlay
-    - L2VPNs
-    - Terminations
+  - L2VPNs
+  - Terminations
 
 ## Summary
 
@@ -212,9 +210,9 @@ based on a simple fictional NREN that has the following characteristics:
 - The network nodes are connected to each other through core links
 - On top of this substrate a set of services like Internet Access, L3VPN and L2VPN are offered
 - The Operations Support Systems (OSS) used are:
-    - An IP Administration Management (IPAM) tool
-    - A network Inventory Management System (IMS)
-    - A Network Resource Manager (NRM) to provision the network
+  - An IP Administration Management (IPAM) tool
+  - A network Inventory Management System (IMS)
+  - A Network Resource Manager (NRM) to provision the network
 - There is no Business Support System (BSS) yet
 
 This NREN decided on a phased introduction of automation in their
@@ -222,15 +220,15 @@ organisation, only automating some of the procedures and flows of
 information while leaving others unautomated for the moment:
 
 - Automated administration and provisioning of:
-    - Network nodes including loopback IP addresses
-    - Core links in between network nodes including point-to-point IP addresses
-    - Customer ports
-    - Customer L2VPN’s
+  - Network nodes including loopback IP addresses
+  - Core links in between network nodes including point-to-point IP addresses
+  - Customer ports
+  - Customer L2VPN’s
 - Not automated administration and provisioning of:
-    - Role, make and model of the network nodes
-    - Sites where network nodes are installed
-    - Customer services like Internet Access, L3VPN, …
-    - Internet peering
+  - Role, make and model of the network nodes
+  - Sites where network nodes are installed
+  - Customer services like Internet Access, L3VPN, …
+  - Internet peering
 
 NetBox[^3] is used as IMS and IPAM, and serves as the source of truth
 for the complete IP address administration and physical and logical
@@ -417,6 +415,7 @@ When this example orchestrator is deployed, it can create a growing
 graph of product blocks as is shown below.
 
 ### Product Hiearchy Diagram
+
 <center><img src=".pictures/subscriptions.png" alt="Product block graph" width=75% height=75%></center>
 
 ### How to use
@@ -496,6 +495,7 @@ is unique per customer. In other words a Subscription contains all the informati
 resource owned by a user/customer that conforms to a certain definition, namely a Product.
 
 ### Product description in Python
+
 Products are described in Python classes called Domain Models. These classes are designed to help the
 developer manage complex subscription models and interact with the
 objects in a developer-friendly way. Domain models use Pydantic[^6] with some
@@ -507,6 +507,7 @@ type checkers, already helps to make the code more robust, furthermore the use o
 variables at runtime which greatly improves reliability.
 
 #### Example of "Runtime typecasting/safety"
+
 In the example below we attempt to access a resource that has been stored in an instance of a product
 (subscription instance). It shows how it can be done directly through the ORM and it shows the added value of Domain
 Models on top of the ORM.
@@ -526,6 +527,7 @@ Models on top of the ORM.
 ```
 
 **Serialisation using domain models**
+
 ```python
 >>> class ProductBlock(ProductBlockModel):
 ...     instance_from_db: bool
@@ -548,10 +550,12 @@ False
 ...    print("False")
 "False"
 ```
+
 As you can see in the example above, interacting with the data stored in the database rows, helps with some of the heavy
 lifting, and makes sure the database remains generic and it's schema remains stable.
 
 #### Product Structure
+
 A Product definition has two parts in its structure. The Higher order product type that contains information describing
 the product in a more general sense, and multiple layers of product blocks that logically describe the set of resources
 that make up the product definition. The product type describes the fixed inputs and the top-level product blocks.
@@ -563,13 +567,14 @@ product blocks as well. If a fixed input needs a custom type, then it is
 defined here together with fixed input definition.
 
 #### Terminology
- * **Product:** A definition of what can be instantiated through a Subscription.
- * **Product Type:** The higher order definition of a Product. Many different Products can exist within a Product Type.
- * **Fixed Input:** Product attributes that discriminate the different Products that adhere to the same Product Type definition.
- * **Product Block:** A (logical) construct that contain references to other Product Blocks or Resource Types. It gives
-   structure to the product definition and defines what resources are related to other resources
- * **Resource Types:** Customer facing attributes that are the result of choices made by the user whilst filling an
-   input form. This can be a value the user chose, or an identifier towards a different system.
+
+- **Product:** A definition of what can be instantiated through a Subscription.
+- **Product Type:** The higher order definition of a Product. Many different Products can exist within a Product Type.
+- **Fixed Input:** Product attributes that discriminate the different Products that adhere to the same Product Type definition.
+- **Product Block:** A (logical) construct that contain references to other Product Blocks or Resource Types. It gives
+  structure to the product definition and defines what resources are related to other resources
+- **Resource Types:** Customer facing attributes that are the result of choices made by the user whilst filling an
+  input form. This can be a value the user chose, or an identifier towards a different system.
 
 ### Product types
 
@@ -584,6 +589,7 @@ before it ends up terminated. The terminated state does not have its own
 type definition, but will default to initial unless otherwise defined.
 
 #### Domain Model a.k.a Product Type Definition
+
 ```python
 class PortInactive(SubscriptionModel, is_base=True):
     speed: PortSpeed
@@ -608,6 +614,7 @@ product block, but it is totally fine to use product blocks from
 different lifecycle states if that suits your use case.
 
 #### Fixed Input
+
 Because a port is only available in a limited number of speeds, a
 separate type is declared with the allowed values, see below.
 
@@ -628,6 +635,7 @@ choices, and in the database migration to register the speed variant of
 this product.
 
 #### Wiring it up in the Orchestrator
+
 <details>
 <summary>This section contains advanced information about how to configure the Orchestrator. It is also possible to use
 a more user friendly tool available <a href="https://workfloworchestrator.
@@ -651,6 +659,7 @@ SUBSCRIPTION_MODEL_REGISTRY.update(
     }
 )
 ```
+
 And all variants also have to entered into the database using a
 migration. The migration uses the create helper function from
 `orchestrator.migrations.helpers` that takes the following dictionary as
@@ -682,6 +691,7 @@ def upgrade() -> None:
     conn = op.get_bind()
     create(conn, new_products)
 ```
+
 </details>
 
 ### Product blocks
@@ -699,6 +709,7 @@ block. This safeguards for incomplete administration for that lifecycle
 state.
 
 #### Resource Type lifecycle. When to use `None`
+
 The resource types on an inactive product block are usually all
 optional to allow the creation of an empty product block instance. All
 resource types that are used to hold the user input for the subscription
@@ -751,6 +762,7 @@ state is present so that the actions that are performed in that state do
 not fail.
 
 #### Product Block customisation
+
 Sometimes there are resource types that depend on information stored on
 other product blocks, even on linked product blocks that do not belong
 to the same subscription. This kind of types need to be calculated at
@@ -816,12 +828,14 @@ types is done automatically. That is why it is important to correctly
 type the step function parameters.
 
 #### Example
+
 Given this function, when a user correctly makes use of the step decorator it is very easy to extract variables and
 make a calculation. It creates readable code, that is easy to understand and reason about. Furthermore the variables
 become available in the step in their correct type according to the domain model. Logic errors due wrong type
 interpretation are much less prone to happen.
 
 **Bad use of the step decorator**
+
 ```python
 @step("A Bad example of using input params")
 def my_ugly_step(state: State) -> State:
@@ -839,10 +853,12 @@ def my_ugly_step(state: State) -> State:
     state["subscription"] = subscription
     return state
 ```
+
 In the above example you see we do a simple calculation based on `variable_1`. When computing with even more
 variables, you van imagine how unreadable the function will be. Now consider the next example.
 
 **Good use of the step decorator**
+
 ```python
 @step("Good use of the input params functionality")
 def my_beautiful_step(variable_1: int, variable_2: str, subscription: SubscriptionModel) -> State:
@@ -859,11 +875,11 @@ def my_beautiful_step(variable_1: int, variable_2: str, subscription: Subscripti
 As you can see the Orchestrator the orchestrator helps you a lot to condense the logic in your function. The `@step`
 decorator does the following:
 
-* Loads the previous steps state from the database.
-* Inspects the step functions signature
-* Finds the arguments in the state and injects them as function arguments to the step function
-* It casts them to the correct type by using the type hints of the step function.
-* Finally it updates the state of the workflow and persists all model changes to the database upon reaching the
+- Loads the previous steps state from the database.
+- Inspects the step functions signature
+- Finds the arguments in the state and injects them as function arguments to the step function
+- It casts them to the correct type by using the type hints of the step function.
+- Finally it updates the state of the workflow and persists all model changes to the database upon reaching the
   `return` of the step function.
 
 ### Forms
@@ -904,19 +920,21 @@ subscription with minimal or no impact to the customer.
 </details>
 
 #### Form _Magic_
+
 As mentioned before, forms are dynamically created from the backend. This means, **little to no** frontend coding is
 needed to make complex wizard like input forms available to the user. When selecting an action in the UI. The first
 thing the frontend does is make an api call to load a form from the backend. The resulting `JSONschema` is parsed
 and the correct widgets are loaded in the frontend. Upon submit this is posted to the backend that does all
 validation and signals to the user if there are any errors. The following forms are supported:
 
-* Multiselect
-* Drop-down
-* Text field (restricted)
-* Number (float and dec)
-* Radio
+- Multiselect
+- Drop-down
+- Text field (restricted)
+- Number (float and dec)
+- Radio
 
 ## Workflow examples
+
 What follows are a few examples of how workflows implement the best common practices implemented by SURF. It
 explains in detail what a typical workflow could look like for provision in network element. These examples can be
 examined in greater detail by exploring the `.workflows.node` directory.
@@ -945,20 +963,21 @@ def create_node() -> StepList:
 
 1. Collect input from user (`initial_input_form`)
 2. Instantiate subscription (`construct_node_model`):
-    1. Create inactive subscription model
-    2. assign user input to subscription
-    3. transition to subscription to provisioning
+   1. Create inactive subscription model
+   2. assign user input to subscription
+   3. transition to subscription to provisioning
 3. Register create process for this subscription (`store_process_subscription`)
 4. Interact with OSS and/or BSS, in this example
-    1. Administer subscription in IMS (`create_node_in ims`)
-    2. Reserve IP addresses in IPAM (`reserve_loopback_addresses`)
-    3. Provision subscription in the network (`provision_node_in_nrm`)
+   1. Administer subscription in IMS (`create_node_in ims`)
+   2. Reserve IP addresses in IPAM (`reserve_loopback_addresses`)
+   3. Provision subscription in the network (`provision_node_in_nrm`)
 5. Transition subscription to active and ‘in sync’ (`@create_workflow`)
 
 As long as every step remains as idempotent as possible, the work can be
 divided over fewer or more steps as desired.
 
 #### Input Form
+
 The input form is created by subclassing the `FormPage` and add the
 input fields together with the type and indication if they are optional
 or not. Additional form settings can be changed via the Config class,
@@ -1014,6 +1033,7 @@ PortsChoiceList: TypeAlias = cast(type[Choice], ports_selector(2))
 ```
 
 #### Extra Validation between dependant fields
+
 Validations between multiple fields is also possible by making use of
 the Pydantic `@model_validator` decorator that gives access to all
 fields. To check if the A and B side of a point-to-point service are not
@@ -1062,13 +1082,13 @@ def modify_node() -> StepList:
 
 1. Collect input from user (`initial_input_form`)
 2. Necessary subscription administration (`@modify_workflow`):
-    1. Register modify process for this subscription
-    2. Set subscription ‘out of sync’ to prevent the start of other processes
+   1. Register modify process for this subscription
+   2. Set subscription ‘out of sync’ to prevent the start of other processes
 3. Transition subscription to Provisioning (`set_status`)
 4. Update subscription with the user input
 5. Interact with OSS and/or BSS, in this example
-    1. Update subscription in IMS (`update_node_in ims`)
-    2. Update subscription in NRM (`update_node_in nrm`)
+   1. Update subscription in IMS (`update_node_in ims`)
+   2. Update subscription in NRM (`update_node_in nrm`)
 6. Transition subscription to active (`set_status`)
 7. Set subscription ‘in sync’ (`@modify_workflow`)
 
@@ -1116,15 +1136,15 @@ def terminate_node() -> StepList:
 
 1. Show subscription details and ask user to confirm termination (`initial_input_form`)
 2. Necessary subscription administration (`@terminate_workflow`):
-    1. Register terminate process for this subscription
-    2. Set subscription ‘out of sync’ to prevent the start of other processes
+   1. Register terminate process for this subscription
+   2. Set subscription ‘out of sync’ to prevent the start of other processes
 3. Get subscription and add information for following steps to the State (`load_initial_state`)
 4. Interact with OSS and/or BSS, in this example
-    1. Delete node in IMS (`delete_node_in ims`)
-    2. Deprovision node in NRM (`deprovision_node_in_nrm`)
+   1. Delete node in IMS (`delete_node_in ims`)
+   2. Deprovision node in NRM (`deprovision_node_in_nrm`)
 5. Necessary subscription administration (`@terminate_workflow`)
-    1. Transition subscription to terminated
-    2. Set subscription ‘in sync’
+   1. Transition subscription to terminated
+   2. Set subscription ‘in sync’
 
 The initial input form for the terminate workflow is very simple, it
 only has to show the details of the subscription:
@@ -1158,13 +1178,13 @@ def validate_l2vpn() -> StepList:
 ```
 
 1. Necessary subscription administration (`@validate_workflow`):
-    1. Register validate process for this subscription
-    2. Set subscription ‘out of sync’, even when subscription is already out of sync
+   1. Register validate process for this subscription
+   2. Set subscription ‘out of sync’, even when subscription is already out of sync
 2. One or more steps to validate the subscription against all OSS and BSS:
-    1. Validate subscription against IMS:
-        1. `validate_l2vpn_in_ims`
-        2. `validate_l2vpn_terminations_in_ims`
-        3. `validate_vlans_on_ports_in_ims`
+   1. Validate subscription against IMS:
+      1. `validate_l2vpn_in_ims`
+      2. `validate_l2vpn_terminations_in_ims`
+      3. `validate_vlans_on_ports_in_ims`
 3. Set subscription ‘in sync’ again (`@validate_workflow`)
 
 When one of the validation steps fail, the subscription will stay ‘out
@@ -1207,12 +1227,12 @@ def reconcile_l2vpn() -> StepList:
 ```
 
 1. Minimal required information of the subscription is collected and consists of the subscriptions
-existing configuration.
+   existing configuration.
 2. Necessary subscription administration (`@reconcile_workflow`):
-    1. Register reconcile process for this subscription
-    2. Set subscription ‘out of sync’ to prevent the start of other processes
+   1. Register reconcile process for this subscription
+   2. Set subscription ‘out of sync’ to prevent the start of other processes
 3. Interact with OSS and/or BSS, in this example
-    1. Update subscription in external systems (OSS and/or BSS) (`update_l2vpn_in_external_systems`)
+   1. Update subscription in external systems (OSS and/or BSS) (`update_l2vpn_in_external_systems`)
 4. Set subscription ‘in sync’ (`@reconcile_workflow`)
 
 Because both a `@modify_workflows` and `@reconcile_workflow` need to have the same update steps for
@@ -1258,7 +1278,7 @@ parameter will be taken into account to decide which one of the
 functions need to be execute.
 
 A helper function called `single_dispatch_base()` is used to keep track
-of all registered functions and the type of their first argument.  This
+of all registered functions and the type of their first argument. This
 allows for more informative error messages when the single dispatch
 function is called with an unsupported parameter.
 
@@ -1465,40 +1485,41 @@ nodes.
 
 ### Federation
 
-WFO and NetBox both use the GraphQL framework Strawberry[^9] which supports Apollo Federation[^8]. This allows to expose both GraphQL backends as a single *supergraph*. WFO can be integrated with any other GraphQL backend that supports[^10] federation and of which you can modify the code. In case of NetBox we don't have direct control over the source code, so we patched it for purposes of demonstration.
+WFO and NetBox both use the GraphQL framework Strawberry[^9] which supports Apollo Federation[^8]. This allows to expose both GraphQL backends as a single _supergraph_. WFO can be integrated with any other GraphQL backend that supports[^10] federation and of which you can modify the code. In case of NetBox we don't have direct control over the source code, so we patched it for purposes of demonstration.
 
 #### Requirements
 
 The following is required to facilitate GraphQL federation on top of WFO and other GraphQL backend(s):
 
-* WFO must be configured with `FEDERATION_ENABLED=True`
-  * [`docker/orchestrator/orchestrator.env`](docker/orchestrator/orchestrator.env)
-* The other backend must also enable federation
-  * NetBox: [`docker/netbox/Dockerfile`](docker/netbox/Dockerfile)
-* In both backends set a federation key on the GraphQL types to join
-  * WFO: [`graphql_federation.py`](graphql_federation.py)
-  * NetBox: [`docker/netbox/patch_federation.py`](docker/netbox/patch_federation.py)
-* Define the supergraph config with both backends
-  * [`docker/federation/supergraph-config.yaml`](docker/federation/supergraph-config.yaml)
-* Compile the supergraph schema with rover[^12]
-  * `rover-compose` startup service in [`docker-compose.yml`](docker-compose.yml)
-* Run Apollo Router to serve the supergraph
-  * `federation` service in [`docker-compose.yml`](docker-compose.yml)
+- WFO must be configured with `FEDERATION_ENABLED=True`
+  - [`docker/orchestrator/orchestrator.env`](docker/orchestrator/orchestrator.env)
+- The other backend must also enable federation
+  - NetBox: [`docker/netbox/Dockerfile`](docker/netbox/Dockerfile)
+- In both backends set a federation key on the GraphQL types to join
+  - WFO: [`graphql_federation.py`](graphql_federation.py)
+  - NetBox: [`docker/netbox/patch_federation.py`](docker/netbox/patch_federation.py)
+- Define the supergraph config with both backends
+  - [`docker/federation/supergraph-config.yaml`](docker/federation/supergraph-config.yaml)
+- Compile the supergraph schema with rover[^12]
+  - `rover-compose` startup service in [`docker-compose.yml`](docker-compose.yml)
+- Run Apollo Router to serve the supergraph
+  - `federation` service in [`docker-compose.yml`](docker-compose.yml)
 
 For more information on federating new GraphQL types, or the existing WFO GraphQL types, please refer to our reference documentation[^11].
 
 #### Example queries
 
 > **Note:**  
-> The following queries assume a running `docker-compose` environment with:  
-> - Initial seed of NetBox via running a `Netbox bootstrap` Task  
-> - Two newly configured nodes  
-> 
+> The following queries assume a running `docker-compose` environment with:
+>
+> - Initial seed of NetBox via running a `Netbox bootstrap` Task
+> - Two newly configured nodes
+>
 > See section [Using the example orchestrator](#using-the-example-orchestrator) on how to run Tasks and create nodes in the [Workflow Orchestrator UI](http://localhost:3000/)
- 
+
 We'll demonstrate how two separate GraphQL queries can now be performed in one federated query.
 
-**NetBox**: NetBox device details can be queried from the NetBox GraphQL endpoint at 
+**NetBox**: NetBox device details can be queried from the NetBox GraphQL endpoint at
 http://localhost:8000/graphql/ (be sure to authenticate first with admin/admin in [NetBox](http://localhost:8000/))
 
 ```graphql
@@ -1524,9 +1545,7 @@ query GetNetboxDevices {
 
 ```graphql
 query GetSubscriptions {
-  subscriptions(filterBy:
-    	{field: "type", value: "Node"}
-  ) {
+  subscriptions(filterBy: { field: "type", value: "Node" }) {
     page {
       ... on NodeSubscription {
         subscriptionId
@@ -1547,9 +1566,7 @@ query GetSubscriptions {
 
 ```graphql
 query GetEnrichedSubscriptions {
-  subscriptions(filterBy:
-    {field: "type", value: "Node"}
-  ) {
+  subscriptions(filterBy: { field: "type", value: "Node" }) {
     page {
       ... on NodeSubscription {
         subscriptionId
@@ -1604,31 +1621,30 @@ Environment variables and orchestrator-core can be overridden for development pu
 <dt> WFO </dt><dd> WorkFlow Orchestrator </dd>
 </dl>
 
-[^1]: M7.3 Common NREN Network Service Product Models -
-https://resources.geant.org/wp-content/uploads/2023/06/M7.3_Common-NREN-Network-Service-Product-Models.pdf
+[^1]:
+    M7.3 Common NREN Network Service Product Models -
+    https://resources.geant.org/wp-content/uploads/2023/06/M7.3_Common-NREN-Network-Service-Product-Models.pdf
 
-[^2]: Workflow Orchestrator website -
-https://workfloworchestrator.org/orchestrator-core/
+[^2]:
+    Workflow Orchestrator website -
+    https://workfloworchestrator.org/orchestrator-core/
 
-[^3]: NetBox is a tool for data center infrastructure management and IP
-address management - https://netbox.dev
+[^3]:
+    NetBox is a tool for data center infrastructure management and IP
+    address management - https://netbox.dev
 
-[^4]: The Python SQL Toolkit and Object Relational Mapper -
-https://www.sqlalchemy.org
+[^4]:
+    The Python SQL Toolkit and Object Relational Mapper -
+    https://www.sqlalchemy.org
 
 [^5]: ASGI server Uvicorn - https://www.uvicorn.org
-
-[^6]: Pydantic is a data validation library for Python -
-https://pydantic.dev/
+[^6]:
+    Pydantic is a data validation library for Python -
+    https://pydantic.dev/
 
 [^7]: Pynetbox Python API - https://github.com/netbox-community/pynetbox
-
 [^8]: Apollo Federation - https://www.apollographql.com/docs/federation/
-
 [^9]: Strawberry Federation - https://strawberry.rocks/docs/federation/introduction
-
 [^10]: Apollo Federation support - https://www.apollographql.com/docs/federation/building-supergraphs/supported-subgraphs
-
 [^11]: WFO GraphQL Documentation - https://workfloworchestrator.org/orchestrator-core/reference-docs/graphql/
-
 [^12]: Apollo Rover - https://www.apollographql.com/docs/rover/

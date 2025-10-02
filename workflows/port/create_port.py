@@ -12,22 +12,21 @@
 # limitations under the License.
 
 
-from pydantic_forms.types import UUIDstr
-import uuid
 import json
+import uuid
 from random import randrange
 from typing import TypeAlias, cast
 
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
+from orchestrator.utils.json import json_dumps
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
-from orchestrator.utils.json import json_dumps
 from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
-from pydantic_forms.types import FormGenerator, State
+from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Choice, Label
 
 from products.product_blocks.port import PortMode
@@ -57,7 +56,9 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
 
     _product = get_product_by_id(product)
     speed = int(_product.fixed_input_value("speed"))
-    FreePortChoice: TypeAlias = cast(type[Choice], free_port_selector(node_subscription_id, speed))
+    FreePortChoice: TypeAlias = cast(
+        type[Choice], free_port_selector(node_subscription_id, speed)
+    )
 
     class CreatePortForm(FormPage):
         model_config = ConfigDict(title=product_name)
@@ -75,7 +76,13 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
     user_input = yield CreatePortForm
     user_input_dict = user_input.model_dump()
 
-    summary_fields = ["port_ims_id", "port_description", "port_mode", "auto_negotiation", "lldp"]
+    summary_fields = [
+        "port_ims_id",
+        "port_description",
+        "port_mode",
+        "auto_negotiation",
+        "lldp",
+    ]
     yield from create_summary_form(user_input_dict, product_name, summary_fields)
 
     return user_input_dict | {"node_subscription_id": node_subscription_id}
@@ -108,7 +115,9 @@ def construct_port_model(
     subscription.port.enabled = False
     subscription.port.ims_id = port_ims_id
 
-    subscription = PortProvisioning.from_other_lifecycle(subscription, SubscriptionLifecycle.PROVISIONING)
+    subscription = PortProvisioning.from_other_lifecycle(
+        subscription, SubscriptionLifecycle.PROVISIONING
+    )
     subscription.description = description(subscription)
 
     return {
