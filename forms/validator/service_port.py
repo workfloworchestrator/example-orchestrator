@@ -37,7 +37,7 @@ from forms.validator.shared import (
     get_port_speed_for_port_subscription,
 )
 from forms.validator.subscription_id import subscription_id
-from forms.validator.vlan_ranges import NsiVlanRanges, SurfVlanRanges
+from forms.validator.vlan_ranges import NsiVlanRanges
 from products.product_blocks.port import PortMode
 from utils.exceptions import PortsValueError, VlanValueError
 from workflows.nsistp.shared.nsistp import (
@@ -61,10 +61,12 @@ class ServicePort(BaseModel):
     # By default we don't want constraints but having ports in the allowed taglist also signals the frontend
     # This way we get te correct behavior even though we don't constrain.. (Well we are sure we want ports here..)
     subscription_id: subscription_id(allowed_tags=_port_tag_values)  # type: ignore # noqa: F821
-    vlan: SurfVlanRanges
+    vlan: VlanRanges
 
     def __repr__(self) -> str:
         # Help distinguish this from the ServicePort product type..
+        print("subscription_id", self.subscription_id)
+
         return f"FormServicePort({self.subscription_id=}, {self.vlan=})"
 
     @field_validator("vlan")
@@ -149,6 +151,7 @@ def service_port(
         # used_vlans = VlanRanges(ims.get_vlans_by_subscription_id(subscription_id))
         # return available_vlans - used_vlans
         used_vlans = nsistp_get_by_port_id(subscription_id)
+        print("used_vlans", used_vlans)
         nsistp_reserved_vlans = get_available_vlans_by_port_id(subscription_id)
         used_vlans = VlanRanges(
             flatten([list(used_vlans), list(nsistp_reserved_vlans)])
@@ -201,6 +204,7 @@ def service_port(
         subscription = subscriptions.get_subscription(
             subscription_id, model=SubscriptionTable
         )
+        print("subscription check", subscription)
 
         if v & used_vlans:
             port_mode = _get_port_mode(subscription)
@@ -219,6 +223,9 @@ def service_port(
 
     # Choose Base Model
     base_model = NsiServicePort if nsi_vlans_only else ServicePort
+
+    print("allowed_tags", allowed_tags)
+    print("base_model", base_model)
 
     return create_model(
         f"{base_model.__name__}{_random_service_port_str()}Value",

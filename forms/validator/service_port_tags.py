@@ -13,6 +13,9 @@
 
 from forms.types import Tags
 
+PORT_TAG_GENERAL: list[Tags] = ["PORT"]
+
+# TODO: these tags can probably be removed
 PORT_TAGS_AGGSP: list[Tags] = ["AGGSP", "AGGSPNL"]
 PORT_TAGS_IRBSP: list[Tags] = ["IRBSP"]
 PORT_TAGS_MSC: list[Tags] = ["MSC", "MSCNL"]
@@ -20,7 +23,11 @@ PORT_TAGS_SPNL: list[Tags] = ["SPNL"]
 PORT_TAGS_SP: list[Tags] = ["SP"]
 PORT_TAGS_SP_ALL: list[Tags] = PORT_TAGS_SPNL + PORT_TAGS_SP
 PORT_TAGS_ALL: list[Tags] = (
-    PORT_TAGS_SP_ALL + PORT_TAGS_AGGSP + PORT_TAGS_MSC + PORT_TAGS_IRBSP
+    PORT_TAGS_SP_ALL
+    + PORT_TAGS_AGGSP
+    + PORT_TAGS_MSC
+    + PORT_TAGS_IRBSP
+    + PORT_TAG_GENERAL
 )
 SERVICES_TAGS_FOR_IMS_REDEPLOY: list[Tags] = [
     "IPBGP",

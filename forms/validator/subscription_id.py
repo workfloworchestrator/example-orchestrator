@@ -17,6 +17,7 @@ from types import new_class
 from typing import Annotated, Any
 from uuid import UUID
 
+import structlog
 from orchestrator.db import (
     SubscriptionTable,
 )
@@ -41,6 +42,8 @@ from forms.validator.subscription_product_id import SubscriptionProductIdValidat
 from forms.validator.subscription_status import SubscriptionStatusValidator
 from forms.validator.subscription_tag import SubscriptionTagValidator
 
+logger = structlog.get_logger(__name__)
+
 
 class SubscriptionId:  # TODO #1983 change to Annotated Type
     @classmethod
@@ -60,6 +63,9 @@ class SubscriptionId:  # TODO #1983 change to Annotated Type
 
 
 def default_get_subscription(v: UUID) -> SubscriptionTable:
+    print("uuid v", v)
+    print("subscription", subscriptions.get_subscription(v, model=SubscriptionTable))
+
     return subscriptions.get_subscription(v, model=SubscriptionTable)
 
 
@@ -113,6 +119,7 @@ def subscription_id(
                 excluded_subscriptions=excluded_subscriptions
             )
         if customer_id:
+            print("customer_id in get_validators", customer_id)
             yield SubscriptionCustomerValidator(
                 customer_id=customer_id,
                 customer_key=customer_key,

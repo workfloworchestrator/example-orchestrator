@@ -26,8 +26,6 @@ def validate_vlan_range(vlan_ranges: VlanRanges) -> VlanRanges:
     return vlan_ranges
 
 
-SurfVlanRanges = Annotated[VlanRanges, AfterValidator(validate_vlan_range)]
-
 _vlan_ranges_schema = TypeAdapter(VlanRanges).json_schema()
 
 NsiVlanRanges = Annotated[

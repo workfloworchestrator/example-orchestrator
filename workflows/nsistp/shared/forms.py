@@ -32,15 +32,12 @@ from sqlalchemy import select
 
 from forms.validator.service_port import service_port
 from forms.validator.service_port_tags import (
-    PORT_TAGS_AGGSP,
-    PORT_TAGS_MSC,
-    PORT_TAGS_SP_ALL,
+    PORT_TAG_GENERAL,
 )
 from products.product_blocks.port import PortMode
 from products.product_types.nsistp import Nsistp, NsistpInactive
 from utils.exceptions import DuplicateValueError, FieldValueError
 from workflows.shared import (
-    AllowedNumberOfNsistpPorts,
     subscriptions_by_product_type_and_instance_value,
 )
 
@@ -51,9 +48,10 @@ FQDN_REQEX = r"^(?!.{255}|.{253}[^.])([a-z0-9](?:[-a-z-0-9]{0,61}[a-z0-9])?\.)*[
 
 
 def nsistp_service_port(current: list[State] | None = None) -> type:
+    print("current", current)
     return service_port(
         visible_port_mode="tagged",
-        allowed_tags=PORT_TAGS_SP_ALL + PORT_TAGS_AGGSP + PORT_TAGS_MSC,
+        allowed_tags=PORT_TAG_GENERAL,
         current=current,
     )
 
@@ -213,9 +211,7 @@ Topology = Annotated[
 
 
 # TODO: check whether this could be the simple implementation
-def ports_selector(
-    number_of_ports: AllowedNumberOfNsistpPorts,
-) -> type[list[Choice]]:
+def ports_selector() -> type[list[Choice]]:
     port_subscriptions = subscriptions_by_product_type_and_instance_value(
         "Port", "port_mode", PortMode.TAGGED, [SubscriptionLifecycle.ACTIVE]
     )
@@ -227,7 +223,7 @@ def ports_selector(
     }
     return choice_list(
         Choice("PortsEnum", zip(ports.keys(), ports.items())),  # type: ignore
-        min_items=number_of_ports,
-        max_items=number_of_ports,
         unique_items=True,
+        min_items=1,
+        max_items=1,
     )

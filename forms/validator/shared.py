@@ -59,8 +59,10 @@ def _get_port_mode(subscription: SubscriptionTable) -> PortMode:
 def get_port_speed_for_port_subscription(
     subscription_id: UUID, get_subscription: GetSubscriptionByIdFunc | None = None
 ) -> int:
+    print("HELLO from get_port_speed_for_port_subscription")
     if get_subscription:
         subscription = get_subscription(subscription_id)
+        print("subscription from get_subscription", subscription)
     else:
         subscription = subscriptions.get_subscription(
             subscription_id, model=SubscriptionTable

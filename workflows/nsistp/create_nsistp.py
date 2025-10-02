@@ -1,12 +1,11 @@
 # workflows/nsistp/create_nsistp.py
 # from typing import TypeAlias, cast
 
-from typing import TypeAlias, cast
 
 import structlog
 from orchestrator.domain import SubscriptionModel
 from orchestrator.forms import FormPage
-from orchestrator.forms.validators import CustomerId, Divider, Label, ListOfOne
+from orchestrator.forms.validators import CustomerId, Divider, Label
 from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
@@ -15,9 +14,8 @@ from orchestrator.workflows.utils import create_workflow
 from pydantic import ConfigDict
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 
-from forms.validator.service_port import ServicePort
 from products.product_types.nsistp import NsistpInactive, NsistpProvisioning
-from workflows.nsistp.shared.forms import nsistp_service_port
+from workflows.nsistp.shared.helpers import ServicePort
 from workflows.shared import create_summary_form
 
 
@@ -36,10 +34,6 @@ logger = structlog.get_logger(__name__)
 def initial_input_form_generator(product_name: str) -> FormGenerator:
     # TODO add additional fields to form if needed
 
-    FormNsistpServicePort: TypeAlias = cast(type[ServicePort], nsistp_service_port())
-
-    SingleServicePort = ListOfOne[FormNsistpServicePort]
-
     class CreateNsistpForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
@@ -49,7 +43,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
         nsistp_settings: Label
         divider_1: Divider
 
-        service_port: SingleServicePort
+        service_port: ServicePort
 
         topology: str
         stp_id: str
