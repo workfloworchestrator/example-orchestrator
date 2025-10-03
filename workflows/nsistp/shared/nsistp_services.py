@@ -14,7 +14,6 @@ from collections.abc import Sequence
 from uuid import UUID
 
 from more_itertools import flatten
-from nwastdlib.vlans import VlanRanges
 from orchestrator.db import db
 from orchestrator.db.models import (
     ProductTable,
@@ -26,8 +25,8 @@ from orchestrator.types import SubscriptionLifecycle
 from sqlalchemy import select
 from sqlalchemy.orm import aliased
 
-# from surf.products.product_types.nsi_lp import NsiLightPath
 from products.product_types.nsistp import Nsistp
+from workflows.nsistp.shared.shared import CustomVlanRanges
 
 
 def _get_subscriptions_inuseby_port_id(
@@ -63,42 +62,20 @@ def nsistp_get_by_port_id(port_id: UUID) -> list[Nsistp]:
         SubscriptionLifecycle.PROVISIONING,
         SubscriptionLifecycle.MIGRATING,
     ]
-    result = _get_subscriptions_inuseby_port_id(port_id, "NSISTP", statuses)
+    result = _get_subscriptions_inuseby_port_id(port_id, "Nsistp", statuses)
 
     return [Nsistp.from_subscription(id) for id in list(set(result))]
 
 
-# def nsi_lp_get_by_port_id(port_id: UUID) -> list[NsiLightPath]:
-#     """Get NsiLightPaths by service port id.
-
-#     Args:
-#         port_id: ID of the service port for which you want all NsiLightPaths of.
-#     """
-#     statuses = [SubscriptionLifecycle.ACTIVE]
-#     result = _get_subscriptions_inuseby_port_id(port_id, "NSILP", statuses)
-
-#     return [NsiLightPath.from_subscription(id) for id in list(set(result))]
-
-
-def get_available_vlans_by_port_id(port_id: UUID) -> VlanRanges:
+def get_available_vlans_by_port_id(port_id: UUID) -> CustomVlanRanges:
     """Get available vlans by service port id.
 
     This will get all NSISTPs and adds their vlan ranges to a single VlanRanges to get the available vlans by nsistps.
-
-    Then filters out the vlans that are already in use by NSI light paths and returns the available vlans.
 
     Args:
         port_id: ID of the service port to find available vlans.
     """
     nsistps = nsistp_get_by_port_id(port_id)
-    available_vlans = VlanRanges(flatten(nsistp.vlan_range for nsistp in nsistps))
-
-    # NOTE: Lightpad can be ommited?
-    # nsi_lps = nsi_lp_get_by_port_id(port_id)
-    # used_vlans = VlanRanges(
-    #     flatten(sap.vlanrange for nsi_lp in nsi_lps for sap in nsi_lp.vc.saps)
-    # )
-
-    # return available_vlans - used_vlans
+    available_vlans = CustomVlanRanges(flatten(nsistp.vlan_range for nsistp in nsistps))
 
     return available_vlans

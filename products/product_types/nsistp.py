@@ -7,6 +7,7 @@ from products.product_blocks.nsistp import (
     NsistpBlockInactive,
     NsistpBlockProvisioning,
 )
+from workflows.nsistp.shared.shared import CustomVlanRanges
 
 
 class NsistpInactive(SubscriptionModel, is_base=True):
@@ -21,3 +22,7 @@ class NsistpProvisioning(
 
 class Nsistp(NsistpProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
     nsistp: NsistpBlock
+
+    @property
+    def vlan_range(self) -> CustomVlanRanges:
+        return self.nsistp.sap.vlan

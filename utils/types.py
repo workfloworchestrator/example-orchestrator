@@ -11,9 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Literal
 
+# TODO: remove entirely or irrelevant tags
 Tags = Literal[
     "SP",
     "SPNL",
@@ -42,25 +42,3 @@ Tags = Literal[
     "Wireless",
     "OS",
 ]
-
-# IMSStatus = Literal["RFS", "PL", "IS", "MI", "RFC", "OOS"]
-TransitionType = Literal["speed", "upgrade", "downgrade", "replace"]
-VisiblePortMode = Literal["all", "normal", "tagged", "untagged", "link_member"]
-
-
-# class MailAddress(TypedDict):
-#     email: EmailStr
-#     name: str
-
-
-# class ConfirmationMail(TypedDict):
-#     message: str
-#     subject: str
-#     language: str
-#     to: list[MailAddress]
-#     cc: list[MailAddress]
-#     bcc: list[MailAddress]
-
-
-IPAddress = IPv4Address | IPv6Address
-IPNetwork = IPv4Network | IPv6Network

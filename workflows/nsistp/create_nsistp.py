@@ -2,6 +2,8 @@
 # from typing import TypeAlias, cast
 
 
+from typing import Annotated
+
 import structlog
 from orchestrator.domain import SubscriptionModel
 from orchestrator.forms import FormPage
@@ -11,7 +13,7 @@ from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
-from pydantic import ConfigDict
+from pydantic import AfterValidator, ConfigDict, model_validator
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 
 from products.product_types.nsistp import NsistpInactive, NsistpProvisioning
@@ -24,8 +26,14 @@ from workflows.nsistp.shared.forms import (
     StpId,
     Topology,
     nsistp_fill_sap,
+    ports_selector,
+    validate_both_aliases_empty_or_not,
 )
-from workflows.nsistp.shared.helpers import FormNsistpPort
+from workflows.nsistp.shared.vlan import (
+    CustomVlanRanges,
+    validate_vlan,
+    validate_vlan_not_in_use,
+)
 from workflows.shared import create_summary_form
 
 
@@ -44,7 +52,7 @@ logger = structlog.get_logger(__name__)
 def initial_input_form_generator(product_name: str) -> FormGenerator:
     # TODO add additional fields to form if needed
 
-    class CreateNsistpForm(FormPage):
+    class CreateNsiStpForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
         # TODO: check whether this should be removed
@@ -54,7 +62,15 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
         divider_1: Divider
 
         # TODO: could this be multiple service ports??
-        service_port: FormNsistpPort
+        subscription_id: Annotated[
+            UUIDstr,
+            ports_selector(),
+        ]
+        vlan: Annotated[
+            CustomVlanRanges,
+            AfterValidator(validate_vlan),
+            AfterValidator(validate_vlan_not_in_use),
+        ]
 
         topology: Topology
         stp_id: StpId
@@ -64,12 +80,18 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
         expose_in_topology: bool = True
         bandwidth: ServiceSpeed
 
-    user_input = yield CreateNsistpForm
+        @model_validator(mode="after")
+        def validate_is_alias_in_out(self) -> "CreateNsiStpForm":
+            validate_both_aliases_empty_or_not(self.is_alias_in, self.is_alias_out)
+            return self
+
+    user_input = yield CreateNsiStpForm
     user_input_dict = user_input.dict()
 
     summary_fields = [
+        "subscription_id",
+        "vlan",
         "topology",
-        # "vlan",
         "stp_id",
         "stp_description",
         "is_alias_in",
@@ -86,7 +108,8 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 def construct_nsistp_model(
     product: UUIDstr,
     customer_id: UUIDstr,
-    service_port: list[dict],
+    subscription_id,
+    vlan,
     topology: str,
     stp_id: str,
     stp_description: str | None,
@@ -95,7 +118,6 @@ def construct_nsistp_model(
     expose_in_topology: bool | None,
     bandwidth: int | None,
 ) -> State:
-    print("service Port in construct", service_port)
     nsistp = NsistpInactive.from_product_id(
         product_id=product,
         customer_id=customer_id,
@@ -109,7 +131,10 @@ def construct_nsistp_model(
     nsistp.nsistp.expose_in_topology = expose_in_topology
     nsistp.nsistp.bandwidth = bandwidth
 
-    nsistp_fill_sap(nsistp, service_port)
+    # TODO: change to support CustomVlanRanges
+    vlan_int = int(vlan) if not isinstance(vlan, int) else vlan
+
+    nsistp.nsistp.sap = nsistp_fill_sap(subscription_id, vlan_int)
 
     nsistp = NsistpProvisioning.from_other_lifecycle(
         nsistp, SubscriptionLifecycle.PROVISIONING
