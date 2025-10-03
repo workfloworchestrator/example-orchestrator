@@ -18,7 +18,6 @@ from typing import Annotated
 from uuid import UUID
 
 from annotated_types import Ge, Le
-from more_itertools import one
 from orchestrator.db import ProductTable, db
 from orchestrator.db.models import (
     SubscriptionTable,
@@ -26,36 +25,22 @@ from orchestrator.db.models import (
 from orchestrator.domain.base import SubscriptionModel
 from orchestrator.types import SubscriptionLifecycle
 from pydantic import AfterValidator, ValidationInfo
-from pydantic_forms.types import State
-from pydantic_forms.validators import Choice, choice_list
+from pydantic_forms.types import UUIDstr
 from sqlalchemy import select
 from typing_extensions import Doc
 
-from forms.validator.service_port import service_port
-from forms.validator.service_port_tags import (
-    PORT_TAG_GENERAL,
-)
-from forms.validator.shared import MAX_SPEED_POSSIBLE
-from products.product_blocks.port import PortMode
 from products.product_types.nsistp import Nsistp, NsistpInactive
-from utils.exceptions import DuplicateValueError, FieldValueError
-from workflows.shared import (
-    subscriptions_by_product_type_and_instance_value,
+from utils.exceptions import (
+    DuplicateValueError,
+    FieldValueError,
 )
+from workflows.nsistp.shared.helpers import CustomVlanRanges
+from workflows.nsistp.shared.shared import MAX_SPEED_POSSIBLE
 
 TOPOLOGY_REGEX = r"^[-a-z0-9+,.;=_]+$"
 STP_ID_REGEX = r"^[-a-z0-9+,.;=_:]+$"
 NURN_REGEX = r"^urn:ogf:network:([^:]+):([0-9]+):([a-z0-9+,-.:;_!$()*@~&]*)$"
 FQDN_REQEX = r"^(?!.{255}|.{253}[^.])([a-z0-9](?:[-a-z-0-9]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?[.]?$"
-
-
-def nsistp_service_port(current: list[State] | None = None) -> type:
-    print("current", current)
-    return service_port(
-        visible_port_mode="tagged",
-        allowed_tags=PORT_TAG_GENERAL,
-        current=current,
-    )
 
 
 def is_fqdn(hostname: str) -> bool:
@@ -159,13 +144,6 @@ def validate_stp_id_uniqueness(
     return stp_id
 
 
-StpId = Annotated[
-    str,
-    AfterValidator(partial(validate_regex, STP_ID_REGEX, "STP identifier")),
-    Doc("must be unique along the set of NSISTP's in the same TOPOLOGY"),
-]
-
-
 def validate_both_aliases_empty_or_not(
     is_alias_in: str | None, is_alias_out: str | None
 ) -> None:
@@ -184,20 +162,26 @@ def validate_nurn(nurn: str | None) -> str | None:
     return nurn
 
 
-def nsistp_fill_sap(subscription: NsistpInactive, service_ports: list[dict]) -> None:
-    print("nsi_fill_sap", service_ports)
-    sp = one(service_ports)
-    subscription.nsistp.sap.vlan = sp["vlan"]
+def nsistp_fill_sap(
+    subscription: NsistpInactive, subscription_id: UUIDstr, vlan: CustomVlanRanges
+) -> None:
+    subscription.nsistp.sap.vlan = vlan
     # SubscriptionModel can be any type of ServicePort
     subscription.nsistp.sap.port = SubscriptionModel.from_subscription(
-        sp["port_id"]
+        subscription_id
     ).port  # type: ignore
 
 
-IsAlias = Annotated[
+Topology = Annotated[
     str,
-    AfterValidator(validate_nurn),
-    Doc("ISALIAS conform https://www.ogf.org/documents/GFD.202.pdf"),
+    AfterValidator(partial(validate_regex, TOPOLOGY_REGEX, "Topology")),
+    Doc("topology string may only consist of characters from the set [-a-z+,.;=_]"),
+]
+
+StpId = Annotated[
+    str,
+    AfterValidator(partial(validate_regex, STP_ID_REGEX, "STP identifier")),
+    Doc("must be unique along the set of NSISTP's in the same TOPOLOGY"),
 ]
 
 StpDescription = Annotated[
@@ -206,12 +190,11 @@ StpDescription = Annotated[
     Doc("STP description may not contain characters from the set [<>&]"),
 ]
 
-Topology = Annotated[
+IsAlias = Annotated[
     str,
-    AfterValidator(partial(validate_regex, TOPOLOGY_REGEX, "Topology")),
-    Doc("topology string may only consist of characters from the set [-a-z+,.;=_]"),
+    AfterValidator(validate_nurn),
+    Doc("ISALIAS conform https://www.ogf.org/documents/GFD.202.pdf"),
 ]
-
 
 Bandwidth = Annotated[
     int,
@@ -221,22 +204,3 @@ Bandwidth = Annotated[
 ]
 
 ServiceSpeed = Bandwidth
-
-
-# NOTE: currently in helpers.py
-def ports_selector() -> type[list[Choice]]:
-    port_subscriptions = subscriptions_by_product_type_and_instance_value(
-        "Port", "port_mode", PortMode.TAGGED, [SubscriptionLifecycle.ACTIVE]
-    )
-    ports = {
-        str(subscription.subscription_id): subscription.description
-        for subscription in sorted(
-            port_subscriptions, key=lambda port: port.description
-        )
-    }
-    return choice_list(
-        Choice("PortsEnum", zip(ports.keys(), ports.items())),  # type: ignore
-        unique_items=True,
-        min_items=1,
-        max_items=1,
-    )

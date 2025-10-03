@@ -14,6 +14,7 @@
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Literal
 
+# TODO: remove entirely or irrelevant tags
 Tags = Literal[
     "SP",
     "SPNL",

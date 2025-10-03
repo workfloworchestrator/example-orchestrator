@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from forms.types import Tags
+from utils.types import Tags
 
 PORT_TAG_GENERAL: list[Tags] = ["PORT"]
 

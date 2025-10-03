@@ -26,7 +26,6 @@ from orchestrator.types import SubscriptionLifecycle
 from sqlalchemy import select
 from sqlalchemy.orm import aliased
 
-# from surf.products.product_types.nsi_lp import NsiLightPath
 from products.product_types.nsistp import Nsistp
 
 
@@ -93,12 +92,10 @@ def get_available_vlans_by_port_id(port_id: UUID) -> VlanRanges:
     nsistps = nsistp_get_by_port_id(port_id)
     available_vlans = VlanRanges(flatten(nsistp.vlan_range for nsistp in nsistps))
 
-    # NOTE: Lightpad can be ommited?
     # nsi_lps = nsi_lp_get_by_port_id(port_id)
     # used_vlans = VlanRanges(
     #     flatten(sap.vlanrange for nsi_lp in nsi_lps for sap in nsi_lp.vc.saps)
     # )
 
     # return available_vlans - used_vlans
-
     return available_vlans
