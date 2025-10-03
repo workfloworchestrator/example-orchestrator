@@ -17,7 +17,7 @@ from functools import partial
 from typing import Annotated
 from uuid import UUID
 
-from annotated_types import doc
+from annotated_types import Ge, Le
 from more_itertools import one
 from orchestrator.db import ProductTable, db
 from orchestrator.db.models import (
@@ -29,11 +29,13 @@ from pydantic import AfterValidator, ValidationInfo
 from pydantic_forms.types import State
 from pydantic_forms.validators import Choice, choice_list
 from sqlalchemy import select
+from typing_extensions import Doc
 
 from forms.validator.service_port import service_port
 from forms.validator.service_port_tags import (
     PORT_TAG_GENERAL,
 )
+from forms.validator.shared import MAX_SPEED_POSSIBLE
 from products.product_blocks.port import PortMode
 from products.product_types.nsistp import Nsistp, NsistpInactive
 from utils.exceptions import DuplicateValueError, FieldValueError
@@ -160,7 +162,7 @@ def validate_stp_id_uniqueness(
 StpId = Annotated[
     str,
     AfterValidator(partial(validate_regex, STP_ID_REGEX, "STP identifier")),
-    doc("must be unique along the set of NSISTP's in the same TOPOLOGY"),
+    Doc("must be unique along the set of NSISTP's in the same TOPOLOGY"),
 ]
 
 
@@ -183,34 +185,45 @@ def validate_nurn(nurn: str | None) -> str | None:
 
 
 def nsistp_fill_sap(subscription: NsistpInactive, service_ports: list[dict]) -> None:
+    print("nsi_fill_sap", service_ports)
     sp = one(service_ports)
-    subscription.settings.sap.vlanrange = sp["vlan"]
+    subscription.nsistp.sap.vlan = sp["vlan"]
     # SubscriptionModel can be any type of ServicePort
-    subscription.settings.sap.port = SubscriptionModel.from_subscription(
-        sp["subscription_id"]
+    subscription.nsistp.sap.port = SubscriptionModel.from_subscription(
+        sp["port_id"]
     ).port  # type: ignore
 
 
 IsAlias = Annotated[
     str,
     AfterValidator(validate_nurn),
-    doc("ISALIAS conform https://www.ogf.org/documents/GFD.202.pdf"),
+    Doc("ISALIAS conform https://www.ogf.org/documents/GFD.202.pdf"),
 ]
 
 StpDescription = Annotated[
     str,
     AfterValidator(partial(validate_regex, r"^[^<>&]*$", "STP description")),
-    doc("STP description may not contain characters from the set [<>&]"),
+    Doc("STP description may not contain characters from the set [<>&]"),
 ]
 
 Topology = Annotated[
     str,
     AfterValidator(partial(validate_regex, TOPOLOGY_REGEX, "Topology")),
-    doc("topology string may only consist of characters from the set [-a-z+,.;=_]"),
+    Doc("topology string may only consist of characters from the set [-a-z+,.;=_]"),
 ]
 
 
-# TODO: check whether this could be the simple implementation
+Bandwidth = Annotated[
+    int,
+    Ge(1),
+    Le(MAX_SPEED_POSSIBLE),
+    Doc(f"Bandwidth between {1} and {MAX_SPEED_POSSIBLE}"),
+]
+
+ServiceSpeed = Bandwidth
+
+
+# NOTE: currently in helpers.py
 def ports_selector() -> type[list[Choice]]:
     port_subscriptions = subscriptions_by_product_type_and_instance_value(
         "Port", "port_mode", PortMode.TAGGED, [SubscriptionLifecycle.ACTIVE]
