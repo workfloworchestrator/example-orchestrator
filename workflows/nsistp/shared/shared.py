@@ -23,8 +23,6 @@ from pydantic import GetJsonSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import CoreSchema
 
-from utils.types import Tags
-
 logger = structlog.get_logger(__name__)
 
 GetSubscriptionByIdFunc = Callable[[UUID], SubscriptionTable]
@@ -35,24 +33,9 @@ MAX_SPEED_POSSIBLE = 400_000
 
 class PortTag(StrEnum):
     SP = "SP"
-    SPNL = "SPNL"
     AGGSP = "AGGSP"
-    AGGSPNL = "AGGSPNL"
     MSC = "MSC"
-    MSCNL = "MSCNL"
     IRBSP = "IRBSP"
-
-
-PORT_TAG_GENERAL: list[Tags] = ["PORT"]
-
-# TODO: these tags can probably be removed
-PORT_TAGS_AGGSP: list[Tags] = ["AGGSP", "AGGSPNL"]
-PORT_TAGS_IRBSP: list[Tags] = ["IRBSP"]
-PORT_TAGS_MSC: list[Tags] = ["MSC", "MSCNL"]
-PORT_TAGS_SP: list[Tags] = ["SP"]
-PORT_TAGS_ALL: list[Tags] = (
-    PORT_TAGS_SP + PORT_TAGS_AGGSP + PORT_TAGS_MSC + PORT_TAGS_IRBSP + PORT_TAG_GENERAL
-)
 
 
 # Custom VlanRanges needed to avoid matching conflict with SURF orchestrator-ui components

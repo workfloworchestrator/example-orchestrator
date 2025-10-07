@@ -129,7 +129,9 @@ def check_vlan_already_used(
         # for tagged only; for link_member/untagged say "SP already in use"
         if port_mode == PortMode.UNTAGGED or port_mode == PortMode.LINK_MEMBER:
             raise PortsValueError("Port already in use")
-        raise VlanValueError(f"Vlan(s) {used_vlans} already in use")
+        raise VlanValueError(
+            f"Vlan(s) {', '.join(map(str, sorted(used_vlans)))} already in use"
+        )
 
     return vlan
 
@@ -174,7 +176,7 @@ def find_allocated_vlans(
     if not used_vlan_values:
         logger.debug("No VLAN values in use found")
         return []
-        return CustomVlanRanges([])
+        # return CustomVlanRanges([])
 
     logger.debug("Found used VLAN values", values=used_vlan_values)
     used_vlan_values_int = list({int(vlan) for vlan in used_vlan_values})
