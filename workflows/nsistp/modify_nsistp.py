@@ -1,8 +1,9 @@
 # workflows/nsistp/modify_nsistp.py
+
 import structlog
 from orchestrator.domain import SubscriptionModel
 from orchestrator.forms import FormPage
-from orchestrator.forms.validators import CustomerId, Divider
+from orchestrator.forms.validators import Divider
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
@@ -28,14 +29,11 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
     subscription = Nsistp.from_subscription(subscription_id)
     nsistp = subscription.nsistp
 
-    # TODO fill in additional fields if needed
-
     class ModifyNsistpForm(FormPage):
-        customer_id: CustomerId = subscription.customer_id  # type: ignore
+        stp_id: read_only_field(nsistp.stp_id)
 
         divider_1: Divider
 
-        stp_id: read_only_field(nsistp.stp_id)
         topology: str = nsistp.topology
         stp_description: str | None = nsistp.stp_description
         is_alias_in: str | None = nsistp.is_alias_in
@@ -70,7 +68,6 @@ def update_subscription(
     expose_in_topology: bool | None,
     bandwidth: int | None,
 ) -> State:
-    # TODO: get all modified fields
     subscription.nsistp.topology = topology
     subscription.nsistp.stp_description = stp_description
     subscription.nsistp.is_alias_in = is_alias_in
@@ -101,6 +98,5 @@ def modify_nsistp() -> StepList:
         >> set_status(SubscriptionLifecycle.PROVISIONING)
         >> update_subscription
         >> update_subscription_description
-        # TODO add additional steps if needed
         >> set_status(SubscriptionLifecycle.ACTIVE)
     )

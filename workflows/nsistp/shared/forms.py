@@ -58,10 +58,7 @@ def ports_selector() -> type[list[Choice]]:
             port_subscriptions, key=lambda port: port.description
         )
     }
-
-    print("Port choices found:", ports)  # --- IGNORE ---
-
-    return Choice("ServicePort", zip(ports.keys(), ports.items()))
+    return Choice("Port", zip(ports.keys(), ports.items()))
 
 
 def is_fqdn(hostname: str) -> bool:

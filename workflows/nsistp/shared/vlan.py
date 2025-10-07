@@ -67,18 +67,16 @@ def validate_vlan(vlan: CustomVlanRanges, info: ValidationInfo) -> CustomVlanRan
     return vlan
 
 
-def validate_vlan_not_in_use(
-    v: CustomVlanRanges, info: ValidationInfo
-) -> CustomVlanRanges:
+def validate_vlan_not_in_use(vlan: int, info: ValidationInfo) -> int | CustomVlanRanges:
     """Wrapper for check_vlan_in_use to work with AfterValidator."""
     # For single form validation, we don't have a 'current' list, so pass empty list
     current: list[State] = []
-    return check_vlan_already_used(current, v, info)
+    return check_vlan_already_used(current, vlan, info)
 
 
 def check_vlan_already_used(
-    current: list[State], v: CustomVlanRanges, info: ValidationInfo
-) -> CustomVlanRanges:
+    current: list[State], vlan: int | CustomVlanRanges, info: ValidationInfo
+) -> int | CustomVlanRanges:
     """Check if vlan value is already in use by a subscription.
 
     Args:
@@ -89,7 +87,7 @@ def check_vlan_already_used(
     Returns: input value if no errors
     """
     if not (subscription_id := info.data.get("subscription_id")):
-        return v
+        return vlan
 
     used_vlans = find_allocated_vlans(subscription_id, ["vlan"])
 
@@ -118,7 +116,14 @@ def check_vlan_already_used(
         subscription_id, model=SubscriptionTable
     )
 
-    if v & used_vlans:
+    # Handle both int and CustomVlanRanges
+    if isinstance(vlan, int):
+        vlan_in_use = vlan in used_vlans
+    else:
+        # For CustomVlanRanges, check if any of its values are in used_vlans
+        vlan_in_use = any(v in used_vlans for v in vlan)
+
+    if vlan_in_use:
         port_mode = _get_port_mode(subscription)
 
         # for tagged only; for link_member/untagged say "SP already in use"
@@ -126,7 +131,7 @@ def check_vlan_already_used(
             raise PortsValueError("Port already in use")
         raise VlanValueError(f"Vlan(s) {used_vlans} already in use")
 
-    return v
+    return vlan
 
 
 def find_allocated_vlans(
@@ -168,8 +173,10 @@ def find_allocated_vlans(
 
     if not used_vlan_values:
         logger.debug("No VLAN values in use found")
+        return []
         return CustomVlanRanges([])
 
     logger.debug("Found used VLAN values", values=used_vlan_values)
-    used_vlan_values_int = {int(vlan) for vlan in used_vlan_values}
-    return CustomVlanRanges(used_vlan_values_int)
+    used_vlan_values_int = list({int(vlan) for vlan in used_vlan_values})
+    return used_vlan_values_int
+    # return CustomVlanRanges(used_vlan_values_int)

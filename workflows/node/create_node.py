@@ -12,22 +12,21 @@
 # limitations under the License.
 
 
-from pydantic_forms.types import UUIDstr
-import uuid
 import json
+import uuid
 from random import randrange
 from typing import TypeAlias, cast
 
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
+from orchestrator.utils.json import json_dumps
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
-from orchestrator.utils.json import json_dumps
 from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
-from pydantic_forms.types import FormGenerator, State
+from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Choice, Label
 
 from products.product_blocks.shared.types import NodeStatus
@@ -36,7 +35,12 @@ from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
 from services.lso_client import execute_playbook, lso_interaction
-from workflows.node.shared.forms import NodeStatusChoice, node_role_selector, node_type_selector, site_selector
+from workflows.node.shared.forms import (
+    NodeStatusChoice,
+    node_role_selector,
+    node_type_selector,
+    site_selector,
+)
 from workflows.node.shared.steps import update_node_in_ims
 from workflows.shared import create_summary_form
 
@@ -64,7 +68,14 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
     user_input = yield CreateNodeForm
     user_input_dict = user_input.model_dump()
 
-    summary_fields = ["role_id", "type_id", "site_id", "node_status", "node_name", "node_description"]
+    summary_fields = [
+        "role_id",
+        "type_id",
+        "site_id",
+        "node_status",
+        "node_name",
+        "node_description",
+    ]
     yield from create_summary_form(user_input_dict, product_name, summary_fields)
 
     return user_input_dict
@@ -95,7 +106,9 @@ def construct_node_model(
     subscription.node.node_name = node_name
     subscription.node.node_description = node_description
 
-    subscription = NodeProvisioning.from_other_lifecycle(subscription, SubscriptionLifecycle.PROVISIONING)
+    subscription = NodeProvisioning.from_other_lifecycle(
+        subscription, SubscriptionLifecycle.PROVISIONING
+    )
     subscription.description = description(subscription)
 
     return {
@@ -114,8 +127,8 @@ def create_node_in_ims(subscription: NodeProvisioning) -> State:
 
 @step("Reserve loopback addresses")
 def reserve_loopback_addresses(subscription: NodeProvisioning) -> State:
-    subscription.node.ipv4_ipam_id, subscription.node.ipv6_ipam_id = netbox.reserve_loopback_addresses(
-        subscription.node.ims_id
+    subscription.node.ipv4_ipam_id, subscription.node.ipv6_ipam_id = (
+        netbox.reserve_loopback_addresses(subscription.node.ims_id)
     )
     return {"subscription": subscription}
 

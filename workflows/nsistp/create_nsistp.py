@@ -2,12 +2,13 @@
 # from typing import TypeAlias, cast
 
 
+import uuid
 from typing import Annotated
 
 import structlog
 from orchestrator.domain import SubscriptionModel
 from orchestrator.forms import FormPage
-from orchestrator.forms.validators import CustomerId, Divider, Label
+from orchestrator.forms.validators import Divider, Label
 from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
@@ -30,7 +31,6 @@ from workflows.nsistp.shared.forms import (
     validate_both_aliases_empty_or_not,
 )
 from workflows.nsistp.shared.vlan import (
-    CustomVlanRanges,
     validate_vlan,
     validate_vlan_not_in_use,
 )
@@ -50,27 +50,24 @@ logger = structlog.get_logger(__name__)
 
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:
-    # TODO add additional fields to form if needed
-
     class CreateNsiStpForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        # TODO: check whether this should be removed
-        customer_id: CustomerId
+        # customer_id: CustomerId
 
         nsistp_settings: Label
-        divider_1: Divider
 
-        # TODO: could this be multiple service ports??
         subscription_id: Annotated[
             UUIDstr,
             ports_selector(),
         ]
         vlan: Annotated[
-            CustomVlanRanges,
+            int,
             AfterValidator(validate_vlan),
             AfterValidator(validate_vlan_not_in_use),
         ]
+
+        divider_1: Divider
 
         topology: Topology
         stp_id: StpId
@@ -107,9 +104,9 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 @step("Construct Subscription model")
 def construct_nsistp_model(
     product: UUIDstr,
-    customer_id: UUIDstr,
+    # customer_id: UUIDstr,
     subscription_id,
-    vlan,
+    vlan: int,
     topology: str,
     stp_id: str,
     stp_description: str | None,
@@ -120,7 +117,7 @@ def construct_nsistp_model(
 ) -> State:
     nsistp = NsistpInactive.from_product_id(
         product_id=product,
-        customer_id=customer_id,
+        customer_id=str(uuid.uuid4()),
         status=SubscriptionLifecycle.INITIAL,
     )
     nsistp.nsistp.topology = topology

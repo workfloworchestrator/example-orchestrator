@@ -21,13 +21,11 @@ from products.product_blocks.port import (
     PortBlockInactive,
     PortBlockProvisioning,
 )
-from workflows.nsistp.shared.shared import CustomVlanRanges
 
 
 class SAPBlockInactive(ProductBlockModel, product_block_name="SAP"):
     port: PortBlockInactive | None = None
     vlan: int | None = None
-    # vlan: CustomVlanRanges  # TODO: check where to use int or CustomVlanRanges
     ims_id: int | None = None
 
 
@@ -35,8 +33,7 @@ class SAPBlockProvisioning(
     SAPBlockInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]
 ):
     port: PortBlockProvisioning
-    vlan: int
-    # vlan: CustomVlanRanges  # TODO: check where to use int or CustomVlanRanges
+    vlan: int  # TODO: refactor to CustomVlanRanges together with L2VPN product and workflow
     ims_id: int | None = None
 
     @computed_field  # type: ignore[misc]
@@ -47,6 +44,5 @@ class SAPBlockProvisioning(
 
 class SAPBlock(SAPBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
     port: PortBlock
-    # vlan: int
-    vlan: CustomVlanRanges | int  # TODO: check where to use int or CustomVlanRanges
+    vlan: int  # TODO: refactor to CustomVlanRanges together with L2VPN product and workflow
     ims_id: int
