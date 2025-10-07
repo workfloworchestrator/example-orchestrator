@@ -12,16 +12,23 @@
 # limitations under the License.
 
 import operator
+from collections.abc import Sequence
 from uuid import UUID
 
 import structlog
 from more_itertools import first, flatten
 from orchestrator.db import (
+    ResourceTypeTable,
+    SubscriptionInstanceRelationTable,
+    SubscriptionInstanceTable,
+    SubscriptionInstanceValueTable,
     SubscriptionTable,
+    db,
 )
 from orchestrator.services import subscriptions
 from pydantic_core.core_schema import ValidationInfo
-from pydantic_forms.types import State
+from pydantic_forms.types import State, UUIDstr
+from sqlalchemy import select
 
 from products.product_blocks.port import PortMode
 from utils.exceptions import PortsValueError, VlanValueError
@@ -72,12 +79,22 @@ def get_port_mode(subscription: SubscriptionTable) -> PortMode:
 # TODO: check why this cannot find vlans by subsriptions_id (it seems that there is no subscription_instance_id created)
 def get_vlans_by_subscription_id(subscription_id: UUID) -> list[list[int]]:
     values = subscriptions.find_values_for_resource_types(
-        subscription_id, ["vlan"], strict=False
+        subscription_id, ["vlan"], strict=True
     )
-    print("Values from vlan resource type:", values)
+    # print("Values from vlan resource type:", values)
     vlan = first(values["vlan"], default=[])  # Provide empty list as default
-    print("First vlan value:", vlan)
+    # print("First vlan value:", vlan)
+
     return vlan
+
+    # values = subscriptions.find_values_for_resource_types(
+    #     subscription_id, ["sap"], strict=True
+    # )
+    # print("Values from sap resource type:", values)
+    # sap = first(values["vlan", "sap"])  # Provide empty list as default
+    # print("First sap value:", sap)
+
+    # return sap
     # return _clean_vlan_ranges(get_vlans_by_ims_circuit_id(int(ims_circuit_id)))
 
 
@@ -201,7 +218,8 @@ def validate_vlan_not_in_use(
     """Wrapper for check_vlan_in_use to work with AfterValidator."""
     # For single form validation, we don't have a 'current' list, so pass empty list
     current: list[State] = []
-    return check_vlan_in_use(current, v, info)
+    return check_vlan_not_used(current, v, info)
+    # return check_vlan_in_use(current, v, info)
 
 
 def parse_vlan_ranges_to_list(vlan_string: str) -> list[int]:
@@ -230,3 +248,153 @@ def parse_vlan_ranges_to_list(vlan_string: str) -> list[int]:
             vlans.append(int(part))
 
     return sorted(set(vlans))
+
+
+def check_vlan_not_used(
+    current: list[State], v: CustomVlanRanges, info: ValidationInfo
+) -> CustomVlanRanges:
+    """Check if vlan value is already in use by service port.
+
+    Args:
+        current: List of current form states, used to filter out self from used vlans.
+        v: Vlan range of the form input.
+        info: validation info, contains other fields in info.data
+
+    1. Get all used vlans in a service port.
+    2. Get all nsi reserved vlans and add them to the used_vlans.
+    3. Filter out vlans used in current subscription from used_vlans.
+    4. if nsi_vlans_only is true, it will also check if the input value is in the range of nsistp vlan ranges.
+    5. checks if input value uses already used vlans. errors if true.
+    6. return input value.
+
+
+    """
+    if not (subscription_id := info.data.get("subscription_id")):
+        return v
+
+    # TODO: check why this cannot find vlans by subsriptions_id (it seems that there is no subscription_instance_id created)
+    # vlans = get_vlans_by_subscription_id(subscription_id)
+    used_vlans = find_allocated_vlans(subscription_id, ["vlan"], strict=False)
+
+    # Remove currently chosen vlans for this port to prevent tripping on in used by itself
+    current_selected_vlan_ranges: list[str] = []
+    if current:
+        current_selected_service_port = filter(
+            lambda c: str(c["subscription_id"]) == str(subscription_id), current
+        )
+        current_selected_vlans = list(
+            map(operator.itemgetter("vlan"), current_selected_service_port)
+        )
+        for current_selected_vlan in current_selected_vlans:
+            # We assume an empty string is untagged and thus 0
+            if not current_selected_vlan:
+                current_selected_vlan = "0"
+
+            current_selected_vlan_range = CustomVlanRanges(current_selected_vlan)
+            used_vlans -= current_selected_vlan_range
+            current_selected_vlan_ranges = [
+                *current_selected_vlan_ranges,
+                *list(current_selected_vlan_range),
+            ]
+
+    subscription = subscriptions.get_subscription(
+        subscription_id, model=SubscriptionTable
+    )
+
+    print("validating vlans:", v)
+    print("used vlans:", used_vlans)
+
+    if v & used_vlans:
+        port_mode = get_port_mode(subscription)
+
+        # for tagged only; for link_member/untagged say "SP already in use"
+        if port_mode == PortMode.UNTAGGED or port_mode == PortMode.LINK_MEMBER:
+            raise PortsValueError("Port already in use")
+        raise VlanValueError(f"Vlan(s) {used_vlans} already in use")
+
+    return v
+
+
+def find_allocated_vlans(
+    subscription_id: UUID | UUIDstr, resource_types: Sequence[str], strict: bool = False
+) -> dict[str, list[str]]:
+    """Find all vlans already allocated to a SAP for a given port."""
+    # the `order_by` on `subscription_instance_id` is there to guarantee the matched ordering across resource_types
+    # (see also docstring)
+    print("subscription_id in allocated vlans:", subscription_id)
+    print("resource_types in allocated vlans:", resource_types)
+
+    subscription_instance_id = db.session.execute(
+        select(SubscriptionInstanceTable.subscription_instance_id).filter(
+            SubscriptionInstanceTable.subscription_id == subscription_id
+        )
+    ).scalar_one_or_none()
+
+    print("subscription_instance_id:", subscription_instance_id)
+
+    vlan_resource_type = db.session.execute(
+        select(ResourceTypeTable).filter(
+            ResourceTypeTable.resource_type == "vlan",
+        )
+    ).scalar_one_or_none()
+
+    vlan_ids = (
+        db.session.execute(
+            select(SubscriptionInstanceValueTable.subscription_instance_id).filter(
+                SubscriptionInstanceValueTable.resource_type_id
+                == vlan_resource_type.resource_type_id,
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    # vlan_ids = [vlan.subscription_instance_id for vlan in vlans]
+
+    print("Found vlan IDs:", vlan_ids)
+    print("Number of vlan IDs:", len(vlan_ids))
+
+    # Check for VLAN IDs that are in use by this subscription instance
+    vlan_relations_query = (
+        select(SubscriptionInstanceRelationTable.in_use_by_id)
+        .join(
+            SubscriptionInstanceTable,
+            SubscriptionInstanceRelationTable.depends_on_id
+            == SubscriptionInstanceTable.subscription_instance_id,
+        )
+        .filter(
+            SubscriptionInstanceTable.subscription_instance_id
+            == subscription_instance_id
+        )
+    )
+
+    vlan_ids_in_use = db.session.execute(vlan_relations_query).scalars().all()
+    print("VLAN IDs in use by this subscription:", vlan_ids_in_use)
+    print("Number of VLAN IDs in use:", len(vlan_ids_in_use))
+
+    # Get VLAN values for the subscription instances that are in use
+    if vlan_ids_in_use:
+        vlan_values_query = (
+            select(SubscriptionInstanceValueTable.value)
+            .join(
+                ResourceTypeTable,
+                SubscriptionInstanceValueTable.resource_type_id
+                == ResourceTypeTable.resource_type_id,
+            )
+            .filter(
+                SubscriptionInstanceValueTable.subscription_instance_id.in_(
+                    vlan_ids_in_use
+                ),
+                ResourceTypeTable.resource_type == "vlan",
+            )
+        )
+
+        used_vlan_values = db.session.execute(vlan_values_query).scalars().all()
+        print("Used VLAN values:", used_vlan_values)
+        used_vlan_values_int = {int(vlan) for vlan in used_vlan_values}
+        return used_vlan_values_int
+
+    else:
+        used_vlan_values = []
+        print("No VLAN values in use found.")
+        return used_vlan_values

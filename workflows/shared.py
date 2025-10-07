@@ -92,6 +92,20 @@ def subscriptions_by_product_type_and_instance_value(
     Returns: Subscription or None
 
     """
+
+    query = (
+        SubscriptionTable.query.join(ProductTable)
+        .join(SubscriptionInstanceTable)
+        .join(SubscriptionInstanceValueTable)
+        .join(ResourceTypeTable)
+        .filter(ProductTable.product_type == product_type)
+        .filter(SubscriptionInstanceValueTable.value == value)
+        .filter(ResourceTypeTable.resource_type == resource_type)
+        .filter(SubscriptionTable.status.in_(status))
+    )
+
+    print("subscription HELLO", query.all())
+
     return (
         SubscriptionTable.query.join(ProductTable)
         .join(SubscriptionInstanceTable)
