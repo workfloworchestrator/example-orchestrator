@@ -486,6 +486,10 @@ should exist, and every port can only be used once in the same L2VPN.
 This product is only supported on tagged interfaces, and VLAN retagging
 is not supported.
 
+#### NSISTP
+
+The Network Service Interface (NSISTP) / Service Termination Point (STP) represents the logical endpoint where a network service connects to a customer port. To create an NSISTP, at least one port subscription must exist. The NSISTP workflow allows you to define service-specific parameters such as VLAN assignment and Service Speed. NSISTP can only be created on tagged ports, as untagged ports are limited to a single service.
+
 ## Products
 
 The Orchestrator uses the concept of a Product to describe what can be built to the end user. When
