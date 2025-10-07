@@ -163,7 +163,7 @@ services:
 
   orchestrator-ui:
     container_name: orchestrator-ui
-    image: ${ORCH_UI_TAG:-ghcr.io/workfloworchestrator/example-orchestrator-ui:5.3.4}
+    image: ${ORCH_UI_TAG:-ghcr.io/workfloworchestrator/example-orchestrator-ui:latest}
     env_file:
       - ./docker/orchestrator-ui/orchestrator-ui.env
       - path: ./docker/overrides/orchestrator-ui/orchestrator-ui.env
