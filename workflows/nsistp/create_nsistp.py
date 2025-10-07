@@ -6,7 +6,6 @@ import uuid
 from typing import Annotated
 
 import structlog
-from orchestrator.domain import SubscriptionModel
 from orchestrator.forms import FormPage
 from orchestrator.forms.validators import Divider, Label
 from orchestrator.targets import Target
@@ -18,6 +17,7 @@ from pydantic import AfterValidator, ConfigDict, model_validator
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 
 from products.product_types.nsistp import NsistpInactive, NsistpProvisioning
+from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from services import netbox
 from workflows.nsistp.shared.forms import (
@@ -35,16 +35,6 @@ from workflows.nsistp.shared.vlan import (
     validate_vlan_not_in_use,
 )
 from workflows.shared import create_summary_form
-
-
-def subscription_description(subscription: SubscriptionModel) -> str:
-    """Generate subscription description.
-
-    The suggested pattern is to implement a subscription service that generates a subscription specific
-    description, in case that is not present the description will just be set to the product name.
-    """
-    return f"{subscription.product.name} subscription"
-
 
 logger = structlog.get_logger(__name__)
 
@@ -136,7 +126,7 @@ def construct_nsistp_model(
     nsistp = NsistpProvisioning.from_other_lifecycle(
         nsistp, SubscriptionLifecycle.PROVISIONING
     )
-    nsistp.description = subscription_description(nsistp)
+    nsistp.description = description(nsistp)
 
     return {
         "subscription": nsistp,

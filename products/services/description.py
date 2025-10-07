@@ -21,12 +21,15 @@ from products.product_blocks.core_port import CorePortBlockProvisioning
 from products.product_types.core_link import CoreLinkProvisioning
 from products.product_types.l2vpn import L2vpnProvisioning
 from products.product_types.node import NodeProvisioning
+from products.product_types.nsistp import NsistpProvisioning
 from products.product_types.port import PortProvisioning
 from utils.singledispatch import single_dispatch_base
 
 
 @singledispatch
-def description(model: Union[ProductModel, ProductBlockModel, SubscriptionModel]) -> str:
+def description(
+    model: Union[ProductModel, ProductBlockModel, SubscriptionModel],
+) -> str:
     """Build subscription description (generic function).
 
     Specific implementations of this generic function will specify the model types they work on.
@@ -79,3 +82,14 @@ def _(l2vpn: L2vpnProvisioning) -> str:
         f"{l2vpn.virtual_circuit.speed} Mbit/s "
         f"({'-'.join(sorted(list(set([sap.port.node.node_name for sap in l2vpn.virtual_circuit.saps]))))})"
     )
+
+
+@description.register
+def _(nsistp: NsistpProvisioning) -> str:
+    product_tag = nsistp.product.tag
+    stp_id = nsistp.nsistp.stp_id
+    topology = nsistp.nsistp.topology
+
+    service_speed = nsistp.nsistp.bandwidth
+
+    return f"{product_tag} {stp_id} {topology} {service_speed}"

@@ -17,6 +17,7 @@
       "node_subscription_id_a": "A side node",
       "node_subscription_id_b": "B side node",
       "number_of_ports": "Number of ports",
+      "nsistp_settings": "Network Service Interface Service Termination Point settings",
       "port_description": "Port description",
       "port_description_info": "Description of the port",
       "port_ims_id": "Port",

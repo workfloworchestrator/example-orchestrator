@@ -21,7 +21,9 @@ class NodeBlockInactive(ProductBlockModel, product_block_name="Node"):
     role_id: int | None = None
     type_id: int | None = None
     site_id: int | None = None
-    node_status: str | None = None  # should be NodeStatus, but strEnum is not supported (yet?)
+    node_status: str | None = (
+        None  # should be NodeStatus, but strEnum is not supported (yet?)
+    )
     node_name: str | None = None
     node_description: str | None = None
     ims_id: int | None = None
@@ -30,7 +32,9 @@ class NodeBlockInactive(ProductBlockModel, product_block_name="Node"):
     ipv6_ipam_id: int | None = None
 
 
-class NodeBlockProvisioning(NodeBlockInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]):
+class NodeBlockProvisioning(
+    NodeBlockInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]
+):
     role_id: int
     type_id: int
     site_id: int

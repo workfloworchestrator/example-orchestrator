@@ -12,7 +12,6 @@
 # limitations under the License.
 
 import operator
-from collections.abc import Sequence
 from uuid import UUID
 
 import structlog
@@ -89,7 +88,7 @@ def check_vlan_already_used(
     if not (subscription_id := info.data.get("subscription_id")):
         return vlan
 
-    used_vlans = find_allocated_vlans(subscription_id, ["vlan"])
+    used_vlans = find_allocated_vlans(subscription_id)
 
     # Remove currently chosen vlans for this port to prevent tripping on in used by itself
     current_selected_vlan_ranges: list[str] = []
@@ -136,15 +135,14 @@ def check_vlan_already_used(
     return vlan
 
 
+# TODO: rewrite to support CustomVlanRanges
 def find_allocated_vlans(
     subscription_id: UUID | UUIDstr,
-    resource_types: Sequence[str],
-) -> CustomVlanRanges:
+) -> list[int]:
     """Find all vlans already allocated to a SAP for a given port."""
     logger.debug(
         "Finding allocated VLANs",
         subscription_id=subscription_id,
-        resource_types=resource_types,
     )
 
     # Get all VLAN values used by the subscription
