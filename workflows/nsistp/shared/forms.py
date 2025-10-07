@@ -31,14 +31,14 @@ from sqlalchemy import select
 from typing_extensions import Doc
 
 from products.product_blocks.port import PortMode
-from products.product_blocks.sap import SAPBlockInactive
-from products.product_types.nsistp import Nsistp
+from products.product_types.nsistp import Nsistp, NsistpInactive
 from utils.exceptions import (
     DuplicateValueError,
     FieldValueError,
 )
 from workflows.nsistp.shared.shared import (
     MAX_SPEED_POSSIBLE,
+    CustomVlanRanges,
 )
 from workflows.shared import subscriptions_by_product_type_and_instance_value
 
@@ -183,21 +183,13 @@ def validate_nurn(nurn: str | None) -> str | None:
     return nurn
 
 
-def nsistp_fill_sap(subscription_id: UUIDstr, vlan: int) -> SAPBlockInactive:
-    sap = SAPBlockInactive.new(subscription_id=subscription_id)
-    sap.port = SubscriptionModel.from_subscription(subscription_id).port  # type: ignore
-    sap.vlan = vlan
-    return sap
-
-
-# def nsistp_fill_sap(
-#     subscription: NsistpInactive, subscription_id: UUIDstr, vlan: CustomVlanRanges
-# ) -> None:
-#     subscription.nsistp.sap.vlan = vlan
-#     # SubscriptionModel can be any type of ServicePort
-#     subscription.nsistp.sap.port = SubscriptionModel.from_subscription(
-#         subscription_id
-#     ).port  # type: ignore
+def nsistp_fill_sap(
+    subscription: NsistpInactive, subscription_id: UUIDstr, vlan: CustomVlanRanges | int
+) -> None:
+    subscription.nsistp.sap.vlan = vlan
+    subscription.nsistp.sap.port = SubscriptionModel.from_subscription(
+        subscription_id
+    ).port  # type: ignore
 
 
 def merge_uniforms(schema: dict[str, Any], *, to_merge: dict[str, Any]) -> None:

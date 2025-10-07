@@ -134,7 +134,7 @@ def construct_nsistp_model(
     # TODO: change to support CustomVlanRanges
     vlan_int = int(vlan) if not isinstance(vlan, int) else vlan
 
-    nsistp.nsistp.sap = nsistp_fill_sap(subscription_id, vlan_int)
+    nsistp_fill_sap(nsistp, subscription_id, vlan_int)
 
     nsistp = NsistpProvisioning.from_other_lifecycle(
         nsistp, SubscriptionLifecycle.PROVISIONING
