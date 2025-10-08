@@ -1,4 +1,4 @@
-FROM netboxcommunity/netbox:v4.0-2.9.1
+FROM netboxcommunity/netbox:v4.4.1
 
 # NOTE: when updating the Netbox version, remember to update the database snapshot. See docker/postgresql/README.md for details
 
