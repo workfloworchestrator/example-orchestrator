@@ -92,7 +92,7 @@ This will build the Docker image for LSO locally, and make the orchestrator use 
 To access the new v2 `orchestrator-ui`, point your browser to:
 
 ```
-http://localhost:3000/
+http://localhost:3009/
 ```
 
 

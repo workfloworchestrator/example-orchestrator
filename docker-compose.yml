@@ -150,7 +150,7 @@ services:
       - path: ./docker/overrides/orchestrator-ui/orchestrator-ui.env
         required: false
     ports:
-      - "3000:3000"
+      - "3009:3000"
     depends_on:
       orchestrator:
         condition: service_started
