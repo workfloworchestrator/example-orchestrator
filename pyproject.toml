@@ -1,7 +1,7 @@
 [project]
 name = "example-orchestrator"
 version = "0.1.0"
-requires-python = ">=3.12"
+requires-python = ">=3.12, <=3.13"
 dependencies = [
   "deepdiff==8.6.1",
   "orchestrator-core==4.0.4",
