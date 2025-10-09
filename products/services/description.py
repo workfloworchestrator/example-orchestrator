@@ -27,9 +27,7 @@ from utils.singledispatch import single_dispatch_base
 
 
 @singledispatch
-def description(
-    model: Union[ProductModel, ProductBlockModel, SubscriptionModel],
-) -> str:
+def description(model: Union[ProductModel, ProductBlockModel, SubscriptionModel]) -> str:
     """Build subscription description (generic function).
 
     Specific implementations of this generic function will specify the model types they work on.

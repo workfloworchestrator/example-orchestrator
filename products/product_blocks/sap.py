@@ -16,11 +16,7 @@ from orchestrator.domain.base import ProductBlockModel
 from orchestrator.types import SubscriptionLifecycle
 from pydantic import computed_field
 
-from products.product_blocks.port import (
-    PortBlock,
-    PortBlockInactive,
-    PortBlockProvisioning,
-)
+from products.product_blocks.port import PortBlock, PortBlockInactive, PortBlockProvisioning
 
 
 class SAPBlockInactive(ProductBlockModel, product_block_name="SAP"):
@@ -29,9 +25,7 @@ class SAPBlockInactive(ProductBlockModel, product_block_name="SAP"):
     ims_id: int | None = None
 
 
-class SAPBlockProvisioning(
-    SAPBlockInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]
-):
+class SAPBlockProvisioning(SAPBlockInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]):
     port: PortBlockProvisioning
     vlan: int  # TODO: refactor to CustomVlanRanges together with L2VPN product and workflow
     ims_id: int | None = None

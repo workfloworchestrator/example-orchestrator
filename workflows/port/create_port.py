@@ -56,9 +56,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
 
     _product = get_product_by_id(product)
     speed = int(_product.fixed_input_value("speed"))
-    FreePortChoice: TypeAlias = cast(
-        type[Choice], free_port_selector(node_subscription_id, speed)
-    )
+    FreePortChoice: TypeAlias = cast(type[Choice], free_port_selector(node_subscription_id, speed))
 
     class CreatePortForm(FormPage):
         model_config = ConfigDict(title=product_name)
@@ -76,13 +74,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
     user_input = yield CreatePortForm
     user_input_dict = user_input.model_dump()
 
-    summary_fields = [
-        "port_ims_id",
-        "port_description",
-        "port_mode",
-        "auto_negotiation",
-        "lldp",
-    ]
+    summary_fields = ["port_ims_id", "port_description", "port_mode", "auto_negotiation", "lldp"]
     yield from create_summary_form(user_input_dict, product_name, summary_fields)
 
     return user_input_dict | {"node_subscription_id": node_subscription_id}
@@ -115,9 +107,7 @@ def construct_port_model(
     subscription.port.enabled = False
     subscription.port.ims_id = port_ims_id
 
-    subscription = PortProvisioning.from_other_lifecycle(
-        subscription, SubscriptionLifecycle.PROVISIONING
-    )
+    subscription = PortProvisioning.from_other_lifecycle(subscription, SubscriptionLifecycle.PROVISIONING)
     subscription.description = description(subscription)
 
     return {
