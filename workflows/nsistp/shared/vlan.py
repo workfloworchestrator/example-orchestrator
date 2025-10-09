@@ -50,18 +50,14 @@ def validate_vlan(vlan: CustomVlanRanges, info: ValidationInfo) -> CustomVlanRan
     if not subscription_id:
         return vlan
 
-    subscription = subscriptions.get_subscription(
-        subscription_id, model=SubscriptionTable
-    )
+    subscription = subscriptions.get_subscription(subscription_id, model=SubscriptionTable)
 
     port_mode = _get_port_mode(subscription)
 
     if port_mode == PortMode.TAGGED and vlan == CustomVlanRanges(0):
         raise VlanValueError(f"{port_mode} {subscription.product.tag} must have a vlan")
     elif port_mode == PortMode.UNTAGGED and vlan != CustomVlanRanges(0):  # noqa: RET506
-        raise VlanValueError(
-            f"{port_mode} {subscription.product.tag} can not have a vlan"
-        )
+        raise VlanValueError(f"{port_mode} {subscription.product.tag} can not have a vlan")
 
     return vlan
 
@@ -93,12 +89,8 @@ def check_vlan_already_used(
     # Remove currently chosen vlans for this port to prevent tripping on in used by itself
     current_selected_vlan_ranges: list[str] = []
     if current:
-        current_selected_service_port = filter(
-            lambda c: str(c["subscription_id"]) == str(subscription_id), current
-        )
-        current_selected_vlans = list(
-            map(operator.itemgetter("vlan"), current_selected_service_port)
-        )
+        current_selected_service_port = filter(lambda c: str(c["subscription_id"]) == str(subscription_id), current)
+        current_selected_vlans = list(map(operator.itemgetter("vlan"), current_selected_service_port))
         for current_selected_vlan in current_selected_vlans:
             # We assume an empty string is untagged and thus 0
             if not current_selected_vlan:
@@ -111,9 +103,7 @@ def check_vlan_already_used(
                 *list(current_selected_vlan_range),
             ]
 
-    subscription = subscriptions.get_subscription(
-        subscription_id, model=SubscriptionTable
-    )
+    subscription = subscriptions.get_subscription(subscription_id, model=SubscriptionTable)
 
     # Handle both int and CustomVlanRanges
     if isinstance(vlan, int):
@@ -128,9 +118,7 @@ def check_vlan_already_used(
         # for tagged only; for link_member/untagged say "SP already in use"
         if port_mode == PortMode.UNTAGGED or port_mode == PortMode.LINK_MEMBER:
             raise PortsValueError("Port already in use")
-        raise VlanValueError(
-            f"Vlan(s) {', '.join(map(str, sorted(used_vlans)))} already in use"
-        )
+        raise VlanValueError(f"Vlan(s) {', '.join(map(str, sorted(used_vlans)))} already in use")
 
     return vlan
 
@@ -150,18 +138,15 @@ def find_allocated_vlans(
         select(SubscriptionInstanceValueTable.value)
         .join(
             ResourceTypeTable,
-            SubscriptionInstanceValueTable.resource_type_id
-            == ResourceTypeTable.resource_type_id,
+            SubscriptionInstanceValueTable.resource_type_id == ResourceTypeTable.resource_type_id,
         )
         .join(
             SubscriptionInstanceRelationTable,
-            SubscriptionInstanceValueTable.subscription_instance_id
-            == SubscriptionInstanceRelationTable.in_use_by_id,
+            SubscriptionInstanceValueTable.subscription_instance_id == SubscriptionInstanceRelationTable.in_use_by_id,
         )
         .join(
             SubscriptionInstanceTable,
-            SubscriptionInstanceRelationTable.depends_on_id
-            == SubscriptionInstanceTable.subscription_instance_id,
+            SubscriptionInstanceRelationTable.depends_on_id == SubscriptionInstanceTable.subscription_instance_id,
         )
         .filter(
             SubscriptionInstanceTable.subscription_id == subscription_id,

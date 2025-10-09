@@ -11,9 +11,7 @@ from products.product_types.nsistp import Nsistp
 logger = structlog.get_logger(__name__)
 
 
-def terminate_initial_input_form_generator(
-    subscription_id: UUIDstr, customer_id: UUIDstr
-) -> InputForm:
+def terminate_initial_input_form_generator(subscription_id: UUIDstr, customer_id: UUIDstr) -> InputForm:
     temp_subscription_id = subscription_id
 
     class TerminateNsistpForm(FormPage):
@@ -39,6 +37,7 @@ additional_steps = begin
 )
 def terminate_nsistp() -> StepList:
     return (
-        begin >> delete_subscription_from_oss_bss
+        begin
+        >> delete_subscription_from_oss_bss
         # TODO: fill in additional steps if needed
     )

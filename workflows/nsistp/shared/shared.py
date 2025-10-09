@@ -43,15 +43,10 @@ class CustomVlanRanges(VlanRanges):
     def __str__(self) -> str:
         # `range` objects have an exclusive `stop`. VlanRanges is expressed using terms that use an inclusive stop,
         # which is one less then the exclusive one we use for the internal representation. Hence the `-1`
-        return ", ".join(
-            str(vr.start) if len(vr) == 1 else f"{vr.start}-{vr.stop - 1}"
-            for vr in self._vlan_ranges
-        )
+        return ", ".join(str(vr.start) if len(vr) == 1 else f"{vr.start}-{vr.stop - 1}" for vr in self._vlan_ranges)
 
     @classmethod
-    def __get_pydantic_json_schema__(
-        cls, core_schema_: CoreSchema, handler: GetJsonSchemaHandler
-    ) -> JsonSchemaValue:
+    def __get_pydantic_json_schema__(cls, core_schema_: CoreSchema, handler: GetJsonSchemaHandler) -> JsonSchemaValue:
         parent_schema = super().__get_pydantic_json_schema__(core_schema_, handler)
         parent_schema["format"] = "custom-vlan"
 
