@@ -37,13 +37,13 @@ new_products = {
             "tag": "NSISTP",
             "status": "active",
             "resources": {
-                "topology": "Topology type or identifier for the service instance",
+                "topology": "Name of the topology this Service Termination Point is exposed in",
                 "stp_id": "Unique identifier for the Service Termination Point",
                 "stp_description": "Description of the Service Termination Point",
-                "is_alias_in": "Indicates if the incoming SAP is an alias",
-                "is_alias_out": "Indicates if the outgoing SAP is an alias",
-                "expose_in_topology": "Whether to expose this STP in the topology view",
-                "bandwidth": "Requested bandwidth for the service instance (in Mbps)",
+                "is_alias_in": "Inbound port from the other topology in case this STP is part of a SDP",
+                "is_alias_out": "Outbound port from the other topology in case this STP is part of a SDP",
+                "expose_in_topology": "Whether to actively expose this STP in the topology",
+                "bandwidth": "Maximum bandwidth for the combined set of STP (in Mbps)",
             },
             "depends_on_block_relations": [
                 "SAP",

@@ -27,14 +27,11 @@ product_blocks:
     description: "nsistp product block"
     fields:
       - name: sap
-        type: list
-        description: "Virtual circuit service access points"
-        list_type: SAP
-        min_items: 2
-        max_items: 8
+        type: SAP
+        description: "NSI STP service access points"
         required: provisioning
       - name: topology
-        description: "Topology type or identifier for the service instance"
+        description: "Name of the topology this Service Termination Point is exposed in"
         type: str
         required: provisioning
         modifiable:
@@ -47,18 +44,18 @@ product_blocks:
         type: str
         modifiable:
       - name: is_alias_in
-        description: "Indicates if the incoming SAP is an alias"
+        description: "Unique identifier for the Service Termination Point"
         type: str
         modifiable:
       - name: is_alias_out
-        description: "Indicates if the outgoing SAP is an alias"
+        description: "Outbound port from the other topology in case this STP is part of a SDP"
         type: str
         modifiable:
       - name: expose_in_topology
-        description: "Whether to expose this STP in the topology view"
+        description: "Whether to actively expose this STP in the topology"
         type: bool
         modifiable:
       - name: bandwidth
-        description: "Requested bandwidth for the service instance (in Mbps)"
+        description: "Maximum bandwidth for the combined set of STP (in Mbps)"
         type: int
         modifiable:
