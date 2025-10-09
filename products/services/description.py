@@ -84,10 +84,10 @@ def _(l2vpn: L2vpnProvisioning) -> str:
 
 @description.register
 def _(nsistp: NsistpProvisioning) -> str:
-    product_tag = nsistp.product.tag
-    stp_id = nsistp.nsistp.stp_id
-    topology = nsistp.nsistp.topology
-
-    service_speed = nsistp.nsistp.bandwidth
-
-    return f"{product_tag} {stp_id} {topology} {service_speed}"
+    return (
+        f"{nsistp.product.tag} "
+        f"{nsistp.nsistp.stp_id} "
+        f"topology {nsistp.nsistp.topology} "
+        f"{nsistp.nsistp.sap.port.node.node_name} "
+        f"{nsistp.nsistp.bandwidth} Mbit/s"
+    )
