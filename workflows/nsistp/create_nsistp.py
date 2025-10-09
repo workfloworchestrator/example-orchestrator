@@ -3,7 +3,7 @@
 
 
 import uuid
-from typing import Annotated
+from typing import Annotated, TypeAlias, cast
 
 import structlog
 from orchestrator.forms import FormPage
@@ -15,6 +15,7 @@ from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
 from pydantic import AfterValidator, ConfigDict, model_validator
 from pydantic_forms.types import FormGenerator, State, UUIDstr
+from pydantic_forms.validators import Choice
 
 from products.product_types.nsistp import NsistpInactive, NsistpProvisioning
 from products.services.description import description
@@ -27,7 +28,7 @@ from workflows.nsistp.shared.forms import (
     StpId,
     Topology,
     nsistp_fill_sap,
-    ports_selector,
+    port_selector,
     validate_both_aliases_empty_or_not,
 )
 from workflows.nsistp.shared.vlan import (
@@ -38,8 +39,11 @@ from workflows.shared import create_summary_form
 
 logger = structlog.get_logger(__name__)
 
+PortChoiceList: TypeAlias = cast(type[Choice], port_selector())
+
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:
+
     class CreateNsiStpForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
@@ -47,10 +51,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 
         nsistp_settings: Label
 
-        subscription_id: Annotated[
-            UUIDstr,
-            ports_selector(),
-        ]
+        port: PortChoiceList
         vlan: Annotated[
             int,
             AfterValidator(validate_vlan),
@@ -76,7 +77,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
     user_input_dict = user_input.dict()
 
     summary_fields = [
-        "subscription_id",
+        "port",
         "vlan",
         "topology",
         "stp_id",
@@ -95,7 +96,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 def construct_nsistp_model(
     product: UUIDstr,
     # customer_id: UUIDstr,
-    subscription_id,
+    port: UUIDstr,
     vlan: int,
     topology: str,
     stp_id: str,
@@ -121,11 +122,9 @@ def construct_nsistp_model(
     # TODO: change to support CustomVlanRanges
     vlan_int = int(vlan) if not isinstance(vlan, int) else vlan
 
-    nsistp_fill_sap(nsistp, subscription_id, vlan_int)
+    nsistp_fill_sap(nsistp, port, vlan_int)
 
-    nsistp = NsistpProvisioning.from_other_lifecycle(
-        nsistp, SubscriptionLifecycle.PROVISIONING
-    )
+    nsistp = NsistpProvisioning.from_other_lifecycle(nsistp, SubscriptionLifecycle.PROVISIONING)
     nsistp.description = description(nsistp)
 
     return {
@@ -146,11 +145,7 @@ def ims_create_vlans(subscription: NsistpProvisioning) -> State:
 additional_steps = begin
 
 
-@create_workflow(
-    "Create nsistp",
-    initial_input_form=initial_input_form_generator,
-    additional_steps=additional_steps,
-)
+@create_workflow("Create nsistp", initial_input_form=initial_input_form_generator, additional_steps=additional_steps)
 def create_nsistp() -> StepList:
     return (
         begin

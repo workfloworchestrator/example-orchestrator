@@ -45,18 +45,18 @@ from workflows.shared import subscriptions_by_product_type_and_instance_value
 TOPOLOGY_REGEX = r"^[-a-z0-9+,.;=_]+$"
 STP_ID_REGEX = r"^[-a-z0-9+,.;=_:]+$"
 NURN_REGEX = r"^urn:ogf:network:([^:]+):([0-9]+):([a-z0-9+,-.:;_!$()*@~&]*)$"
-FQDN_REQEX = r"^(?!.{255}|.{253}[^.])([a-z0-9](?:[-a-z-0-9]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?[.]?$"
+FQDN_REQEX = (
+    r"^(?!.{255}|.{253}[^.])([a-z0-9](?:[-a-z-0-9]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?[.]?$"
+)
 
 
-def ports_selector() -> type[list[Choice]]:
+def port_selector() -> type[Choice]:
     port_subscriptions = subscriptions_by_product_type_and_instance_value(
         "Port", "port_mode", PortMode.TAGGED, [SubscriptionLifecycle.ACTIVE]
     )
     ports = {
         str(subscription.subscription_id): subscription.description
-        for subscription in sorted(
-            port_subscriptions, key=lambda port: port.description
-        )
+        for subscription in sorted(port_subscriptions, key=lambda port: port.description)
     }
     return Choice("Port", zip(ports.keys(), ports.items()))
 
@@ -137,9 +137,7 @@ def _get_nsistp_subscriptions(subscription_id: UUID | None) -> Iterator[Nsistp]:
     return (Nsistp.from_subscription(subscription_id) for subscription_id in result)
 
 
-def validate_stp_id_uniqueness(
-    subscription_id: UUID | None, stp_id: str, info: ValidationInfo
-) -> str:
+def validate_stp_id_uniqueness(subscription_id: UUID | None, stp_id: str, info: ValidationInfo) -> str:
     values = info.data
 
     customer_id = values.get("customer_id")
@@ -155,20 +153,14 @@ def validate_stp_id_uniqueness(
 
         subscriptions = _get_nsistp_subscriptions(subscription_id)
         if any(is_not_unique(nsistp) for nsistp in subscriptions):
-            raise DuplicateValueError(
-                f"STP identifier `{stp_id}` already exists for topology `{topology}`"
-            )
+            raise DuplicateValueError(f"STP identifier `{stp_id}` already exists for topology `{topology}`")
 
     return stp_id
 
 
-def validate_both_aliases_empty_or_not(
-    is_alias_in: str | None, is_alias_out: str | None
-) -> None:
+def validate_both_aliases_empty_or_not(is_alias_in: str | None, is_alias_out: str | None) -> None:
     if bool(is_alias_in) != bool(is_alias_out):
-        raise FieldValueError(
-            "NSI inbound and outbound isAlias should either both have a value or be empty"
-        )
+        raise FieldValueError("NSI inbound and outbound isAlias should either both have a value or be empty")
 
 
 def validate_nurn(nurn: str | None) -> str | None:
@@ -180,13 +172,9 @@ def validate_nurn(nurn: str | None) -> str | None:
     return nurn
 
 
-def nsistp_fill_sap(
-    subscription: NsistpInactive, subscription_id: UUIDstr, vlan: CustomVlanRanges | int
-) -> None:
+def nsistp_fill_sap(subscription: NsistpInactive, subscription_id: UUIDstr, vlan: CustomVlanRanges | int) -> None:
     subscription.nsistp.sap.vlan = vlan
-    subscription.nsistp.sap.port = SubscriptionModel.from_subscription(
-        subscription_id
-    ).port  # type: ignore
+    subscription.nsistp.sap.port = SubscriptionModel.from_subscription(subscription_id).port  # type: ignore
 
 
 def merge_uniforms(schema: dict[str, Any], *, to_merge: dict[str, Any]) -> None:
