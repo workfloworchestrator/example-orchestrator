@@ -36,8 +36,6 @@ Vlan = Annotated[int, Ge(2), Le(4094), doc("VLAN ID.")]
 
 AllowedNumberOfL2vpnPorts = Annotated[int, Ge(2), Le(8), doc("Allowed number of L2vpn ports.")]
 
-AllowedNumberOfNsistpPorts = Annotated[int, Ge(1), Le(1), doc("Allowed number of Nsistp ports.")]
-
 
 def subscriptions_by_product_type(product_type: str, status: List[SubscriptionLifecycle]) -> List[SubscriptionTable]:
     """
