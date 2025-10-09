@@ -21,6 +21,7 @@ from products.product_blocks.core_port import CorePortBlockProvisioning
 from products.product_types.core_link import CoreLinkProvisioning
 from products.product_types.l2vpn import L2vpnProvisioning
 from products.product_types.node import NodeProvisioning
+from products.product_types.nsistp import NsistpProvisioning
 from products.product_types.port import PortProvisioning
 from utils.singledispatch import single_dispatch_base
 
@@ -78,4 +79,15 @@ def _(l2vpn: L2vpnProvisioning) -> str:
         f"{l2vpn.product.tag} "
         f"{l2vpn.virtual_circuit.speed} Mbit/s "
         f"({'-'.join(sorted(list(set([sap.port.node.node_name for sap in l2vpn.virtual_circuit.saps]))))})"
+    )
+
+
+@description.register
+def _(nsistp: NsistpProvisioning) -> str:
+    return (
+        f"{nsistp.product.tag} "
+        f"{nsistp.nsistp.stp_id} "
+        f"topology {nsistp.nsistp.topology} "
+        f"{nsistp.nsistp.sap.port.node.node_name} "
+        f"{nsistp.nsistp.bandwidth} Mbit/s"
     )

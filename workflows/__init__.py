@@ -40,5 +40,11 @@ LazyWorkflowInstance("workflows.l2vpn.validate_l2vpn", "validate_l2vpn")
 LazyWorkflowInstance("workflows.l2vpn.modify_l2vpn", "reconcile_l2vpn")
 
 
+LazyWorkflowInstance("workflows.nsistp.create_nsistp", "create_nsistp")
+LazyWorkflowInstance("workflows.nsistp.modify_nsistp", "modify_nsistp")
+LazyWorkflowInstance("workflows.nsistp.terminate_nsistp", "terminate_nsistp")
+LazyWorkflowInstance("workflows.nsistp.validate_nsistp", "validate_nsistp")
+
+
 LazyWorkflowInstance("workflows.tasks.bootstrap_netbox", "task_bootstrap_netbox")
 LazyWorkflowInstance("workflows.tasks.wipe_netbox", "task_wipe_netbox")
