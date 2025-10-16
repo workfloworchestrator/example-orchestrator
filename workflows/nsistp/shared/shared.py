@@ -10,15 +10,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+
 from collections.abc import Callable
 from enum import StrEnum
 from uuid import UUID
 
 import structlog
 from nwastdlib.vlans import VlanRanges
-from orchestrator.db import (
-    SubscriptionTable,
-)
+from orchestrator.db import SubscriptionTable
 from pydantic import GetJsonSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import CoreSchema
@@ -27,10 +27,10 @@ logger = structlog.get_logger(__name__)
 
 GetSubscriptionByIdFunc = Callable[[UUID], SubscriptionTable]
 
-PORT_SPEED = "port_speed"
 MAX_SPEED_POSSIBLE = 400_000
 
 
+# TODO: remove unneeded PortTag class
 class PortTag(StrEnum):
     SP = "SP"
     AGGSP = "AGGSP"

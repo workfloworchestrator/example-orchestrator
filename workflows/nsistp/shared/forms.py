@@ -10,6 +10,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+
 import re
 from collections.abc import Iterator
 from datetime import datetime
@@ -19,9 +21,7 @@ from uuid import UUID
 
 from annotated_types import BaseMetadata, Ge, Le
 from orchestrator.db import ProductTable, db
-from orchestrator.db.models import (
-    SubscriptionTable,
-)
+from orchestrator.db.models import SubscriptionTable
 from orchestrator.domain.base import SubscriptionModel
 from orchestrator.types import SubscriptionLifecycle
 from pydantic import AfterValidator, Field, ValidationInfo
@@ -32,14 +32,7 @@ from typing_extensions import Doc
 
 from products.product_blocks.port import PortMode
 from products.product_types.nsistp import Nsistp, NsistpInactive
-from utils.exceptions import (
-    DuplicateValueError,
-    FieldValueError,
-)
-from workflows.nsistp.shared.shared import (
-    MAX_SPEED_POSSIBLE,
-    CustomVlanRanges,
-)
+from workflows.nsistp.shared.shared import MAX_SPEED_POSSIBLE, CustomVlanRanges
 from workflows.shared import subscriptions_by_product_type_and_instance_value
 
 TOPOLOGY_REGEX = r"^[-a-z0-9+,.;=_]+$"
@@ -118,7 +111,7 @@ def validate_regex(
         return field
 
     if not re.match(regex, field, re.IGNORECASE):
-        raise FieldValueError(f"{message} must match: {regex}")
+        raise ValueError(f"{message} must match: {regex}")
 
     return field
 
@@ -153,21 +146,21 @@ def validate_stp_id_uniqueness(subscription_id: UUID | None, stp_id: str, info: 
 
         subscriptions = _get_nsistp_subscriptions(subscription_id)
         if any(is_not_unique(nsistp) for nsistp in subscriptions):
-            raise DuplicateValueError(f"STP identifier `{stp_id}` already exists for topology `{topology}`")
+            raise ValueError(f"STP identifier `{stp_id}` already exists for topology `{topology}`")
 
     return stp_id
 
 
 def validate_both_aliases_empty_or_not(is_alias_in: str | None, is_alias_out: str | None) -> None:
     if bool(is_alias_in) != bool(is_alias_out):
-        raise FieldValueError("NSI inbound and outbound isAlias should either both have a value or be empty")
+        raise ValueError("NSI inbound and outbound isAlias should either both have a value or be empty")
 
 
 def validate_nurn(nurn: str | None) -> str | None:
     if nurn:
         valid, message = valid_nurn(nurn)
         if not valid:
-            raise FieldValueError(message)
+            raise ValueError(message)
 
     return nurn
 

@@ -1,5 +1,15 @@
-# workflows/nsistp/create_nsistp.py
-# from typing import TypeAlias, cast
+# Copyright 2019-2023 SURF.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 
 import uuid
@@ -31,27 +41,22 @@ from workflows.nsistp.shared.forms import (
     port_selector,
     validate_both_aliases_empty_or_not,
 )
-from workflows.nsistp.shared.vlan import (
-    validate_vlan,
-    validate_vlan_not_in_use,
-)
+from workflows.nsistp.shared.vlan import validate_vlan, validate_vlan_not_in_use
 from workflows.shared import create_summary_form
 
 logger = structlog.get_logger(__name__)
 
-PortChoiceList: TypeAlias = cast(type[Choice], port_selector())
-
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:
+    PortChoiceList: TypeAlias = cast(type[Choice], port_selector())
 
     class CreateNsiStpForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        # customer_id: CustomerId
-
         nsistp_settings: Label
 
         port: PortChoiceList
+        # TODO: change to support CustomVlanRanges
         vlan: Annotated[
             int,
             AfterValidator(validate_vlan),
@@ -95,7 +100,6 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 @step("Construct Subscription model")
 def construct_nsistp_model(
     product: UUIDstr,
-    # customer_id: UUIDstr,
     port: UUIDstr,
     vlan: int,
     topology: str,
@@ -142,15 +146,6 @@ def ims_create_vlans(subscription: NsistpProvisioning) -> State:
     return {"subscription": subscription, "payloads": [payload]}
 
 
-additional_steps = begin
-
-
-@create_workflow("Create nsistp", initial_input_form=initial_input_form_generator, additional_steps=additional_steps)
+@create_workflow("Create nsistp", initial_input_form=initial_input_form_generator)
 def create_nsistp() -> StepList:
-    return (
-        begin
-        >> construct_nsistp_model
-        >> store_process_subscription(Target.CREATE)
-        >> ims_create_vlans
-        # TODO add provision step(s)
-    )
+    return begin >> construct_nsistp_model >> store_process_subscription(Target.CREATE) >> ims_create_vlans

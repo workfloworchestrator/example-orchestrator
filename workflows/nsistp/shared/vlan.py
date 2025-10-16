@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 import operator
 from uuid import UUID
 
@@ -29,12 +30,12 @@ from pydantic_forms.types import State, UUIDstr
 from sqlalchemy import select
 
 from products.product_blocks.port import PortMode
-from utils.exceptions import PortsValueError, VlanValueError
 from workflows.nsistp.shared.shared import CustomVlanRanges, PortTag
 
 logger = structlog.get_logger(__name__)
 
 
+# TODO: remove unneeded _get_port_mode()
 def _get_port_mode(subscription: SubscriptionTable) -> PortMode:
     if subscription.product.tag in [PortTag.AGGSP + PortTag.SP]:
         return subscription.port_mode
@@ -55,9 +56,9 @@ def validate_vlan(vlan: CustomVlanRanges, info: ValidationInfo) -> CustomVlanRan
     port_mode = _get_port_mode(subscription)
 
     if port_mode == PortMode.TAGGED and vlan == CustomVlanRanges(0):
-        raise VlanValueError(f"{port_mode} {subscription.product.tag} must have a vlan")
+        raise ValueError(f"{port_mode} {subscription.product.tag} must have a vlan")
     elif port_mode == PortMode.UNTAGGED and vlan != CustomVlanRanges(0):  # noqa: RET506
-        raise VlanValueError(f"{port_mode} {subscription.product.tag} can not have a vlan")
+        raise ValueError(f"{port_mode} {subscription.product.tag} can not have a vlan")
 
     return vlan
 
@@ -117,8 +118,8 @@ def check_vlan_already_used(
 
         # for tagged only; for link_member/untagged say "SP already in use"
         if port_mode == PortMode.UNTAGGED or port_mode == PortMode.LINK_MEMBER:
-            raise PortsValueError("Port already in use")
-        raise VlanValueError(f"Vlan(s) {', '.join(map(str, sorted(used_vlans)))} already in use")
+            raise ValueError("Port already in use")
+        raise ValueError(f"Vlan(s) {', '.join(map(str, sorted(used_vlans)))} already in use")
 
     return vlan
 
