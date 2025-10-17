@@ -41,6 +41,12 @@ NURN_REGEX = r"^urn:ogf:network:([^:]+):([0-9]+):([a-z0-9+,-.:;_!$()*@~&]*)$"
 FQDN_REQEX = (
     r"^(?!.{255}|.{253}[^.])([a-z0-9](?:[-a-z-0-9]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?[.]?$"
 )
+VALID_DATE_FORMATS = {
+    4: '%Y',
+    6: '%Y%m',
+    8: '%Y%m%d',
+}
+
 
 
 def port_selector() -> type[Choice]:
@@ -59,33 +65,14 @@ def is_fqdn(hostname: str) -> bool:
 
 
 def valid_date(date: str) -> tuple[bool, str | None]:
-    def valid_month() -> tuple[bool, str | None]:
-        month_str = date[4:6]
-        month = int(month_str)
-        if month < 1 or month > 12:
-            return False, f"{month_str} is not a valid month number"
+    if not (date_format := VALID_DATE_FORMATS.get(len(date))):
+        return False, f"Invalid date length, expected one of: {list(VALID_DATE_FORMATS)}"
+
+    try:
+        _ = datetime.strptime(date, date_format)
         return True, None
-
-    def valid_day() -> tuple[bool, str | None]:
-        try:
-            datetime.fromisoformat(f"{date[0:4]}-{date[4:6]}-{date[6:8]}")
-        except ValueError:
-            return False, f"`{date}` is not a valid date"
-        return True, None
-
-    length = len(date)
-    if length == 4:  # year
-        pass  # No checks on reasonable year, so 9999 is allowed
-    elif length in (6, 8):
-        valid, message = valid_month()
-        if not valid:
-            return valid, message
-        if length == 8:  # year + month + day
-            return valid_day()
-    else:
-        return False, f"date `{date}` has invalid length"
-
-    return True, None
+    except ValueError as exc:
+        return False, f"Invalid date for format {date_format!r}: {exc}"
 
 
 def valid_nurn(nurn: str) -> tuple[bool, str | None]:
