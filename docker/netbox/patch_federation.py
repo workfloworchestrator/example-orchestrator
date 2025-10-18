@@ -41,11 +41,23 @@ def patch_types():
         f.write(text)
 
 
+def patch_subscription_query():
+    file = NETBOX_ROOT / 'extras/graphql/schema.py'
+    text = file.open().read()
+
+    text = re.sub("subscription:", "nb_subscription:", text, count=1)
+    text = re.sub("subscription_list:", "nb_subscription_list:", text, count=1)
+
+    with file.open(mode='w') as f:
+        f.write(text)
+
+
 def main():
     if not NETBOX_ROOT.is_dir():
         raise Exception(f"Netbox root {NETBOX_ROOT} not found")
 
     patch_types()
+    patch_subscription_query()
 
 
 if __name__ == '__main__':
