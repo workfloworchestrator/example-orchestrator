@@ -4,7 +4,7 @@ version = "0.1.0"
 requires-python = ">=3.12,<3.14"
 dependencies = [
   "deepdiff==8.6.1",
-  "orchestrator-core==4.0.4",
+  "orchestrator-core==4.5.3",
   "pynetbox==7.4.1",
   "rich==13.9.4",
 ]

@@ -17,9 +17,10 @@ from orchestrator.forms import FormPage
 from orchestrator.forms.validators import DisplaySubscription
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import terminate_workflow
-from pydantic_forms.types import InputForm, State, UUIDstr
+from pydantic_forms.types import InputForm, UUIDstr
 
 from products.product_types.nsistp import Nsistp
+from services import netbox
 
 logger = structlog.get_logger(__name__)
 
@@ -33,16 +34,14 @@ def terminate_initial_input_form_generator(subscription_id: UUIDstr, customer_id
     return TerminateNsistpForm
 
 
-@step("Delete subscription from OSS/BSS")
-def delete_subscription_from_oss_bss(subscription: Nsistp) -> State:
-    # TODO: add actual call to OSS/BSS to delete subscription
-
-    return {}
+@step("Remove VLANs from IMS")
+def ims_remove_vlans(subscription: Nsistp) -> None:
+    netbox.delete_vlan_group(id=subscription.nsistp.sap.ims_id)
 
 
 @terminate_workflow("Terminate nsistp", initial_input_form=terminate_initial_input_form_generator)
 def terminate_nsistp() -> StepList:
     return (
-        begin >> delete_subscription_from_oss_bss
+        begin >> ims_remove_vlans
         # TODO: fill in additional steps if needed
     )
