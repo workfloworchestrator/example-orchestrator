@@ -42,7 +42,10 @@ def ims_remove_l2vpn(subscription: L2vpn) -> None:
 @step("Remove VLANs from IMS")
 def ims_remove_vlans(subscription: L2vpn) -> None:
     for sap in subscription.virtual_circuit.saps:
-        netbox.delete_vlan(id=sap.ims_id)
+        vlans = netbox.get_vlans(group_id=sap.ims_id)
+        for vlan in vlans:
+            netbox.delete_vlan(id=vlan.id)
+        netbox.delete_vlan_group(id=sap.ims_id)
 
 
 @terminate_workflow("Terminate l2vpn", initial_input_form=terminate_initial_input_form_generator)
