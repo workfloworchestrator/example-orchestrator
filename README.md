@@ -349,12 +349,11 @@ to define the helper functions as locally as possible.
 
 ### Main application
 
-The `main.py` can be as simple as shown below, and can be deployed by a
+The `wsgi.py` can be as simple as shown below, and can be deployed by a
 ASGI server like Uvicorn[^5].
 
 ```python
 from orchestrator import OrchestratorCore
-from orchestrator.cli.main import app as core_cli
 from orchestrator.settings import AppSettings
 
 import products
@@ -362,19 +361,25 @@ import workflows
 
 app = OrchestratorCore(base_settings=AppSettings())
 app.register_graphql()
-
-if __name__ == "__main__":
-    core_cli()
 ```
 
 All other orchestrator code is referenced by importing the `products`
 and `workflows` modules. The application is started with:
 
 ```shell
-uvicorn --host localhost --port 8080 main:app
+uvicorn --host localhost --port 8080 wsgi:app
 ```
 
-To use the orchestrator command line interface use:
+To use the orchestrator command line interface create a `main.py` like below:
+
+```python
+from orchestrator.cli.main import app as core_cli
+
+if __name__ == "__main__":
+    core_cli()
+```
+
+Run the CLI using:
 
 ```shell
 python main.py --help

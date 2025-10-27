@@ -27,7 +27,7 @@ if [ -f ${CORE_OVERRIDE}/pyproject.toml ]; then
     # Run any missing migrations on the database
     python main.py db upgrade heads
 
-    uvicorn --host 0.0.0.0 --port 8080 $UVICORN_ARGS main:app --reload --proxy-headers \
+    uvicorn --host 0.0.0.0 --port 8080 $UVICORN_ARGS wsgi:app --reload --proxy-headers \
         --reload-dir $CORE_OVERRIDE \
         --reload-dir products \
         --reload-dir services \
@@ -39,5 +39,5 @@ else
     python main.py db upgrade heads
 
     echo "⏭️ Use orchestrator-core as specified in pyproject.toml $(uv pip freeze | grep orchestrator-core)"
-    uvicorn --host 0.0.0.0 --port 8080 $UVICORN_ARGS main:app --reload --proxy-headers
+    uvicorn --host 0.0.0.0 --port 8080 $UVICORN_ARGS wsgi:app --reload --proxy-headers
 fi
