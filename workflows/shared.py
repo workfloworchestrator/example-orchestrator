@@ -10,8 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from pydantic_forms.types import UUIDstr
-from pydantic_forms.types import SummaryData
 from pprint import pformat
 from typing import Annotated, Generator, List, TypeAlias, cast
 
@@ -28,6 +26,7 @@ from orchestrator.domain.base import ProductBlockModel
 from orchestrator.types import SubscriptionLifecycle
 from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
+from pydantic_forms.types import SummaryData, UUIDstr
 from pydantic_forms.validators import Choice, MigrationSummary, migration_summary
 
 from products.product_types.node import Node

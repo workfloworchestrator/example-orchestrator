@@ -12,22 +12,21 @@
 # limitations under the License.
 
 
-from pydantic_forms.types import UUIDstr
-import uuid
 import json
+import uuid
 from random import randrange
 from typing import TypeAlias, cast
 
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
+from orchestrator.utils.json import json_dumps
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
-from orchestrator.utils.json import json_dumps
 from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
-from pydantic_forms.types import FormGenerator, State
+from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Choice, Label
 
 from products.product_blocks.shared.types import NodeStatus

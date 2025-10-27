@@ -12,7 +12,6 @@
 # limitations under the License.
 
 
-from pydantic_forms.types import UUIDstr
 import uuid
 from random import randrange
 from typing import TypeAlias, cast
@@ -24,7 +23,7 @@ from orchestrator.workflows.steps import set_status, store_process_subscription
 from orchestrator.workflows.utils import create_workflow
 from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
-from pydantic_forms.types import FormGenerator, State
+from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Choice
 
 from products.product_blocks.sap import SAPBlockInactive

@@ -12,25 +12,23 @@
 # limitations under the License.
 
 
-from orchestrator.domain import SUBSCRIPTION_MODEL_REGISTRY
+import structlog
+from orchestrator.workflow import StepList, begin, step
+from orchestrator.workflows.utils import validate_workflow
+from pydantic_forms.types import State
 
-from products.product_types.core_link import CoreLink
-from products.product_types.l2vpn import L2vpn
-from products.product_types.node import Node
 from products.product_types.nsistp import Nsistp
-from products.product_types.port import Port
 
-SUBSCRIPTION_MODEL_REGISTRY.update(
-    {
-        "node Cisco": Node,
-        "node Nokia": Node,
-        "node Cumulus": Node,
-        "node FRR": Node,
-        "port 10G": Port,
-        "port 100G": Port,
-        "core link 10G": CoreLink,
-        "core link 100G": CoreLink,
-        "l2vpn": L2vpn,
-        "nsistp": Nsistp,
+logger = structlog.get_logger(__name__)
+
+
+@step("Load initial state")
+def load_initial_state_nsistp(subscription: Nsistp) -> State:
+    return {
+        "subscription": subscription,
     }
-)
+
+
+@validate_workflow("Validate nsistp")
+def validate_nsistp() -> StepList:
+    return begin >> load_initial_state_nsistp
