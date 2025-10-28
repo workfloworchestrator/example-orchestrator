@@ -183,6 +183,7 @@ services:
       - ./migrations:/home/orchestrator/migrations
       - ./docker:/home/orchestrator/etc
       - ./main.py:/home/orchestrator/main.py
+      - ./wsgi.py:/home/orchestrator/wsgi.py
       - ./settings.py:/home/orchestrator/settings.py
       - ./graphql_federation.py:/home/orchestrator/graphql_federation.py
       - ./utils:/home/orchestrator/utils
