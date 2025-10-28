@@ -1,0 +1,42 @@
+name: Docker Compose Validation
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  validate-compose:
+    name: Spin up and test health of services
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Start Docker Compose stack
+        run: |
+          docker compose up -d --build
+          docker compose ps
+
+      - name: Wait for services with health checks to become healthy
+        run: |
+          timeout 180 bash -c '
+            while true; do
+              unhealthy=$(docker compose ps --format "{{.Service}} {{.Health}}" | awk '\''$2 != "healthy" && $2 != "" {print $1}'\'')
+              if [ -z "$unhealthy" ]; then
+                echo "✅ All services with health checks are healthy!"
+                break
+              fi
+              echo "Still waiting for unhealthy services:"
+              echo "$unhealthy"
+              sleep 5
+            done
+          '
+
+      - name: Tear down Docker Compose
+        if: always()
+        run: docker compose down -v
