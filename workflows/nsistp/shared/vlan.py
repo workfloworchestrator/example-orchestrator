@@ -64,13 +64,11 @@ def validate_vlan_not_in_use(
 
     Returns: input value if no errors
     """
-    print(port_field_name, info.data.get(port_field_name))
     if not (subscription_id := info.data.get(port_field_name)):
         return vlan
 
     used_vlans = find_allocated_vlans(subscription_id)
 
-    print(used_vlans)
     # Remove currently chosen vlans for this port to prevent tripping on in used by itself
     current_selected_vlan_ranges: list[str] = []
     if current:
@@ -82,7 +80,7 @@ def validate_vlan_not_in_use(
                 current_selected_vlan = "0"
 
             current_selected_vlan_range = OrchestratorVlanRanges(current_selected_vlan)
-            used_vlans -= current_selected_vlan_range
+            used_vlans -= current_selected_vlan_range  # type: ignore[assignment]
             current_selected_vlan_ranges = [
                 *current_selected_vlan_ranges,
                 *list(current_selected_vlan_range),
@@ -103,7 +101,7 @@ def validate_vlan_not_in_use(
 
 def find_allocated_vlans(
     subscription_id: UUID | UUIDstr,
-) -> list[int]:
+) -> OrchestratorVlanRanges:
     """Find all vlans already allocated to a SAP for a given port."""
     logger.debug(
         "Finding allocated VLANs",

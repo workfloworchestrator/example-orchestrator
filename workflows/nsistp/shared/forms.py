@@ -57,7 +57,7 @@ def port_selector() -> type[Choice]:
         str(subscription.subscription_id): subscription.description
         for subscription in sorted(port_subscriptions, key=lambda port: port.description)
     }
-    return Choice("Port", zip(ports.keys(), ports.items()))
+    return Choice("Port", zip(ports.keys(), ports.items()))  # type: ignore
 
 
 def is_fqdn(hostname: str) -> bool:
@@ -124,11 +124,10 @@ def validate_stp_id_uniqueness(subscription_id: UUID | None, stp_id: str, info: 
     topology = values.get("topology")
 
     if customer_id and topology:
-
         def is_not_unique(nsistp: Nsistp) -> bool:
             return (
-                nsistp.settings.stp_id.casefold() == stp_id.casefold()
-                and nsistp.settings.topology.casefold() == topology.casefold()
+                nsistp.nsistp.stp_id.casefold() == stp_id.casefold()
+                and nsistp.nsistp.topology.casefold() == topology.casefold()
             )
 
         subscriptions = _get_nsistp_subscriptions(subscription_id)
@@ -152,7 +151,7 @@ def validate_nurn(nurn: str | None) -> str | None:
     return nurn
 
 
-def nsistp_fill_sap(subscription: NsistpInactive, subscription_id: UUIDstr, vlan: OrchestratorVlanRanges | int) -> None:
+def nsistp_fill_sap(subscription: NsistpInactive, subscription_id: UUIDstr, vlan: OrchestratorVlanRanges) -> None:
     subscription.nsistp.sap.vlan = vlan
     subscription.nsistp.sap.port = SubscriptionModel.from_subscription(subscription_id).port  # type: ignore
 

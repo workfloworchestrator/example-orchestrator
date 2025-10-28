@@ -30,7 +30,6 @@ from pydantic_forms.validators import Choice
 
 from products.product_types.nsistp import NsistpInactive, NsistpProvisioning
 from products.services.description import description
-from products.services.netbox.netbox import build_payload
 from products.services.netbox.payload.sap import build_sap_vlan_group_payload
 from services import netbox
 from workflows.nsistp.shared.forms import (

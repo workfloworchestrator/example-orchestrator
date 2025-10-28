@@ -109,8 +109,7 @@ def ims_create_vlans(subscription: L2vpnProvisioning) -> State:
     for sap in subscription.virtual_circuit.saps:
         group_payload = build_sap_vlan_group_payload(sap, subscription)
         sap.ims_id = netbox.create(group_payload)
-        group_payloads = group_payloads + [group_payload]
-
+        group_payloads += [group_payload]
         vlan_payloads += build_payload(sap, subscription)
 
     for payload in vlan_payloads:

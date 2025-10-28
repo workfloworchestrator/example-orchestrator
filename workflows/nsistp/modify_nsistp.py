@@ -35,7 +35,7 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
     nsistp = subscription.nsistp
 
     class ModifyNsistpForm(FormPage):
-        stp_id: read_only_field(nsistp.stp_id)
+        stp_id: read_only_field(nsistp.stp_id)  # type: ignore[valid-type]
 
         divider_1: Divider
 

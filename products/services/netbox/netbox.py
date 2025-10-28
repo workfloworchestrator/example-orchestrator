@@ -77,7 +77,7 @@ def _(model: CoreLinkBlockProvisioning, subscription: SubscriptionModel, **kwarg
 
 
 @build_payload.register
-def _(model: SAPBlockProvisioning, subscription: SubscriptionModel, **kwargs: Any) -> netbox.VlanPayload:
+def _(model: SAPBlockProvisioning, subscription: SubscriptionModel, **kwargs: Any) -> netbox.VlansPayload:
     return build_sap_payload(model, subscription)
 
 

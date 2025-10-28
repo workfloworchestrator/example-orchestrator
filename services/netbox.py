@@ -130,7 +130,7 @@ class AvailableIpPayload:
 
 @dataclass
 class VlanPayload(NetboxPayload):
-    vid: OrchestratorVlanRanges
+    vid: int
     name: str
     group: int
     status: str | None = "active"
@@ -140,7 +140,14 @@ class VlanPayload(NetboxPayload):
 class VlanGroupPayload(NetboxPayload):
     name: str
     slug: str
-    vid_ranges: list[list[int, int]]
+    vid_ranges: list[tuple[int, int]]
+
+
+@dataclass
+class VlansPayload(NetboxPayload):
+    vlans: list[VlanPayload]
+
+
 
 
 @dataclass
@@ -426,6 +433,13 @@ def _(payload: SitePayload, **kwargs: Any) -> int:
 @create.register
 def _(payload: VlanPayload, **kwargs: Any) -> int:
     return _create_object(payload, endpoint=api.ipam.vlans)
+
+
+@create.register
+def _(payload: VlansPayload, **kwargs: Any) -> int:
+    for vlan_payload in payload.vlans:
+        _create_object(vlan_payload, endpoint=api.ipam.vlans)
+    return payload.vlans[0].group
 
 
 @create.register
