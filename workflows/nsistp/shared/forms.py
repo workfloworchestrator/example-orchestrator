@@ -32,8 +32,9 @@ from typing_extensions import Doc
 
 from products.product_blocks.port import PortMode
 from products.product_types.nsistp import Nsistp, NsistpInactive
-from workflows.nsistp.shared.shared import MAX_SPEED_POSSIBLE, OrchestratorVlanRanges
+from workflows.nsistp.shared.shared import MAX_SPEED_POSSIBLE
 from workflows.shared import subscriptions_by_product_type_and_instance_value
+from nwastdlib.vlans import VlanRanges
 
 TOPOLOGY_REGEX = r"^[-a-z0-9+,.;=_]+$"
 STP_ID_REGEX = r"^[-a-z0-9+,.;=_:]+$"
@@ -151,7 +152,7 @@ def validate_nurn(nurn: str | None) -> str | None:
     return nurn
 
 
-def nsistp_fill_sap(subscription: NsistpInactive, subscription_id: UUIDstr, vlan: OrchestratorVlanRanges) -> None:
+def nsistp_fill_sap(subscription: NsistpInactive, subscription_id: UUIDstr, vlan: VlanRanges) -> None:
     subscription.nsistp.sap.vlan = vlan
     subscription.nsistp.sap.port = SubscriptionModel.from_subscription(subscription_id).port  # type: ignore
 

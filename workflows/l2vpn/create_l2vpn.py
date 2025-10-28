@@ -35,8 +35,8 @@ from products.services.netbox.netbox import build_payload
 from products.services.netbox.payload.sap import build_sap_vlan_group_payload
 from services import netbox
 from workflows.l2vpn.shared.forms import ports_selector
-from workflows.nsistp.shared.shared import OrchestratorVlanRanges
 from workflows.shared import AllowedNumberOfL2vpnPorts
+from nwastdlib.vlans import VlanRanges
 
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:
@@ -57,7 +57,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
         model_config = ConfigDict(title=product_name)
 
         ports: PortsChoiceList
-        vlan: OrchestratorVlanRanges
+        vlan: VlanRanges
 
     select_ports = yield SelectPortsForm
     select_ports_dict = select_ports.model_dump()
@@ -73,7 +73,7 @@ def construct_l2vpn_model(
     ports: list[UUIDstr],
     speed: int,
     speed_policer: bool,
-    vlan: OrchestratorVlanRanges,
+    vlan: VlanRanges,
 ) -> State:
     subscription = L2vpnInactive.from_product_id(
         product_id=product,
@@ -110,7 +110,7 @@ def ims_create_vlans(subscription: L2vpnProvisioning) -> State:
         group_payload = build_sap_vlan_group_payload(sap, subscription)
         sap.ims_id = netbox.create(group_payload)
         group_payloads += [group_payload]
-        vlan_payloads += build_payload(sap, subscription)
+        vlan_payloads += [build_payload(sap, subscription)]
 
     for payload in vlan_payloads:
         netbox.create(payload)

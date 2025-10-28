@@ -44,7 +44,7 @@ def build_sap_vlans_payload(model: SAPBlockProvisioning, subscription: Subscript
 
 
 def build_sap_vlan_group_payload(model: SAPBlockProvisioning, subscription: SubscriptionModel) -> netbox.VlanGroupPayload:
-    """Create and return a list of Netbox :class:`VlanGroupPayload` for a :class:`~products.product_blocks.sap.SAPBlockProvisioning`.
+    """Create and return a Netbox VlanGroupPayload object for a :class:`~products.product_blocks.sap.SAPBlockProvisioning`.
 
     Example payload::
 

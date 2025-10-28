@@ -17,18 +17,18 @@ from orchestrator.types import SubscriptionLifecycle
 from pydantic import computed_field
 
 from products.product_blocks.port import PortBlock, PortBlockInactive, PortBlockProvisioning
-from workflows.nsistp.shared.shared import OrchestratorVlanRanges
+from nwastdlib.vlans import VlanRanges
 
 
 class SAPBlockInactive(ProductBlockModel, product_block_name="SAP"):
     port: PortBlockInactive | None = None
-    vlan: OrchestratorVlanRanges | None = None
+    vlan: VlanRanges | None = None
     ims_id: int | None = None
 
 
 class SAPBlockProvisioning(SAPBlockInactive, lifecycle=[SubscriptionLifecycle.PROVISIONING]):
     port: PortBlockProvisioning
-    vlan: OrchestratorVlanRanges
+    vlan: VlanRanges
     ims_id: int | None = None
 
     @computed_field  # type: ignore[misc]
@@ -39,5 +39,5 @@ class SAPBlockProvisioning(SAPBlockInactive, lifecycle=[SubscriptionLifecycle.PR
 
 class SAPBlock(SAPBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
     port: PortBlock
-    vlan: OrchestratorVlanRanges
+    vlan: VlanRanges
     ims_id: int

@@ -42,9 +42,9 @@ from workflows.nsistp.shared.forms import (
     port_selector,
     validate_both_aliases_empty_or_not,
 )
-from workflows.nsistp.shared.shared import OrchestratorVlanRanges
 from workflows.nsistp.shared.vlan import validate_vlan, validate_vlan_not_in_use
 from workflows.shared import create_summary_form
+from nwastdlib.vlans import VlanRanges
 
 logger = structlog.get_logger(__name__)
 
@@ -60,7 +60,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
     
         port: PortChoiceList
         vlan: Annotated[
-            OrchestratorVlanRanges,
+            VlanRanges,
             AfterValidator(validate_vlan),
             AfterValidator(_validate_vlan_not_in_use),
         ]
@@ -103,7 +103,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 def construct_nsistp_model(
     product: UUIDstr,
     port: UUIDstr,
-    vlan: OrchestratorVlanRanges,
+    vlan: VlanRanges,
     topology: str,
     stp_id: str,
     stp_description: str | None,

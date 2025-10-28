@@ -25,7 +25,6 @@ from pynetbox.models.ipam import IpAddresses, Prefixes
 
 from settings import settings
 from utils.singledispatch import single_dispatch_base
-from workflows.nsistp.shared.shared import OrchestratorVlanRanges
 
 logger = structlog.get_logger(__name__)
 

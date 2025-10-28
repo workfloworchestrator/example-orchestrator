@@ -28,17 +28,17 @@ from orchestrator.services import subscriptions
 from pydantic_core.core_schema import ValidationInfo
 from pydantic_forms.types import State, UUIDstr
 from sqlalchemy import select
+from nwastdlib.vlans import VlanRanges
 
 from products.product_blocks.port import PortMode
-from workflows.nsistp.shared.shared import OrchestratorVlanRanges
 
 logger = structlog.get_logger(__name__)
 
 
-def validate_vlan(vlan: OrchestratorVlanRanges, info: ValidationInfo) -> OrchestratorVlanRanges:
+def validate_vlan(vlan: VlanRanges, info: ValidationInfo) -> VlanRanges:
     # We assume an empty string is untagged and thus 0
     if not vlan:
-        vlan = OrchestratorVlanRanges(0)
+        vlan = VlanRanges(0)
 
     subscription_id = info.data.get("port_id")
     if not subscription_id:
@@ -46,15 +46,15 @@ def validate_vlan(vlan: OrchestratorVlanRanges, info: ValidationInfo) -> Orchest
 
     subscription = subscriptions.get_subscription(subscription_id, model=SubscriptionTable)
 
-    if vlan == OrchestratorVlanRanges(0):
+    if vlan == VlanRanges(0):
         raise ValueError(f"{subscription.product.tag} must have a vlan")
 
     return vlan
 
 
 def validate_vlan_not_in_use(
-    vlan: int | OrchestratorVlanRanges, info: ValidationInfo, port_field_name: str = "subscription_id", current: list[State] | None = None
-) -> int | OrchestratorVlanRanges:
+    vlan: int | VlanRanges, info: ValidationInfo, port_field_name: str = "subscription_id", current: list[State] | None = None
+) -> int | VlanRanges:
     """Check if vlan value is already in use by a subscription.
 
     Args:
@@ -79,18 +79,18 @@ def validate_vlan_not_in_use(
             if not current_selected_vlan:
                 current_selected_vlan = "0"
 
-            current_selected_vlan_range = OrchestratorVlanRanges(current_selected_vlan)
+            current_selected_vlan_range = VlanRanges(current_selected_vlan)
             used_vlans -= current_selected_vlan_range  # type: ignore[assignment]
             current_selected_vlan_ranges = [
                 *current_selected_vlan_ranges,
                 *list(current_selected_vlan_range),
             ]
 
-    # Handle both int and OrchestratorVlanRanges
+    # Handle both int and VlanRanges
     if isinstance(vlan, int):
         vlan_in_use = vlan in used_vlans
     else:
-        # For OrchestratorVlanRanges, check if any of its values are in used_vlans
+        # For VlanRanges, check if any of its values are in used_vlans
         vlan_in_use = any(v in used_vlans for v in vlan)
 
     if vlan_in_use:
@@ -101,7 +101,7 @@ def validate_vlan_not_in_use(
 
 def find_allocated_vlans(
     subscription_id: UUID | UUIDstr,
-) -> OrchestratorVlanRanges:
+) -> VlanRanges:
     """Find all vlans already allocated to a SAP for a given port."""
     logger.debug(
         "Finding allocated VLANs",
@@ -133,7 +133,7 @@ def find_allocated_vlans(
 
     if not used_vlan_values:
         logger.debug("No VLAN values in use found")
-        return OrchestratorVlanRanges([])
+        return VlanRanges([])
 
     logger.debug("Found used VLAN values", values=used_vlan_values)
-    return OrchestratorVlanRanges(",".join(used_vlan_values))
+    return VlanRanges(",".join(used_vlan_values))
