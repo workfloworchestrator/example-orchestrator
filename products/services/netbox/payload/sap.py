@@ -16,9 +16,10 @@ from orchestrator.domain import SubscriptionModel
 
 from products.product_blocks.sap import SAPBlockProvisioning
 from services import netbox
+import itertools
 
 
-def build_sap_payload(model: SAPBlockProvisioning, subscription: SubscriptionModel) -> netbox.VlanPayload:
+def build_sap_payload(model: SAPBlockProvisioning, subscription: SubscriptionModel) -> list[netbox.VlanPayload]:
     """Create and return a Netbox payload object for a :class:`~products.product_blocks.sap.SAPBlockProvisioning`.
 
     Example payload::
@@ -26,7 +27,8 @@ def build_sap_payload(model: SAPBlockProvisioning, subscription: SubscriptionMod
        {
           "vid": 4,
           "name": "paris01a 0/0/1 vlan 4",
-          "status": "active"
+          "status": "active",
+          "group": 1
        }
 
     Args:
@@ -36,4 +38,28 @@ def build_sap_payload(model: SAPBlockProvisioning, subscription: SubscriptionMod
     Returns: :class:`netbox.VlanPayload`
 
     """
-    return netbox.VlanPayload(vid=int(model.vlan), name=f"{model.port.node.node_name} {model.port.port_name}")
+    name = f"{model.port.node.node_name} {model.port.port_name}"
+    vlan_list = [vlan for vlan_start, vlan_end in model.vlan.to_list_of_tuples() for vlan in range(vlan_start, vlan_end+1)]
+    return [netbox.VlanPayload(vid=vlan, group=model.ims_id, name=f"{name} - {vlan}") for vlan in vlan_list]
+
+
+def build_sap_vlan_group_payload(model: SAPBlockProvisioning, subscription: SubscriptionModel) -> netbox.VlanGroupPayload:
+    """Create
+
+    Example payload::
+
+       {
+          "name": "paris01a 0/0/1 vlan 4",
+          "vid_ranges": "5, 10, 15-20",
+       }
+
+    Args:
+        model: SAPBlockProvisioning
+        subscription: The Subscription that will be provisioned
+
+    Returns: :class:`netbox.VlanGroupPayload`
+
+    """
+    name = f"{model.port.node.node_name} {model.port.port_name}"
+    slug = name.replace(" ", "-").replace("/", "-")
+    return netbox.VlanGroupPayload(name=name, slug=slug, vid_ranges=model.vlan.to_list_of_tuples())

@@ -18,6 +18,14 @@ from orchestrator.settings import AppSettings
 from graphql_federation import CUSTOM_GRAPHQL_MODELS
 import products  # noqa: F401  Side-effects
 import workflows  # noqa: F401  Side-effects
+from orchestrator.graphql.types import SCALAR_OVERRIDES, VlanRangesType
+
+from workflows.nsistp.shared.shared import OrchestratorVlanRanges
+
+
+scalar_overrides=SCALAR_OVERRIDES | {
+    OrchestratorVlanRanges: VlanRangesType
+}
 
 app = OrchestratorCore(base_settings=AppSettings())
 app.register_graphql(graphql_models=CUSTOM_GRAPHQL_MODELS)

@@ -14,7 +14,9 @@
 
 from collections.abc import Callable
 from enum import StrEnum
+from typing import Annotated
 from uuid import UUID
+from pydantic import Field
 
 import structlog
 from nwastdlib.vlans import VlanRanges
@@ -30,16 +32,8 @@ GetSubscriptionByIdFunc = Callable[[UUID], SubscriptionTable]
 MAX_SPEED_POSSIBLE = 400_000
 
 
-# TODO: remove unneeded PortTag class
-class PortTag(StrEnum):
-    SP = "SP"
-    AGGSP = "AGGSP"
-    MSC = "MSC"
-    IRBSP = "IRBSP"
-
-
 # Custom VlanRanges needed to avoid matching conflict with SURF orchestrator-ui components
-class CustomVlanRanges(VlanRanges):
+class OrchestratorVlanRanges(VlanRanges):
     def __str__(self) -> str:
         # `range` objects have an exclusive `stop`. VlanRanges is expressed using terms that use an inclusive stop,
         # which is one less then the exclusive one we use for the internal representation. Hence the `-1`

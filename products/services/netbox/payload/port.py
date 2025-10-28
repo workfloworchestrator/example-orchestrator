@@ -44,11 +44,13 @@ def build_port_payload(model: PortBlockProvisioning, subscription: SubscriptionM
     Returns: :class:`netbox.InterfacePayload`
 
     """
+    print(model.vlan_group_ims_ids)
+    vlan_ids = [vlan.id for group_id in model.vlan_group_ims_ids for vlan in netbox.get_vlans(group_id=group_id)]
     return netbox.InterfacePayload(
         device=model.node.ims_id,
         name=model.port_name,
         type=model.port_type,
-        tagged_vlans=sorted(model.vlan_ims_ids),
+        tagged_vlans=sorted(vlan_ids),
         mode="tagged" if model.port_mode == PortMode.TAGGED else "",
         description=model.port_description,
         enabled=model.enabled,

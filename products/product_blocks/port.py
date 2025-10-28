@@ -73,8 +73,8 @@ class PortBlockProvisioning(PortBlockInactive, lifecycle=[SubscriptionLifecycle.
 
     @computed_field  # type: ignore[misc]
     @property
-    def vlan_ims_ids(self) -> List[int]:
-        """Get list of active VLAN IMS IDs by looking at SAPBlock's that use this PortBlock."""
+    def vlan_group_ims_ids(self) -> List[int]:
+        """Get list of active IMS VLAN GROUP IDs by looking at SAPBlock's that use this PortBlock."""
         return [sap_block.ims_id for sap_block in self._active_sap_blocks()]
 
     @computed_field  # type: ignore[misc]
