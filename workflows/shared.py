@@ -132,7 +132,7 @@ def modify_summary_form(user_input: dict, block: ProductBlockModel, fields: List
     before = [str(getattr(block, nm)) for nm in fields]  # type: ignore[attr-defined]
     after = [str(user_input[nm]) for nm in fields]
     yield from summary_form(
-        block.subscription.product.name,
+        block.subscription.product.name if block.subscription else "No Product Name Found",
         SummaryData(labels=fields, headers=["Before", "After"], columns=[before, after]),
     )
 

@@ -131,7 +131,22 @@ class AvailableIpPayload:
 class VlanPayload(NetboxPayload):
     vid: int
     name: str
+    group: int
     status: str | None = "active"
+
+
+@dataclass
+class VlanGroupPayload(NetboxPayload):
+    name: str
+    slug: str
+    vid_ranges: list[tuple[int, int]]
+
+
+@dataclass
+class VlansPayload(NetboxPayload):
+    vlans: list[VlanPayload]
+
+
 
 
 @dataclass
@@ -270,6 +285,9 @@ def delete_l2vpn(**kwargs) -> None:
 
 def delete_vlan(**kwargs) -> None:
     delete_from_netbox(api.ipam.vlans, **kwargs)
+
+def delete_vlan_group(**kwargs) -> None:
+    delete_from_netbox(api.ipam.vlan_groups, **kwargs)
 
 
 def skip_network_address(ip_prefix: Prefixes) -> None:
@@ -414,6 +432,18 @@ def _(payload: SitePayload, **kwargs: Any) -> int:
 @create.register
 def _(payload: VlanPayload, **kwargs: Any) -> int:
     return _create_object(payload, endpoint=api.ipam.vlans)
+
+
+@create.register
+def _(payload: VlansPayload, **kwargs: Any) -> int:
+    for vlan_payload in payload.vlans:
+        _create_object(vlan_payload, endpoint=api.ipam.vlans)
+    return payload.vlans[0].group
+
+
+@create.register
+def _(payload: VlanGroupPayload, **kwargs: Any) -> int:
+    return _create_object(payload, endpoint=api.ipam.vlan_groups)
 
 
 @create.register

@@ -40,7 +40,7 @@ class NsistpBlockProvisioning(NsistpBlockInactive, lifecycle=[SubscriptionLifecy
     expose_in_topology: bool | None = None
     bandwidth: int | None = None
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def title(self) -> str:
         return f"NSISTP {self.stp_id} on {self.sap.title}"

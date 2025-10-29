@@ -236,7 +236,6 @@ services:
       - "80:80"
     volumes:
       - "./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro"
-    restart: always
     depends_on:
       orchestrator:
         condition: service_started

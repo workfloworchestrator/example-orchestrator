@@ -12,6 +12,7 @@
 # limitations under the License.
 
 
+from functools import partial
 import uuid
 from typing import Annotated, TypeAlias, cast
 
@@ -29,7 +30,7 @@ from pydantic_forms.validators import Choice
 
 from products.product_types.nsistp import NsistpInactive, NsistpProvisioning
 from products.services.description import description
-from products.services.netbox.netbox import build_payload
+from products.services.netbox.payload.sap import build_sap_vlan_group_payload
 from services import netbox
 from workflows.nsistp.shared.forms import (
     IsAlias,
@@ -43,6 +44,7 @@ from workflows.nsistp.shared.forms import (
 )
 from workflows.nsistp.shared.vlan import validate_vlan, validate_vlan_not_in_use
 from workflows.shared import create_summary_form
+from nwastdlib.vlans import VlanRanges
 
 logger = structlog.get_logger(__name__)
 
@@ -50,17 +52,17 @@ logger = structlog.get_logger(__name__)
 def initial_input_form_generator(product_name: str) -> FormGenerator:
     PortChoiceList: TypeAlias = cast(type[Choice], port_selector())
 
+    _validate_vlan_not_in_use = partial(validate_vlan_not_in_use, port_field_name="port")
     class CreateNsiStpForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
         nsistp_settings: Label
-
+    
         port: PortChoiceList
-        # TODO: change to support CustomVlanRanges
         vlan: Annotated[
-            int,
+            VlanRanges,
             AfterValidator(validate_vlan),
-            AfterValidator(validate_vlan_not_in_use),
+            AfterValidator(_validate_vlan_not_in_use),
         ]
 
         divider_1: Divider
@@ -101,7 +103,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 def construct_nsistp_model(
     product: UUIDstr,
     port: UUIDstr,
-    vlan: int,
+    vlan: VlanRanges,
     topology: str,
     stp_id: str,
     stp_description: str | None,
@@ -123,10 +125,7 @@ def construct_nsistp_model(
     nsistp.nsistp.expose_in_topology = expose_in_topology
     nsistp.nsistp.bandwidth = bandwidth
 
-    # TODO: change to support CustomVlanRanges
-    vlan_int = int(vlan) if not isinstance(vlan, int) else vlan
-
-    nsistp_fill_sap(nsistp, port, vlan_int)
+    nsistp_fill_sap(nsistp, port, vlan)
 
     nsistp = NsistpProvisioning.from_other_lifecycle(nsistp, SubscriptionLifecycle.PROVISIONING)
     nsistp.description = description(nsistp)
@@ -140,10 +139,10 @@ def construct_nsistp_model(
 
 @step("Create VLANs in IMS (Netbox)")
 def ims_create_vlans(subscription: NsistpProvisioning) -> State:
-    payload = build_payload(subscription.nsistp.sap, subscription)
-    subscription.nsistp.sap.ims_id = netbox.create(payload)
+    group_payload = build_sap_vlan_group_payload(subscription.nsistp.sap, subscription)
+    subscription.nsistp.sap.ims_id = netbox.create(group_payload)
 
-    return {"subscription": subscription, "payloads": [payload]}
+    return {"subscription": subscription, "payload": group_payload}
 
 
 @create_workflow("Create nsistp", initial_input_form=initial_input_form_generator)

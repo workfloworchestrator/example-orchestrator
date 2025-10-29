@@ -16,6 +16,7 @@ import uuid
 from random import randrange
 from typing import TypeAlias, cast
 
+from more_itertools import flatten
 from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
@@ -31,9 +32,11 @@ from products.product_types.l2vpn import L2vpn, L2vpnInactive, L2vpnProvisioning
 from products.product_types.port import Port
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
+from products.services.netbox.payload.sap import build_sap_vlan_group_payload
 from services import netbox
 from workflows.l2vpn.shared.forms import ports_selector
-from workflows.shared import AllowedNumberOfL2vpnPorts, Vlan
+from workflows.shared import AllowedNumberOfL2vpnPorts
+from nwastdlib.vlans import VlanRanges
 
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:
@@ -54,7 +57,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
         model_config = ConfigDict(title=product_name)
 
         ports: PortsChoiceList
-        vlan: Vlan
+        vlan: VlanRanges
 
     select_ports = yield SelectPortsForm
     select_ports_dict = select_ports.model_dump()
@@ -70,7 +73,7 @@ def construct_l2vpn_model(
     ports: list[UUIDstr],
     speed: int,
     speed_policer: bool,
-    vlan: Vlan,
+    vlan: VlanRanges,
 ) -> State:
     subscription = L2vpnInactive.from_product_id(
         product_id=product,
@@ -101,13 +104,18 @@ def construct_l2vpn_model(
 
 @step("Create VLANs in IMS")
 def ims_create_vlans(subscription: L2vpnProvisioning) -> State:
-    payloads = []
+    group_payloads = []
+    vlan_payloads = []
     for sap in subscription.virtual_circuit.saps:
-        payload = build_payload(sap, subscription)
-        sap.ims_id = netbox.create(payload)
-        payloads.append(payload)
+        group_payload = build_sap_vlan_group_payload(sap, subscription)
+        sap.ims_id = netbox.create(group_payload)
+        group_payloads += [group_payload]
+        vlan_payloads += [build_payload(sap, subscription)]
 
-    return {"subscription": subscription, "payloads": payloads}
+    for payload in vlan_payloads:
+        netbox.create(payload)
+
+    return {"subscription": subscription, "vlan_group_payloads": group_payloads, "vlan_payloads": vlan_payloads}
 
 
 @step("Create L2VPN in IMS")
@@ -120,13 +128,15 @@ def ims_create_l2vpn(subscription: L2vpnProvisioning) -> State:
 
 @step("Create L2VPN terminations in IMS")
 def ims_create_l2vpn_terminations(subscription: L2vpnProvisioning) -> State:
-    payloads = []
     l2vpn = netbox.get_l2vpn(id=subscription.virtual_circuit.ims_id)
-    for sap in subscription.virtual_circuit.saps:
-        vlan = netbox.get_vlan(id=sap.ims_id)
-        payload = netbox.L2vpnTerminationPayload(l2vpn=l2vpn.id, assigned_object_id=vlan.id)
+
+    def create_sap_payloads(sap) -> list[netbox.L2vpnTerminationPayload]:
+        vlans = netbox.get_vlans(group_id=sap.ims_id)
+        return [netbox.L2vpnTerminationPayload(l2vpn=l2vpn.id, assigned_object_id=vlan.id) for vlan in vlans]
+
+    payloads = list(flatten([create_sap_payloads(sap) for sap in subscription.virtual_circuit.saps]))
+    for payload in payloads:
         netbox.create(payload)
-        payloads.append(payload)
 
     return {"payloads": payloads}
 
