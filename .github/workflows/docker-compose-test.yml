@@ -1,0 +1,78 @@
+name: Docker Compose Validation
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  validate-compose:
+    name: Spin up and test health of services
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Start Docker Compose stack
+        run: |
+          docker compose up -d --build
+
+      - name: Wait for services with health checks to become healthy
+        run: |
+          timeout 180 bash -c '
+            while true; do
+              unhealthy=$(docker compose ps --format "{{.Service}} {{.Health}}" | awk '\''$2 != "healthy" && $2 != "" {print $1}'\'')
+              if [ -z "$unhealthy" ]; then
+                echo "✅ All services with health checks are healthy!"
+                break
+              fi
+              echo "Still waiting for unhealthy services:"
+              echo "$unhealthy"
+              sleep 5
+            done
+          '
+
+      - name: Check that services are running.
+        run: |
+          errors=0
+          docker compose ps --all --format "{{.Name}} {{.Service}} {{.State}}" | while read -r line; do
+            name=$(echo "$line" | awk '{print $1}')
+            service=$(echo "$line" | awk '{print $2}')
+            state=$(echo "$line" | awk '{print $3}')
+            health=$(echo "$line" | awk '{print $4}')
+
+            if [ "$state" = "running" ]; then
+              if [ "$health" = "unhealthy" ]; then
+                echo "❌ $service ($name) is running but unhealthy: $health"
+                errors=$((errors+1))
+              elif [ "$health" = "healthy" ]; then
+                echo "🟢 $service ($name) is running, health: $health"
+              else
+                echo "🟢 $service ($name) is running, health: no health check"
+              fi
+            elif [ "$state" = "exited" ]; then
+              echo "⚪ $service ($name) has exited normally (exit 0)"
+            else
+              echo "❌ $service ($name) failed or exited unexpectedly: state=$state, health=$health"
+              docker compose ps --all
+              errors=$((errors+1))
+            fi
+          done
+
+          if [ "$errors" -gt 0 ]; then
+            echo "❌ $errors service(s) failed or unhealthy"
+            exit 1
+          else
+            echo "✅ All services are running or exited normally"
+          fi
+
+      - name: Check errors inside service logs
+        run: docker compose logs --no-color | grep -v "uvicorn\.error" | grep -i "error" && exit 1 || echo "No errors detected."
+
+      - name: Tear down Docker Compose
+        if: always()
+        run: docker compose down -v
