@@ -3,7 +3,7 @@ name: Docker Compose Validation
 on:
   pull_request:
   push:
-    branches: [ main ]
+    branches: [main, master]
 
 jobs:
   validate-compose:
