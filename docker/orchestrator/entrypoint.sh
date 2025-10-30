@@ -8,6 +8,8 @@ pip install uv
 uv sync
 source .venv/bin/activate
 
+exit 1
+
 if [ -f ${CORE_OVERRIDE}/pyproject.toml ]; then
     echo "⏭️ Use editable install of orchestrator-core"
 
