@@ -54,7 +54,7 @@ jobs:
               else
                 echo "🟢 $service ($name) is running, health: no health check"
               fi
-            elif [ "$state" = "exited" ]; then
+            elif [ "$state" = "exited (0)" ]; then
               echo "⚪ $service ($name) has exited normally (exit 0)"
             else
               echo "❌ $service ($name) failed or exited unexpectedly: state=$state, health=$health"
