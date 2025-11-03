@@ -58,7 +58,6 @@ jobs:
               echo "⚪ $service ($name) has exited normally (exit 0)"
             else
               echo "❌ $service ($name) failed or exited unexpectedly: state=$state, health=$health"
-              docker compose ps --all
               errors=$((errors+1))
             fi
           done
