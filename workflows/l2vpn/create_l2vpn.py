@@ -20,7 +20,7 @@ from more_itertools import flatten
 from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.steps import set_status, store_process_subscription
+from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
 from pydantic import ConfigDict
 from pydantic_forms.core import FormPage
@@ -28,7 +28,7 @@ from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Choice
 
 from products.product_blocks.sap import SAPBlockInactive
-from products.product_types.l2vpn import L2vpn, L2vpnInactive, L2vpnProvisioning
+from products.product_types.l2vpn import L2vpnInactive, L2vpnProvisioning
 from products.product_types.port import Port
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
@@ -142,7 +142,7 @@ def ims_create_l2vpn_terminations(subscription: L2vpnProvisioning) -> State:
 
 
 @step("Update VLANs on connected ports in IMS")
-def update_vlans_on_ports(subscription: L2vpn) -> State:
+def update_vlans_on_ports(subscription: L2vpnProvisioning) -> State:
     """By re-provisioning the connected ports,
     the VLANs from active SAPs will be provisioned in IMS or removed otherwise.
     """
@@ -173,6 +173,5 @@ def create_l2vpn() -> StepList:
         >> ims_create_l2vpn
         >> ims_create_l2vpn_terminations
         >> provision_l2vpn_in_nrm
-        >> set_status(SubscriptionLifecycle.ACTIVE)
         >> update_vlans_on_ports
     )

@@ -15,10 +15,8 @@
 import structlog
 from orchestrator.forms import FormPage
 from orchestrator.forms.validators import Divider
-from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.steps import set_status
-from orchestrator.workflows.utils import modify_workflow
+from orchestrator.workflows.utils import modify_workflow, ensure_provisioning_status
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import read_only_field
 
@@ -62,7 +60,7 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
 
     return user_input_dict | {"subscription": subscription}
 
-
+@ensure_provisioning_status
 @step("Update subscription")
 def update_subscription(
     subscription: NsistpProvisioning,
@@ -79,13 +77,8 @@ def update_subscription(
     subscription.nsistp.is_alias_out = is_alias_out
     subscription.nsistp.expose_in_topology = expose_in_topology
     subscription.nsistp.bandwidth = bandwidth
-
-    return {"subscription": subscription}
-
-
-@step("Update subscription description")
-def update_subscription_description(subscription: Nsistp) -> State:
     subscription.description = description(subscription)
+
     return {"subscription": subscription}
 
 
@@ -93,8 +86,5 @@ def update_subscription_description(subscription: Nsistp) -> State:
 def modify_nsistp() -> StepList:
     return (
         begin
-        >> set_status(SubscriptionLifecycle.PROVISIONING)
         >> update_subscription
-        >> update_subscription_description
-        >> set_status(SubscriptionLifecycle.ACTIVE)
     )

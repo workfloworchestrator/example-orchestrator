@@ -13,10 +13,8 @@
 
 
 from pydantic_forms.types import UUIDstr
-from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.steps import set_status
-from orchestrator.workflows.utils import modify_workflow
+from orchestrator.workflows.utils import modify_workflow, ensure_provisioning_status
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State
 from pydantic_forms.validators import Label, read_only_field
@@ -53,6 +51,7 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
     return user_input_dict | {"subscription": subscription}
 
 
+@ensure_provisioning_status
 @step("Update subscription")
 def update_subscription(
     subscription: PortProvisioning,
@@ -69,7 +68,7 @@ def update_subscription(
 
 
 @step("Update port in NRM")
-def update_port_in_nrm(subscription: PortProvisioning) -> State:
+def update_port_in_nrm(subscription: Port) -> State:
     """Dummy step, replace with actual call to NRM."""
     return {"subscription": subscription}
 
@@ -78,9 +77,7 @@ def update_port_in_nrm(subscription: PortProvisioning) -> State:
 def modify_port() -> StepList:
     return (
         begin
-        >> set_status(SubscriptionLifecycle.PROVISIONING)
         >> update_subscription
         >> update_port_in_ims
         >> update_port_in_nrm
-        >> set_status(SubscriptionLifecycle.ACTIVE)
     )

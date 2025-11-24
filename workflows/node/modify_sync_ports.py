@@ -21,7 +21,7 @@ from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import modify_initial_input_form_generator, modify_workflow
 
-from products.product_types.node import NodeProvisioning
+from products.product_types.node import Node
 from services import netbox
 
 logger = structlog.get_logger(__name__)
@@ -43,7 +43,7 @@ def get_node_interface_list(node_name: str) -> List[Tuple[str, str, int]]:
 
 @step("Update interfaces")
 def update_interfaces(
-    subscription: NodeProvisioning,
+    subscription: Node,
 ) -> State:
     node_interfaces = set(get_node_interface_list(subscription.node.node_name))
     device = netbox.get_device(name=subscription.node.node_name)

@@ -10,15 +10,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from pydantic_forms.types import UUIDstr
 from typing import TypeAlias, cast
 
 import structlog
 from orchestrator.services.products import get_product_by_id
 from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import modify_workflow, ensure_provisioning_status
+from orchestrator.workflows.utils import ensure_provisioning_status, modify_workflow
 from pydantic_forms.core import FormPage
-from pydantic_forms.types import FormGenerator, State
+from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Choice, Label
 
 from products.product_blocks.shared.types import NodeStatus
@@ -83,16 +82,11 @@ def update_subscription(
 
 
 @step("Update node in NRM")
-def update_node_in_nrm(subscription: NodeProvisioning) -> State:
+def update_node_in_nrm(subscription: Node) -> State:
     """Dummy step, replace with actual call to NRM."""
     return {"subscription": subscription}
 
 
 @modify_workflow("Modify node", initial_input_form=initial_input_form_generator)
 def modify_node() -> StepList:
-    return (
-        begin
-        >> update_subscription
-        >> update_node_in_ims
-        >> update_node_in_nrm
-    )
+    return begin >> update_subscription >> update_node_in_ims >> update_node_in_nrm

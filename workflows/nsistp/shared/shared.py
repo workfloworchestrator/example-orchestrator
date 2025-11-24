@@ -13,17 +13,10 @@
 
 
 from collections.abc import Callable
-from enum import StrEnum
-from typing import Annotated
 from uuid import UUID
-from pydantic import Field
 
 import structlog
-from nwastdlib.vlans import VlanRanges
 from orchestrator.db import SubscriptionTable
-from pydantic import GetJsonSchemaHandler
-from pydantic.json_schema import JsonSchemaValue
-from pydantic_core import CoreSchema
 
 logger = structlog.get_logger(__name__)
 

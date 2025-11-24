@@ -65,7 +65,7 @@ def _(core_link: CoreLinkProvisioning) -> str:
         f"{core_link.core_link.ports[0].node.node_name} {core_link.core_link.ports[0].port_name}"
         " <-> "
         f"{core_link.core_link.ports[1].port_name} {core_link.core_link.ports[1].node.node_name}"
-    )
+    ) + (" (maintenance)" if core_link.core_link.under_maintenance else "")
 
 
 @description.register
@@ -79,7 +79,7 @@ def _(l2vpn: L2vpnProvisioning) -> str:
         f"{l2vpn.product.tag} "
         f"{l2vpn.virtual_circuit.speed} Mbit/s "
         f"({'-'.join(sorted(list(set([sap.port.node.node_name for sap in l2vpn.virtual_circuit.saps]))))})"
-    )
+    ) + (" (policer active)" if l2vpn.virtual_circuit.speed_policer else "")
 
 
 @description.register

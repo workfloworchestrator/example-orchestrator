@@ -39,7 +39,8 @@
       "type_id_info": "Hardware make and model",
       "under_maintenance": "Maintenance",
       "under_maintenance_info": "Enable maintenance mode?",
-      "vlan": "VLAN"
+      "vlan": "VLAN ID(s)",
+      "vlan_info": "VLAN ID or range(s) of IDs"
     }
   },
   "workflow": {

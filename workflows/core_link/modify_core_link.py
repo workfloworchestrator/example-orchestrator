@@ -13,10 +13,8 @@
 
 
 from pydantic_forms.types import UUIDstr
-from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.steps import set_status
-from orchestrator.workflows.utils import modify_workflow
+from orchestrator.workflows.utils import modify_workflow, ensure_provisioning_status
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State
 
@@ -43,21 +41,17 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
     return user_input_dict | {"subscription": subscription}
 
 
+@ensure_provisioning_status
 @step("Update subscription")
 def update_subscription(subscription: CoreLinkProvisioning, under_maintenance: bool) -> State:
     subscription.core_link.under_maintenance = under_maintenance
-
-    return {"subscription": subscription}
-
-
-@step("Update subscription description")
-def update_subscription_description(subscription: CoreLink) -> State:
     subscription.description = description(subscription)
+
     return {"subscription": subscription}
 
 
 @step("Update core link in NRM")
-def update_core_link_in_nrm(subscription: CoreLinkProvisioning) -> State:
+def update_core_link_in_nrm(subscription: CoreLink) -> State:
     """Dummy step, replace with actual call to NRM."""
     return {"subscription": subscription}
 
@@ -66,9 +60,6 @@ def update_core_link_in_nrm(subscription: CoreLinkProvisioning) -> State:
 def modify_core_link() -> StepList:
     return (
         begin
-        >> set_status(SubscriptionLifecycle.PROVISIONING)
         >> update_subscription
-        >> update_subscription_description
         >> update_core_link_in_nrm
-        >> set_status(SubscriptionLifecycle.ACTIVE)
     )

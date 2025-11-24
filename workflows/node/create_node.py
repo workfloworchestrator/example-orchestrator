@@ -156,6 +156,6 @@ def create_node() -> StepList:
         >> create_node_in_ims
         >> reserve_loopback_addresses
         >> lso_interaction(provision_node)
-        >> update_node_in_ims
         >> provision_node_in_nrm
+        >> update_node_in_ims
     )

@@ -12,10 +12,8 @@
 # limitations under the License.
 
 
-from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.steps import set_status
-from orchestrator.workflows.utils import modify_workflow, reconcile_workflow
+from orchestrator.workflows.utils import modify_workflow, reconcile_workflow, ensure_provisioning_status
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 
@@ -43,6 +41,7 @@ def initial_input_form_generator(subscription_id: UUIDstr) -> FormGenerator:
     return user_input_dict | {"subscription": subscription}
 
 
+@ensure_provisioning_status
 @step("Update subscription")
 def update_subscription(
     subscription: L2vpnProvisioning,
@@ -51,18 +50,13 @@ def update_subscription(
 ) -> State:
     subscription.virtual_circuit.speed = speed
     subscription.virtual_circuit.speed_policer = speed_policer
-
-    return {"subscription": subscription}
-
-
-@step("Update subscription description")
-def update_subscription_description(subscription: L2vpn) -> State:
     subscription.description = description(subscription)
+
     return {"subscription": subscription}
 
 
 @step("Update L2VPN in NRM")
-def update_l2vpn_in_nrm(subscription: L2vpnProvisioning) -> State:
+def update_l2vpn_in_nrm(subscription: L2vpn) -> State:
     """Dummy step, replace with actual call to NRM."""
     return {"subscription": subscription}
 
@@ -75,10 +69,7 @@ update_l2vpn_in_external_systems = begin >> update_l2vpn_in_nrm
 def modify_l2vpn() -> StepList:
     return (
         begin
-        >> set_status(SubscriptionLifecycle.PROVISIONING)
         >> update_subscription
-        >> update_subscription_description
-        >> set_status(SubscriptionLifecycle.ACTIVE)
         >> update_l2vpn_in_external_systems
     )
 

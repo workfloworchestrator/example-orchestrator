@@ -158,7 +158,7 @@ def create_port() -> StepList:
         >> construct_port_model
         >> store_process_subscription(Target.CREATE)
         >> enable_port
-        >> update_port_in_ims
         >> lso_interaction(provision_port)
         >> provision_port_in_nrm
+        >> update_port_in_ims
     )

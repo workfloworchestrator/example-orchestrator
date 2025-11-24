@@ -15,13 +15,13 @@
 from pydantic_forms.types import State
 from orchestrator.workflow import step
 
-from products.product_types.node import NodeProvisioning
+from products.product_types.node import Node
 from products.services.netbox.netbox import build_payload
 from services import netbox
 
 
 @step("Update node in IMS")
-def update_node_in_ims(subscription: NodeProvisioning) -> State:
+def update_node_in_ims(subscription: Node) -> State:
     """Update node in IMDB"""
     payload = build_payload(subscription.node, subscription)
     netbox.update(payload, id=subscription.node.ims_id)

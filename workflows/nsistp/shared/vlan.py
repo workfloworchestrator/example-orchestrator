@@ -30,7 +30,6 @@ from pydantic_forms.types import State, UUIDstr
 from sqlalchemy import select
 from nwastdlib.vlans import VlanRanges
 
-from products.product_blocks.port import PortMode
 
 logger = structlog.get_logger(__name__)
 
