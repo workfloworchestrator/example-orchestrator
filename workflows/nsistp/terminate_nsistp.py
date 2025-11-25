@@ -42,6 +42,7 @@ def ims_remove_vlans(subscription: Nsistp) -> None:
 @terminate_workflow("Terminate nsistp", initial_input_form=terminate_initial_input_form_generator)
 def terminate_nsistp() -> StepList:
     return (
-        begin >> ims_remove_vlans
+        begin
+        >> ims_remove_vlans
         # TODO: fill in additional steps if needed
     )

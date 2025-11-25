@@ -12,11 +12,10 @@
 # limitations under the License.
 
 
-from pydantic_forms.types import UUIDstr
 from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import modify_workflow, ensure_provisioning_status
+from orchestrator.workflows.utils import ensure_provisioning_status, modify_workflow
 from pydantic_forms.core import FormPage
-from pydantic_forms.types import FormGenerator, State
+from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Label, read_only_field
 
 from products.product_types.port import Port, PortProvisioning
@@ -75,9 +74,4 @@ def update_port_in_nrm(subscription: Port) -> State:
 
 @modify_workflow("Modify port", initial_input_form=initial_input_form_generator)
 def modify_port() -> StepList:
-    return (
-        begin
-        >> update_subscription
-        >> update_port_in_ims
-        >> update_port_in_nrm
-    )
+    return begin >> update_subscription >> update_port_in_ims >> update_port_in_nrm

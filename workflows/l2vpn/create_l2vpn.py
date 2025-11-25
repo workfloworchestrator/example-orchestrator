@@ -17,6 +17,7 @@ from random import randrange
 from typing import TypeAlias, cast
 
 from more_itertools import flatten
+from nwastdlib.vlans import VlanRanges
 from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
@@ -36,7 +37,6 @@ from products.services.netbox.payload.sap import build_sap_vlan_group_payload
 from services import netbox
 from workflows.l2vpn.shared.forms import ports_selector
 from workflows.shared import AllowedNumberOfL2vpnPorts
-from nwastdlib.vlans import VlanRanges
 
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:

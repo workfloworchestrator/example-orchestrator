@@ -16,6 +16,7 @@ import operator
 from uuid import UUID
 
 import structlog
+from nwastdlib.vlans import VlanRanges
 from orchestrator.db import (
     ResourceTypeTable,
     SubscriptionInstanceRelationTable,
@@ -28,8 +29,6 @@ from orchestrator.services import subscriptions
 from pydantic_core.core_schema import ValidationInfo
 from pydantic_forms.types import State, UUIDstr
 from sqlalchemy import select
-from nwastdlib.vlans import VlanRanges
-
 
 logger = structlog.get_logger(__name__)
 
@@ -52,7 +51,10 @@ def validate_vlan(vlan: VlanRanges, info: ValidationInfo) -> VlanRanges:
 
 
 def validate_vlan_not_in_use(
-    vlan: int | VlanRanges, info: ValidationInfo, port_field_name: str = "subscription_id", current: list[State] | None = None
+    vlan: int | VlanRanges,
+    info: ValidationInfo,
+    port_field_name: str = "subscription_id",
+    current: list[State] | None = None,
 ) -> int | VlanRanges:
     """Check if vlan value is already in use by a subscription.
 

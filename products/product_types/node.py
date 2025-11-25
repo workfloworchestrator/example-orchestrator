@@ -12,9 +12,9 @@
 # limitations under the License.
 
 
-from pydantic_forms.types import strEnum
 from orchestrator.domain.base import SubscriptionModel
 from orchestrator.types import SubscriptionLifecycle
+from pydantic_forms.types import strEnum
 
 from products.product_blocks.node import NodeBlock, NodeBlockInactive, NodeBlockProvisioning
 

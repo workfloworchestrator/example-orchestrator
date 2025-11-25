@@ -12,21 +12,18 @@
 # limitations under the License.
 
 
-from pydantic_forms.types import UUIDstr
-from pydantic_forms.types import InputForm
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import terminate_workflow
 from pydantic_forms.core import FormPage
-from pydantic_forms.types import State
+from pydantic_forms.types import InputForm, State, UUIDstr
 from pydantic_forms.validators import DisplaySubscription
 
 from products.product_types.port import PortProvisioning
 from workflows.port.shared.steps import update_port_in_ims
 
 
-#def terminate_initial_input_form_generator(subscription_id: UUIDstr, organisation: UUIDstr) -> InputForm:
 def terminate_initial_input_form_generator(subscription_id: UUIDstr) -> InputForm:
     temp_subscription_id = subscription_id
 

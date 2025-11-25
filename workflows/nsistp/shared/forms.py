@@ -20,6 +20,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from annotated_types import BaseMetadata, Ge, Le
+from nwastdlib.vlans import VlanRanges
 from orchestrator.db import ProductTable, db
 from orchestrator.db.models import SubscriptionTable
 from orchestrator.domain.base import SubscriptionModel
@@ -34,7 +35,6 @@ from products.product_blocks.port import PortMode
 from products.product_types.nsistp import Nsistp, NsistpInactive
 from workflows.nsistp.shared.shared import MAX_SPEED_POSSIBLE
 from workflows.shared import subscriptions_by_product_type_and_instance_value
-from nwastdlib.vlans import VlanRanges
 
 TOPOLOGY_REGEX = r"^[-a-z0-9+,.;=_]+$"
 STP_ID_REGEX = r"^[-a-z0-9+,.;=_:]+$"
@@ -43,11 +43,10 @@ FQDN_REQEX = (
     r"^(?!.{255}|.{253}[^.])([a-z0-9](?:[-a-z-0-9]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?[.]?$"
 )
 VALID_DATE_FORMATS = {
-    4: '%Y',
-    6: '%Y%m',
-    8: '%Y%m%d',
+    4: "%Y",
+    6: "%Y%m",
+    8: "%Y%m%d",
 }
-
 
 
 def port_selector() -> type[Choice]:
@@ -125,6 +124,7 @@ def validate_stp_id_uniqueness(subscription_id: UUID | None, stp_id: str, info: 
     topology = values.get("topology")
 
     if customer_id and topology:
+
         def is_not_unique(nsistp: Nsistp) -> bool:
             return (
                 nsistp.nsistp.stp_id.casefold() == stp_id.casefold()

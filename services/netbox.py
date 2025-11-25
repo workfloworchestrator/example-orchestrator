@@ -147,8 +147,6 @@ class VlansPayload(NetboxPayload):
     vlans: list[VlanPayload]
 
 
-
-
 @dataclass
 class L2vpnPayload(NetboxPayload):
     name: str
@@ -285,6 +283,7 @@ def delete_l2vpn(**kwargs) -> None:
 
 def delete_vlan(**kwargs) -> None:
     delete_from_netbox(api.ipam.vlans, **kwargs)
+
 
 def delete_vlan_group(**kwargs) -> None:
     delete_from_netbox(api.ipam.vlan_groups, **kwargs)

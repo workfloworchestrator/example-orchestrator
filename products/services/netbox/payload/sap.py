@@ -39,11 +39,15 @@ def build_sap_vlans_payload(model: SAPBlockProvisioning, subscription: Subscript
     """
     assert model.ims_id
     name = f"{model.port.node.node_name} {model.port.port_name}"
-    vlan_list = [vlan for vlan_start, vlan_end in model.vlan.to_list_of_tuples() for vlan in range(vlan_start, vlan_end+1)]
+    vlan_list = [
+        vlan for vlan_start, vlan_end in model.vlan.to_list_of_tuples() for vlan in range(vlan_start, vlan_end + 1)
+    ]
     return [netbox.VlanPayload(vid=vlan, group=model.ims_id, name=f"{name} - {vlan}") for vlan in vlan_list]
 
 
-def build_sap_vlan_group_payload(model: SAPBlockProvisioning, subscription: SubscriptionModel) -> netbox.VlanGroupPayload:
+def build_sap_vlan_group_payload(
+    model: SAPBlockProvisioning, subscription: SubscriptionModel
+) -> netbox.VlanGroupPayload:
     """Create and return a Netbox VlanGroupPayload object for a :class:`~products.product_blocks.sap.SAPBlockProvisioning`.
 
     Example payload::

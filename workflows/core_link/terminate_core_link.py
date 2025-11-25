@@ -11,15 +11,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pydantic_forms.types import UUIDstr
-from pydantic_forms.types import InputForm
 import json
+
+from orchestrator.utils.json import json_dumps
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import terminate_workflow
 from pydantic_forms.core import FormPage
-from pydantic_forms.types import State
+from pydantic_forms.types import InputForm, State, UUIDstr
 from pydantic_forms.validators import DisplaySubscription
-from orchestrator.utils.json import json_dumps
 
 from products.product_types.core_link import CoreLink
 from products.services.netbox.netbox import build_payload
@@ -27,7 +26,6 @@ from services import netbox
 from services.lso_client import execute_playbook, lso_interaction
 
 
-#def terminate_initial_input_form_generator(subscription_id: UUIDstr, organisation: UUIDstr) -> InputForm:
 def terminate_initial_input_form_generator(subscription_id: UUIDstr) -> InputForm:
     temp_subscription_id = subscription_id
 

@@ -12,11 +12,12 @@
 # limitations under the License.
 
 
-from functools import partial
 import uuid
+from functools import partial
 from typing import Annotated, TypeAlias, cast
 
 import structlog
+from nwastdlib.vlans import VlanRanges
 from orchestrator.forms import FormPage
 from orchestrator.forms.validators import Divider, Label
 from orchestrator.targets import Target
@@ -44,7 +45,6 @@ from workflows.nsistp.shared.forms import (
 )
 from workflows.nsistp.shared.vlan import validate_vlan, validate_vlan_not_in_use
 from workflows.shared import create_summary_form
-from nwastdlib.vlans import VlanRanges
 
 logger = structlog.get_logger(__name__)
 
@@ -53,11 +53,12 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
     PortChoiceList: TypeAlias = cast(type[Choice], port_selector())
 
     _validate_vlan_not_in_use = partial(validate_vlan_not_in_use, port_field_name="port")
+
     class CreateNsiStpForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
         nsistp_settings: Label
-    
+
         port: PortChoiceList
         vlan: Annotated[
             VlanRanges,

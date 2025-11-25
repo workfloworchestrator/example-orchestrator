@@ -15,7 +15,6 @@
 :term:`LSO` is responsible for executing Ansible playbooks, that deploy subscriptions.
 """
 
-from pydantic_forms.types import State
 import json
 import logging
 from os import getenv
@@ -25,9 +24,9 @@ import requests
 from orchestrator import step
 from orchestrator.config.assignee import Assignee
 from orchestrator.utils.errors import ProcessFailureError
-from orchestrator.workflow import conditional, Step, StepList, begin, callback_step, inputstep
+from orchestrator.workflow import Step, StepList, begin, callback_step, conditional, inputstep
 from pydantic_forms.core import FormPage
-from pydantic_forms.types import FormGenerator
+from pydantic_forms.types import FormGenerator, State
 from pydantic_forms.validators import LongText
 
 logger = logging.getLogger(__name__)
@@ -157,17 +156,14 @@ def lso_interaction(provisioning_step: Step) -> StepList:
     :rtype: :class:`StepList`
     """
     lso_is_enabled = conditional(lambda _: getenv("LSO_ENABLED") == "True")
-    return (
+    return begin >> lso_is_enabled(
         begin
-        >> lso_is_enabled(
-            begin
-            >> callback_step(
-                name=provisioning_step.name,
-                action_step=provisioning_step,
-                validate_step=_evaluate_results,
-            )
-            >> _show_results
+        >> callback_step(
+            name=provisioning_step.name,
+            action_step=provisioning_step,
+            validate_step=_evaluate_results,
         )
+        >> _show_results
     )
 
 
@@ -188,15 +184,12 @@ def indifferent_lso_interaction(provisioning_step: Step) -> StepList:
     :rtype: :class:`StepList`
     """
     lso_is_enabled = conditional(lambda _: getenv("LSO_ENABLED") == "True")
-    return (
+    return begin >> lso_is_enabled(
         begin
-        >> lso_is_enabled(
-            begin
-            >> callback_step(
-                name=provisioning_step.name,
-                action_step=provisioning_step,
-                validate_step=_ignore_results,
-            )
-            >> _show_results
+        >> callback_step(
+            name=provisioning_step.name,
+            action_step=provisioning_step,
+            validate_step=_ignore_results,
         )
+        >> _show_results
     )
