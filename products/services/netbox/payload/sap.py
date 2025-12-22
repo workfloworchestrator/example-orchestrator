@@ -27,7 +27,7 @@ def build_sap_vlans_payload(model: SAPBlockProvisioning, subscription: Subscript
           "vid": 4,
           "name": "paris01a 0/0/1 vlan 4",
           "status": "active",
-          "group": 1
+          "group": <existing port IMS id>
        }
 
     Args:
@@ -37,56 +37,10 @@ def build_sap_vlans_payload(model: SAPBlockProvisioning, subscription: Subscript
     Returns: list[:class:`netbox.VlanPayload`]
 
     """
-    assert model.ims_id
+    assert model.ims_id, "IMS id must be present when creating VLAN payloads"
     name = f"{model.port.node.node_name} {model.port.port_name}"
     vlan_list = [
         vlan for vlan_start, vlan_end in model.vlan.to_list_of_tuples() for vlan in range(vlan_start, vlan_end + 1)
     ]
     return [netbox.VlanPayload(vid=vlan, group=model.ims_id, name=f"{name} - {vlan}") for vlan in vlan_list]
 
-
-def build_sap_vlan_group_payload(
-    model: SAPBlockProvisioning, subscription: SubscriptionModel
-) -> netbox.VlanGroupPayload:
-    """Create and return a Netbox VlanGroupPayload object for a :class:`~products.product_blocks.sap.SAPBlockProvisioning`.
-
-    Example payload::
-
-       {
-          "name": "paris01a 0/0/1 vlan 4",
-          "vid_ranges": "5, 10, 15-20",
-       }
-
-    Args:
-        model: SAPBlockProvisioning
-        subscription: The Subscription that will be provisioned
-
-    Returns: :class:`netbox.VlanGroupPayload`
-
-    """
-    name = f"{model.port.node.node_name} {model.port.port_name}"
-    slug = name.replace(" ", "-").replace("/", "-")
-    return netbox.VlanGroupPayload(name=name, slug=slug, vid_ranges=model.vlan.to_list_of_tuples())
-
-
-def build_sap_payload(model: SAPBlockProvisioning, subscription: SubscriptionModel) -> netbox.VlansPayload:
-    """Create and return a Netbox payload object for a :class:`~products.product_blocks.sap.SAPBlockProvisioning`.
-
-    Example payload::
-
-       {
-          "vid": 4,
-          "name": "paris01a 0/0/1 vlan 4",
-          "status": "active",
-          "group": 1
-       }
-
-    Args:
-        model: SAPBlockProvisioning
-        subscription: The Subscription that will be provisioned
-
-    Returns: :class:`netbox.VlanPayload`
-
-    """
-    vlan_payloads = build_sap_vlans_payload(model, subscription)
-    return netbox.VlansPayload(vlans=vlan_payloads)

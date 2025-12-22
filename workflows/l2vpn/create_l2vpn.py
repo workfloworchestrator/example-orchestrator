@@ -13,8 +13,10 @@
 
 
 import uuid
+from types import SimpleNamespace
+from functools import partial
 from random import randrange
-from typing import TypeAlias, cast
+from typing import Annotated, TypeAlias, cast
 
 from more_itertools import flatten
 from nwastdlib.vlans import VlanRanges
@@ -23,7 +25,7 @@ from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
-from pydantic import ConfigDict
+from pydantic import AfterValidator, ConfigDict
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Choice
@@ -33,10 +35,10 @@ from products.product_types.l2vpn import L2vpnInactive, L2vpnProvisioning
 from products.product_types.port import Port
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
-from products.services.netbox.payload.sap import build_sap_vlan_group_payload
+from products.services.netbox.payload.sap import build_sap_vlans_payload
 from services import netbox
 from workflows.l2vpn.shared.forms import ports_selector
-from workflows.shared import AllowedNumberOfL2vpnPorts
+from workflows.shared import AllowedNumberOfL2vpnPorts, validate_vlan, validate_vlan_not_in_use
 
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:
@@ -53,11 +55,17 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
         type[Choice], ports_selector(AllowedNumberOfL2vpnPorts(user_input_dict["number_of_ports"]))  # noqa: F821
     )
 
+    _validate_vlan_not_in_use = partial(validate_vlan_not_in_use, port_field_name="ports")
+
     class SelectPortsForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
         ports: PortsChoiceList
-        vlan: VlanRanges
+        vlan: Annotated[
+            VlanRanges,
+            AfterValidator(validate_vlan),
+            AfterValidator(_validate_vlan_not_in_use),
+        ] = VlanRanges(0)
 
     select_ports = yield SelectPortsForm
     select_ports_dict = select_ports.model_dump()
@@ -102,20 +110,28 @@ def construct_l2vpn_model(
     }
 
 
+@step("Validate VLAN selection")
+def validate_vlan_selection(ports: list[UUIDstr], vlan: VlanRanges) -> State:
+    info = SimpleNamespace(data={"ports": ports})
+    validated_vlan = validate_vlan(vlan, info)
+    validate_vlan_not_in_use(validated_vlan, info, port_field_name="ports")
+    return {"ports": ports, "vlan": validated_vlan}
+
+
 @step("Create VLANs in IMS")
 def ims_create_vlans(subscription: L2vpnProvisioning) -> State:
-    group_payloads = []
+    """Create VLANs without creating VLAN groups; assume IMS group already exists or is not required."""
     vlan_payloads = []
     for sap in subscription.virtual_circuit.saps:
-        group_payload = build_sap_vlan_group_payload(sap, subscription)
-        sap.ims_id = netbox.create(group_payload)
-        group_payloads += [group_payload]
-        vlan_payloads += [build_payload(sap, subscription)]
+        if sap.port.ims_id is None:
+            raise ValueError("Port IMS id missing; cannot associate VLANs")
+        sap.ims_id = sap.port.ims_id
+        vlan_payloads += build_sap_vlans_payload(sap, subscription)
 
     for payload in vlan_payloads:
         netbox.create(payload)
 
-    return {"subscription": subscription, "vlan_group_payloads": group_payloads, "vlan_payloads": vlan_payloads}
+    return {"subscription": subscription, "vlan_payloads": vlan_payloads}
 
 
 @step("Create L2VPN in IMS")
@@ -167,6 +183,7 @@ def provision_l2vpn_in_nrm(subscription: L2vpnProvisioning) -> State:
 def create_l2vpn() -> StepList:
     return (
         begin
+        >> validate_vlan_selection
         >> construct_l2vpn_model
         >> store_process_subscription(Target.CREATE)
         >> ims_create_vlans

@@ -43,7 +43,7 @@ from workflows.nsistp.shared.forms import (
     port_selector,
     validate_both_aliases_empty_or_not,
 )
-from workflows.nsistp.shared.vlan import validate_vlan, validate_vlan_not_in_use
+from workflows.shared import validate_vlan, validate_vlan_not_in_use
 from workflows.shared import create_summary_form
 
 logger = structlog.get_logger(__name__)
