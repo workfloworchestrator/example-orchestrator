@@ -13,10 +13,10 @@
 
 
 import uuid
-from types import SimpleNamespace
 from functools import partial
 from random import randrange
 from typing import Annotated, TypeAlias, cast
+from types import SimpleNamespace
 
 from more_itertools import flatten
 from nwastdlib.vlans import VlanRanges

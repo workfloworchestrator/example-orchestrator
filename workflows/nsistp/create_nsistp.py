@@ -31,8 +31,6 @@ from pydantic_forms.validators import Choice
 
 from products.product_types.nsistp import NsistpInactive, NsistpProvisioning
 from products.services.description import description
-from products.services.netbox.payload.sap import build_sap_vlan_group_payload
-from services import netbox
 from workflows.nsistp.shared.forms import (
     IsAlias,
     ServiceSpeed,
@@ -127,6 +125,7 @@ def construct_nsistp_model(
     nsistp.nsistp.bandwidth = bandwidth
 
     nsistp_fill_sap(nsistp, port, vlan)
+    nsistp.nsistp.sap.ims_id = nsistp.nsistp.sap.port.ims_id
 
     nsistp = NsistpProvisioning.from_other_lifecycle(nsistp, SubscriptionLifecycle.PROVISIONING)
     nsistp.description = description(nsistp)
@@ -138,14 +137,6 @@ def construct_nsistp_model(
     }
 
 
-@step("Create VLANs in IMS (Netbox)")
-def ims_create_vlans(subscription: NsistpProvisioning) -> State:
-    group_payload = build_sap_vlan_group_payload(subscription.nsistp.sap, subscription)
-    subscription.nsistp.sap.ims_id = netbox.create(group_payload)
-
-    return {"subscription": subscription, "payload": group_payload}
-
-
 @create_workflow("Create nsistp", initial_input_form=initial_input_form_generator)
 def create_nsistp() -> StepList:
-    return begin >> construct_nsistp_model >> store_process_subscription(Target.CREATE) >> ims_create_vlans
+    return begin >> construct_nsistp_model >> store_process_subscription(Target.CREATE)
