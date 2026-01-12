@@ -16,7 +16,6 @@ import uuid
 from functools import partial
 from random import randrange
 from typing import Annotated, TypeAlias, cast
-from types import SimpleNamespace
 
 from more_itertools import flatten
 from nwastdlib.vlans import VlanRanges
@@ -112,12 +111,20 @@ def construct_l2vpn_model(
 
 @step("Create VLANs in IMS")
 def ims_create_vlans(subscription: L2vpnProvisioning) -> State:
-    """Create VLANs without creating VLAN groups; assume IMS group already exists or is not required."""
+    """Create VLANs and VLAN groups in IMS."""
     vlan_payloads = []
     for sap in subscription.virtual_circuit.saps:
         if sap.port.ims_id is None:
             raise ValueError("Port IMS id missing; cannot associate VLANs")
-        sap.ims_id = sap.port.ims_id
+
+        # Create VLAN group
+        vlan_group_payload = netbox.VlanGroupPayload(
+            name=f"{sap.port.node.node_name} {sap.port.port_name} {str(subscription.subscription_id)[:8]}",
+            slug=f"{sap.port.node.node_name}_{sap.port.port_name}_{str(subscription.subscription_id)[:8]}".replace(" ", "_").replace("/", "-").lower(),
+            vid_ranges=sap.vlan.to_list_of_tuples(),
+        )
+        sap.ims_id = netbox.create(vlan_group_payload)
+
         vlan_payloads += build_sap_vlans_payload(sap, subscription)
 
     for payload in vlan_payloads:
