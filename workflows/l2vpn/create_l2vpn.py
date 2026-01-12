@@ -110,14 +110,6 @@ def construct_l2vpn_model(
     }
 
 
-@step("Validate VLAN selection")
-def validate_vlan_selection(ports: list[UUIDstr], vlan: VlanRanges) -> State:
-    info = SimpleNamespace(data={"ports": ports})
-    validated_vlan = validate_vlan(vlan, info)
-    validate_vlan_not_in_use(validated_vlan, info, port_field_name="ports")
-    return {"ports": ports, "vlan": validated_vlan}
-
-
 @step("Create VLANs in IMS")
 def ims_create_vlans(subscription: L2vpnProvisioning) -> State:
     """Create VLANs without creating VLAN groups; assume IMS group already exists or is not required."""
@@ -183,7 +175,6 @@ def provision_l2vpn_in_nrm(subscription: L2vpnProvisioning) -> State:
 def create_l2vpn() -> StepList:
     return (
         begin
-        >> validate_vlan_selection
         >> construct_l2vpn_model
         >> store_process_subscription(Target.CREATE)
         >> ims_create_vlans
