@@ -112,7 +112,6 @@ def construct_l2vpn_model(
 
 @step("Create VLANs in IMS")
 def ims_create_vlans(subscription: L2vpnProvisioning) -> State:
-    """Create VLANs and VLAN groups in IMS."""
     group_payloads = []
     vlan_payloads = []
     for sap in subscription.virtual_circuit.saps:
