@@ -14,9 +14,6 @@
 
 import uuid
 from functools import partial
-from random import randrange
-from typing import Annotated, TypeAlias, cast
-
 from more_itertools import flatten
 from nwastdlib.vlans import VlanRanges
 from orchestrator.targets import Target
@@ -28,16 +25,19 @@ from pydantic import AfterValidator, ConfigDict
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Choice
+from random import randrange
+from typing import Annotated, TypeAlias, cast
 
 from products.product_blocks.sap import SAPBlockInactive
 from products.product_types.l2vpn import L2vpnInactive, L2vpnProvisioning
 from products.product_types.port import Port
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
-from products.services.netbox.payload.sap import build_sap_vlans_payload
+from products.services.netbox.payload.sap import build_sap_vlan_group_payload
 from services import netbox
 from workflows.l2vpn.shared.forms import ports_selector
-from workflows.shared import AllowedNumberOfL2vpnPorts, validate_vlan, validate_vlan_not_in_use
+from workflows.shared import AllowedNumberOfL2vpnPorts, validate_vlan, \
+    validate_vlan_not_in_use
 
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:
@@ -54,7 +54,8 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
         type[Choice], ports_selector(AllowedNumberOfL2vpnPorts(user_input_dict["number_of_ports"]))  # noqa: F821
     )
 
-    _validate_vlan_not_in_use = partial(validate_vlan_not_in_use, port_field_name="ports")
+    _validate_vlan_not_in_use = partial(validate_vlan_not_in_use,
+                                        port_field_name="ports")
 
     class SelectPortsForm(FormPage):
         model_config = ConfigDict(title=product_name)
@@ -112,25 +113,20 @@ def construct_l2vpn_model(
 @step("Create VLANs in IMS")
 def ims_create_vlans(subscription: L2vpnProvisioning) -> State:
     """Create VLANs and VLAN groups in IMS."""
+    group_payloads = []
     vlan_payloads = []
     for sap in subscription.virtual_circuit.saps:
-        if sap.port.ims_id is None:
-            raise ValueError("Port IMS id missing; cannot associate VLANs")
-
-        # Create VLAN group
-        vlan_group_payload = netbox.VlanGroupPayload(
-            name=f"{sap.port.node.node_name} {sap.port.port_name} {str(subscription.subscription_id)[:8]}",
-            slug=f"{sap.port.node.node_name}_{sap.port.port_name}_{str(subscription.subscription_id)[:8]}".replace(" ", "_").replace("/", "-").lower(),
-            vid_ranges=sap.vlan.to_list_of_tuples(),
-        )
-        sap.ims_id = netbox.create(vlan_group_payload)
-
-        vlan_payloads += build_sap_vlans_payload(sap, subscription)
+        group_payload = build_sap_vlan_group_payload(sap, subscription)
+        sap.ims_id = netbox.create(group_payload)
+        group_payloads += [group_payload]
+        vlan_payloads += [build_payload(sap, subscription)]
 
     for payload in vlan_payloads:
         netbox.create(payload)
 
-    return {"subscription": subscription, "vlan_payloads": vlan_payloads}
+    return {"subscription": subscription,
+            "vlan_group_payloads": group_payloads,
+            "vlan_payloads": vlan_payloads}
 
 
 @step("Create L2VPN in IMS")
@@ -181,12 +177,12 @@ def provision_l2vpn_in_nrm(subscription: L2vpnProvisioning) -> State:
 @create_workflow("Create l2vpn", initial_input_form=initial_input_form_generator)
 def create_l2vpn() -> StepList:
     return (
-        begin
-        >> construct_l2vpn_model
-        >> store_process_subscription(Target.CREATE)
-        >> ims_create_vlans
-        >> ims_create_l2vpn
-        >> ims_create_l2vpn_terminations
-        >> provision_l2vpn_in_nrm
-        >> update_vlans_on_ports
+            begin
+            >> construct_l2vpn_model
+            >> store_process_subscription(Target.CREATE)
+            >> ims_create_vlans
+            >> ims_create_l2vpn
+            >> ims_create_l2vpn_terminations
+            >> provision_l2vpn_in_nrm
+            >> update_vlans_on_ports
     )
