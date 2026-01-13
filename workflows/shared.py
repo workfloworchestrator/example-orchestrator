@@ -10,27 +10,38 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import operator
 from pprint import pformat
 from typing import Annotated, Generator, List, TypeAlias, cast
+from uuid import UUID
 
+import structlog
 from annotated_types import Ge, Le, doc
 from deepdiff import DeepDiff
+from nwastdlib.vlans import VlanRanges
 from orchestrator.db import (
     ProductTable,
     ResourceTypeTable,
+    SubscriptionInstanceRelationTable,
     SubscriptionInstanceTable,
     SubscriptionInstanceValueTable,
     SubscriptionTable,
+    db,
 )
 from orchestrator.domain.base import ProductBlockModel
+from orchestrator.services import subscriptions
 from orchestrator.types import SubscriptionLifecycle
 from pydantic import ConfigDict
+from pydantic_core.core_schema import ValidationInfo
 from pydantic_forms.core import FormPage
-from pydantic_forms.types import SummaryData, UUIDstr
+from pydantic_forms.types import State, SummaryData, UUIDstr
 from pydantic_forms.validators import Choice, MigrationSummary, migration_summary
+from sqlalchemy import select
 
 from products.product_types.node import Node
 from services import netbox
+
+logger = structlog.get_logger(__name__)
 
 Vlan = Annotated[int, Ge(2), Le(4094), doc("VLAN ID.")]
 
@@ -139,3 +150,101 @@ def modify_summary_form(user_input: dict, block: ProductBlockModel, fields: List
 
 def pretty_print_deepdiff(diff: DeepDiff) -> str:
     return pformat(diff.to_dict(), indent=2, compact=False)
+
+
+def validate_vlan(vlan: VlanRanges, info: ValidationInfo) -> VlanRanges:
+    # We assume an empty string is untagged and thus 0
+    if not vlan:
+        vlan = VlanRanges(0)
+
+    subscription_id = info.data.get("port_id") or info.data.get("port")
+    if not subscription_id and (ports := info.data.get("ports")):
+        subscription_id = ports[0] if ports else None
+
+    if vlan == VlanRanges(0):
+        if subscription_id:
+            subscription = subscriptions.get_subscription(subscription_id, model=SubscriptionTable)
+            raise ValueError(f"{subscription.product.tag} must have a vlan")
+        raise ValueError("vlan must have a value")
+
+    return vlan
+
+
+def validate_vlan_not_in_use(
+    vlan: int | VlanRanges,
+    info: ValidationInfo,
+    port_field_name: str = "subscription_id",
+    current: list[State] | None = None,
+) -> int | VlanRanges:
+    """Check if vlan value is already in use by one or more subscriptions."""
+    if not (subscription_ids_raw := info.data.get(port_field_name)):
+        return vlan
+
+    subscription_ids = (
+        list(subscription_ids_raw)
+        if isinstance(subscription_ids_raw, (list, tuple, set))
+        else [subscription_ids_raw]
+    )
+
+    used_vlans = VlanRanges([])
+    for subscription_id in subscription_ids:
+        used_vlans |= find_allocated_vlans(subscription_id)
+
+    if current:
+        for subscription_id in subscription_ids:
+            current_selected_service_port = filter(
+                lambda c: str(c[port_field_name]) == str(subscription_id), current
+            )
+            current_selected_vlans = list(map(operator.itemgetter("vlan"), current_selected_service_port))
+            for current_selected_vlan in current_selected_vlans:
+                if not current_selected_vlan:
+                    current_selected_vlan = "0"
+
+                current_selected_vlan_range = VlanRanges(current_selected_vlan)
+                used_vlans -= current_selected_vlan_range  # type: ignore[assignment]
+
+    vlan_in_use = False
+    if isinstance(vlan, int):
+        vlan_in_use = vlan in used_vlans
+    else:
+        vlan_in_use = any(v in used_vlans for v in vlan)
+
+    if vlan_in_use:
+        raise ValueError(f"Vlan(s) {used_vlans} already in use")
+
+    return vlan
+
+
+def find_allocated_vlans(subscription_id: UUID | UUIDstr) -> VlanRanges:
+    """Find all vlans already allocated to a SAP for a given port."""
+    logger.debug("Finding allocated VLANs", subscription_id=subscription_id)
+
+    query = (
+        select(SubscriptionInstanceValueTable.value)
+        .join(
+            ResourceTypeTable,
+            SubscriptionInstanceValueTable.resource_type_id == ResourceTypeTable.resource_type_id,
+        )
+        .join(
+            SubscriptionInstanceRelationTable,
+            SubscriptionInstanceValueTable.subscription_instance_id
+            == SubscriptionInstanceRelationTable.in_use_by_id,
+        )
+        .join(
+            SubscriptionInstanceTable,
+            SubscriptionInstanceRelationTable.depends_on_id == SubscriptionInstanceTable.subscription_instance_id,
+        )
+        .filter(
+            SubscriptionInstanceTable.subscription_id == subscription_id,
+            ResourceTypeTable.resource_type == "vlan",
+        )
+    )
+
+    used_vlan_values = db.session.execute(query).scalars().all()
+
+    if not used_vlan_values:
+        logger.debug("No VLAN values in use found")
+        return VlanRanges([])
+
+    logger.debug("Found used VLAN values", values=used_vlan_values)
+    return VlanRanges(",".join(used_vlan_values))
