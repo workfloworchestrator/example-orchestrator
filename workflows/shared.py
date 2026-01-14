@@ -34,9 +34,10 @@ from orchestrator.types import SubscriptionLifecycle
 from pydantic import ConfigDict
 from pydantic_core.core_schema import ValidationInfo
 from pydantic_forms.core import FormPage
-from pydantic_forms.types import State, SummaryData, UUIDstr
+from pydantic_forms.types import SummaryData, UUIDstr
 from pydantic_forms.validators import Choice, MigrationSummary, migration_summary
 from sqlalchemy import select
+from sqlalchemy.orm import aliased
 
 from products.product_types.node import Node
 from services import netbox
@@ -248,3 +249,126 @@ def find_allocated_vlans(subscription_id: UUID | UUIDstr) -> VlanRanges:
 
     logger.debug("Found used VLAN values", values=used_vlan_values)
     return VlanRanges(",".join(used_vlan_values))
+
+
+def find_allocated_vlans_for_product(subscription_id: UUID | UUIDstr, product_type: str) -> VlanRanges:
+    """Find VLANs allocated to SAPs on a port filtered by product type (e.g. NSISTP or NSIP2P)."""
+    logger.debug("Finding allocated VLANs for product", subscription_id=subscription_id, product_type=product_type)
+
+    port_si = aliased(SubscriptionInstanceTable)
+    sap_si = aliased(SubscriptionInstanceTable)
+    sap_sub = aliased(SubscriptionTable)
+    sap_prod = aliased(ProductTable)
+
+    query = (
+        select(SubscriptionInstanceValueTable.value)
+        .join(
+            ResourceTypeTable,
+            SubscriptionInstanceValueTable.resource_type_id == ResourceTypeTable.resource_type_id,
+        )
+        .join(
+            sap_si,
+            SubscriptionInstanceValueTable.subscription_instance_id == sap_si.subscription_instance_id
+        )
+        .join(sap_sub, sap_si.subscription_id == sap_sub.subscription_id)
+        .join(sap_prod, sap_sub.product_id == sap_prod.product_id)
+        .join(
+            SubscriptionInstanceRelationTable,
+            sap_si.subscription_instance_id == SubscriptionInstanceRelationTable.in_use_by_id
+        )
+        .join(
+            port_si,
+            SubscriptionInstanceRelationTable.depends_on_id == port_si.subscription_instance_id,
+        )
+        .filter(
+            port_si.subscription_id == subscription_id,
+            ResourceTypeTable.resource_type == "vlan",
+            sap_prod.product_type == product_type,
+            sap_sub.status.in_(
+                [SubscriptionLifecycle.PROVISIONING, SubscriptionLifecycle.ACTIVE]
+            ),
+        )
+    )
+
+    values = db.session.execute(query).scalars().all()
+    if not values:
+        logger.debug("No VLAN values in use found for product", product_type=product_type)
+        return VlanRanges([])
+
+    logger.debug("Found VLAN values for product", values=values, product_type=product_type)
+    return VlanRanges(",".join(values))
+
+
+def validate_vlan_reserved_by_product(
+    vlan: int | VlanRanges,
+    info: ValidationInfo,
+    *,
+    port_field_name: str = "subscription_id",
+    product_type: str,
+) -> int | VlanRanges:
+    """Require the selected VLAN to be part of the reserved set for a specific product type on the selected port(s)."""
+    if not (subscription_ids_raw := info.data.get(port_field_name)):
+        return vlan
+
+    subscription_ids = (
+        list(subscription_ids_raw)
+        if isinstance(subscription_ids_raw, (list, tuple, set))
+        else [subscription_ids_raw]
+    )
+
+    for subscription_id in subscription_ids:
+        reserved_vlans = find_allocated_vlans_for_product(subscription_id, product_type)
+        if isinstance(vlan, int):
+            allowed = vlan in reserved_vlans
+        else:
+            allowed = all(v in reserved_vlans for v in vlan)
+        if not allowed:
+            raise ValueError(f"VLAN(s) {vlan} not reserved by {product_type} on port {subscription_id}")
+
+    return vlan
+
+
+def validate_vlan_not_used_by_product(
+    vlan: int | VlanRanges,
+    info: ValidationInfo,
+    *,
+    port_field_name: str = "subscription_id",
+    product_type: str,
+    current: list[State] | None = None,
+) -> int | VlanRanges:
+    """Ensure VLAN is not already in use by the given product type on the selected port(s)."""
+    if not (subscription_ids_raw := info.data.get(port_field_name)):
+        return vlan
+
+    subscription_ids = (
+        list(subscription_ids_raw)
+        if isinstance(subscription_ids_raw, (list, tuple, set))
+        else [subscription_ids_raw]
+    )
+
+    used_vlans = VlanRanges([])
+    for subscription_id in subscription_ids:
+        used_vlans |= find_allocated_vlans_for_product(subscription_id, product_type)
+
+    if current:
+        for subscription_id in subscription_ids:
+            current_selected_service_port = filter(
+                lambda c: str(c[port_field_name]) == str(subscription_id), current
+            )
+            current_selected_vlans = list(map(operator.itemgetter("vlan"), current_selected_service_port))
+            for current_selected_vlan in current_selected_vlans:
+                if not current_selected_vlan:
+                    current_selected_vlan = "0"
+                current_selected_vlan_range = VlanRanges(current_selected_vlan)
+                used_vlans -= current_selected_vlan_range  # type: ignore[assignment]
+
+    vlan_in_use = False
+    if isinstance(vlan, int):
+        vlan_in_use = vlan in used_vlans
+    else:
+        vlan_in_use = any(v in used_vlans for v in vlan)
+
+    if vlan_in_use:
+        raise ValueError(f"VLAN(s) {vlan} already in use by {product_type}")
+
+    return vlan
