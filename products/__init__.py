@@ -18,6 +18,7 @@ from products.product_types.core_link import CoreLink
 from products.product_types.l2vpn import L2vpn
 from products.product_types.node import Node
 from products.product_types.nsistp import Nsistp
+from products.product_types.nsip2p import Nsip2p
 from products.product_types.port import Port
 
 SUBSCRIPTION_MODEL_REGISTRY.update(
@@ -32,5 +33,6 @@ SUBSCRIPTION_MODEL_REGISTRY.update(
         "core link 100G": CoreLink,
         "l2vpn": L2vpn,
         "nsistp": Nsistp,
+        "nsip2p": Nsip2p,
     }
 )
