@@ -33,14 +33,11 @@ from workflows.l2vpn.create_l2vpn import ims_create_vlans, ims_create_l2vpn, ims
 from workflows.l2vpn.shared.forms import ports_selector
 from workflows.shared import validate_vlan, validate_vlan_reserved_by_product, validate_vlan_not_used_by_product
 
-# Only allow exactly 2 ports for NSIP2P
-AllowedNumberOfNsip2pPorts = Annotated[int, ConfigDict(ge=2, le=2, title="Allowed number of NSIP2P ports")]
-
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:
     class CreateNsip2pForm(FormPage):
         model_config = ConfigDict(title=product_name)
-        number_of_ports: AllowedNumberOfNsip2pPorts = 2  # Always 2
+
         speed: int
         speed_policer: bool | None = False
 
@@ -77,9 +74,6 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
     select_ports_dict = select_ports.model_dump()
     ports = [str(item) for item in select_ports_dict["ports"]]
 
-    # Enforce exactly 2 ports
-    if len(ports) != 2:
-        raise ValueError("NSIP2P must have exactly 2 ports selected.")
     # Enforce only one VLAN per port
     if not select_ports_dict["vlan"].is_single_vlan:
         raise ValueError("Only one VLAN may be selected per port for NSIP2P.")
