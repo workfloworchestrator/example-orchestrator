@@ -171,6 +171,34 @@ def validate_vlan(vlan: VlanRanges, info: ValidationInfo) -> VlanRanges:
     return vlan
 
 
+def _vlan_partially_in_vlan_range(vlan: int | VlanRanges, vlan_range: VlanRanges) -> bool:
+    match vlan:
+        case int():
+            return vlan in vlan_range
+        case VlanRanges():
+            return any(v in vlan_range for v in vlan)
+
+
+def _vlan_completely_in_vlan_range(vlan: int | VlanRanges, vlan_range: VlanRanges) -> bool:
+    match vlan:
+        case int():
+            return vlan in vlan_range
+        case VlanRanges():
+            return all(v in vlan_range for v in vlan)
+
+
+def _get_subscription_ids_from_info(info: ValidationInfo, port_field_name: str) -> list[str] | None:
+    match info.data.get(port_field_name):
+        case list() | tuple() | set() as iterable:
+            return list(iterable)
+        case str() as scalar:
+            return [scalar]
+        case None:
+            return None
+        case _ as invalid:
+            raise ValueError(f"Cannot convert value {invalid} in field {port_field_name} to list of subscription ids")
+
+
 def validate_vlan_not_in_use(
     vlan: int | VlanRanges,
     info: ValidationInfo,
@@ -178,14 +206,8 @@ def validate_vlan_not_in_use(
     current: list[State] | None = None,
 ) -> int | VlanRanges:
     """Check if vlan value is already in use by one or more subscriptions."""
-    if not (subscription_ids_raw := info.data.get(port_field_name)):
+    if not (subscription_ids := _get_subscription_ids_from_info(info, port_field_name)):
         return vlan
-
-    subscription_ids = (
-        list(subscription_ids_raw)
-        if isinstance(subscription_ids_raw, (list, tuple, set))
-        else [subscription_ids_raw]
-    )
 
     used_vlans = VlanRanges([])
     for subscription_id in subscription_ids:
@@ -204,13 +226,7 @@ def validate_vlan_not_in_use(
                 current_selected_vlan_range = VlanRanges(current_selected_vlan)
                 used_vlans -= current_selected_vlan_range  # type: ignore[assignment]
 
-    vlan_in_use = False
-    if isinstance(vlan, int):
-        vlan_in_use = vlan in used_vlans
-    else:
-        vlan_in_use = any(v in used_vlans for v in vlan)
-
-    if vlan_in_use:
+    if _vlan_partially_in_vlan_range(vlan, used_vlans):
         raise ValueError(f"Vlan(s) {used_vlans} already in use")
 
     return vlan
@@ -307,22 +323,12 @@ def validate_vlan_reserved_by_product(
     product_type: str,
 ) -> int | VlanRanges:
     """Require the selected VLAN to be part of the reserved set for a specific product type on the selected port(s)."""
-    if not (subscription_ids_raw := info.data.get(port_field_name)):
+    if not (subscription_ids := _get_subscription_ids_from_info(info, port_field_name)):
         return vlan
-
-    subscription_ids = (
-        list(subscription_ids_raw)
-        if isinstance(subscription_ids_raw, (list, tuple, set))
-        else [subscription_ids_raw]
-    )
 
     for subscription_id in subscription_ids:
         reserved_vlans = find_allocated_vlans_for_product(subscription_id, product_type)
-        if isinstance(vlan, int):
-            allowed = vlan in reserved_vlans
-        else:
-            allowed = all(v in reserved_vlans for v in vlan)
-        if not allowed:
+        if not _vlan_completely_in_vlan_range(vlan, reserved_vlans):
             raise ValueError(f"VLAN(s) {vlan} not reserved by {product_type} on port {subscription_id}")
 
     return vlan
@@ -337,14 +343,8 @@ def validate_vlan_not_used_by_product(
     current: list[State] | None = None,
 ) -> int | VlanRanges:
     """Ensure VLAN is not already in use by the given product type on the selected port(s)."""
-    if not (subscription_ids_raw := info.data.get(port_field_name)):
+    if not (subscription_ids := _get_subscription_ids_from_info(info, port_field_name)):
         return vlan
-
-    subscription_ids = (
-        list(subscription_ids_raw)
-        if isinstance(subscription_ids_raw, (list, tuple, set))
-        else [subscription_ids_raw]
-    )
 
     used_vlans = VlanRanges([])
     for subscription_id in subscription_ids:
@@ -362,13 +362,7 @@ def validate_vlan_not_used_by_product(
                 current_selected_vlan_range = VlanRanges(current_selected_vlan)
                 used_vlans -= current_selected_vlan_range  # type: ignore[assignment]
 
-    vlan_in_use = False
-    if isinstance(vlan, int):
-        vlan_in_use = vlan in used_vlans
-    else:
-        vlan_in_use = any(v in used_vlans for v in vlan)
-
-    if vlan_in_use:
+    if _vlan_partially_in_vlan_range(vlan, used_vlans):
         raise ValueError(f"VLAN(s) {vlan} already in use by {product_type}")
 
     return vlan
