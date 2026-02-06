@@ -34,9 +34,14 @@ from products.product_types.nsip2p import Nsip2pInactive, Nsip2pProvisioning
 from products.product_types.port import Port
 from products.services.description import description
 from workflows.l2vpn.shared.forms import ports_selector
-from workflows.shared import validate_vlan, validate_vlan_reserved_by_product, validate_vlan_not_used_by_product
 from workflows.shared import validate_vlan, validate_vlan_reserved_by_product, validate_vlan_not_used_by_product, \
     update_ports_in_netbox, create_saps_in_netbox, create_l2vpn_in_netbox, create_l2vpn_terminations_in_netbox
+
+
+def validate_single_vlan(vlan: VlanRanges, info: ValidationInfo) -> VlanRanges:
+    if not vlan.is_single_vlan:
+        raise ValueError(f"Only one VLAN may be selected per port for NSIP2P")
+    return vlan
 
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:
@@ -71,6 +76,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
         vlan: Annotated[
             VlanRanges,
             AfterValidator(validate_vlan),
+            AfterValidator(validate_single_vlan),
             AfterValidator(_validate_vlan_reserved_by_nsistp),
             AfterValidator(_validate_vlan_not_used_by_nsip2p),
         ] = VlanRanges(0)
@@ -78,10 +84,6 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
     select_ports = yield SelectPortsForm
     select_ports_dict = select_ports.model_dump()
     ports = [str(item) for item in select_ports_dict["ports"]]
-
-    # Enforce only one VLAN per port
-    if not select_ports_dict["vlan"].is_single_vlan:
-        raise ValueError("Only one VLAN may be selected per port for NSIP2P.")
 
     return user_input_dict | select_ports_dict | {"ports": ports}
 
@@ -92,14 +94,8 @@ def construct_nsip2p_model(
     ports: list[UUIDstr],
     speed: int,
     speed_policer: bool,
-    vlan: VlanRanges,
+    vlan: str,
 ) -> State:
-    # Enforce exactly 2 SAPs
-    if len(ports) != 2:
-        raise ValueError("NSIP2P must have exactly 2 SAPs (ports)")
-    # Enforce only one VLAN per port
-    if not vlan.is_single_vlan:
-        raise ValueError("Only one VLAN may be selected per port for NSIP2P.")
     subscription = Nsip2pInactive.from_product_id(
         product_id=product,
         customer_id=str(uuid.uuid4()),
