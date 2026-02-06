@@ -19,7 +19,7 @@ from pydantic_forms.types import InputForm, UUIDstr
 from pydantic_forms.validators import DisplaySubscription
 
 from products.product_types.l2vpn import L2vpn
-from services import netbox
+from workflows.shared import remove_saps_in_netbox, remove_l2vpn_in_netbox
 
 
 def terminate_initial_input_form_generator(subscription_id: UUIDstr) -> InputForm:
@@ -33,17 +33,16 @@ def terminate_initial_input_form_generator(subscription_id: UUIDstr) -> InputFor
 
 @step("Remove L2VPN from IMS")
 def ims_remove_l2vpn(subscription: L2vpn) -> None:
-    netbox.delete_l2vpn(id=subscription.virtual_circuit.ims_id)
-    # We rely on Netbox to delete the vlan terminations together with the l2vpn.
+    vc = subscription.virtual_circuit
+
+    remove_l2vpn_in_netbox(vc)
 
 
 @step("Remove VLANs from IMS")
 def ims_remove_vlans(subscription: L2vpn) -> None:
-    for sap in subscription.virtual_circuit.saps:
-        vlans = netbox.get_vlans(group_id=sap.ims_id)
-        for vlan in vlans:
-            netbox.delete_vlan(id=vlan.id)
-        netbox.delete_vlan_group(id=sap.ims_id)
+    saps = subscription.virtual_circuit.saps
+
+    remove_saps_in_netbox(saps)
 
 
 @terminate_workflow("Terminate l2vpn", initial_input_form=terminate_initial_input_form_generator)

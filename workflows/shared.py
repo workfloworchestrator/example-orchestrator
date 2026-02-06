@@ -43,8 +43,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import aliased
 
 from products import Port
-from products.product_blocks.sap import SAPBlockProvisioning
-from products.product_blocks.virtual_circuit import VirtualCircuitBlockProvisioning
+from products.product_blocks.sap import SAPBlockProvisioning, SAPBlock
+from products.product_blocks.virtual_circuit import VirtualCircuitBlockProvisioning, VirtualCircuitBlock
 
 from products.product_types.node import Node
 from products.services.netbox.netbox import build_payload
@@ -453,3 +453,18 @@ def create_l2vpn_terminations_in_netbox(vc: VirtualCircuitBlockProvisioning) -> 
         netbox.create(payload)
 
     return payloads
+
+
+def remove_l2vpn_in_netbox(vc: VirtualCircuitBlock) -> None:
+    """Deprovision the Virtual Circuit in Netbox."""
+    netbox.delete_l2vpn(id=vc.ims_id)
+    # We rely on Netbox to delete the vlan terminations together with the l2vpn.
+
+
+def remove_saps_in_netbox(saps: list[SAPBlock]) -> None:
+    """Deprovision the SAPs in Netbox."""
+    for sap in saps:
+        vlans = netbox.get_vlans(group_id=sap.ims_id)
+        for vlan in vlans:
+            netbox.delete_vlan(id=vlan.id)
+        netbox.delete_vlan_group(id=sap.ims_id)

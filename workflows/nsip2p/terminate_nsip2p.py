@@ -13,9 +13,12 @@
 
 from orchestrator.forms import FormPage
 from orchestrator.forms.validators import DisplaySubscription
-from orchestrator.workflow import StepList, begin
+from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import terminate_workflow
 from pydantic_forms.types import InputForm, UUIDstr
+
+from products import Nsip2p
+from workflows.shared import remove_saps_in_netbox, remove_l2vpn_in_netbox
 
 
 def terminate_initial_input_form_generator(subscription_id: UUIDstr, customer_id: UUIDstr) -> InputForm:
@@ -27,6 +30,20 @@ def terminate_initial_input_form_generator(subscription_id: UUIDstr, customer_id
     return TerminateNsip2pForm
 
 
+@step("Remove NSIP2P from IMS")
+def ims_remove_nsip2p(subscription: Nsip2p) -> None:
+    vc = subscription.virtual_circuit
+
+    remove_l2vpn_in_netbox(vc)
+
+
+@step("Remove VLANs from IMS")
+def ims_remove_vlans(subscription: Nsip2p) -> None:
+    saps = subscription.virtual_circuit.saps
+
+    remove_saps_in_netbox(saps)
+
+
 @terminate_workflow("Terminate NSIP2P", initial_input_form=terminate_initial_input_form_generator)
 def terminate_nsip2p() -> StepList:
-    return begin
+    return begin >> ims_remove_nsip2p >> ims_remove_vlans
