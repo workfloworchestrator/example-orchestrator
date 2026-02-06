@@ -17,9 +17,9 @@ from typing import List
 from orchestrator.domain.base import ProductBlockModel
 from orchestrator.types import SubscriptionLifecycle
 from pydantic import computed_field
-from pydantic_forms.types import strEnum
 
 from products.product_blocks.node import NodeBlock, NodeBlockInactive, NodeBlockProvisioning
+from pydantic_forms.types import strEnum
 
 
 class PortMode(strEnum):

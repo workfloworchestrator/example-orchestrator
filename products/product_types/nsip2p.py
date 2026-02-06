@@ -15,7 +15,6 @@ from orchestrator.domain.base import SubscriptionModel
 from orchestrator.types import SubscriptionLifecycle
 from pydantic import model_validator
 
-from products.product_blocks.sap import SAPBlockInactive, SAPBlockProvisioning
 from products.product_blocks.virtual_circuit import (
     VirtualCircuitBlock,
     VirtualCircuitBlockInactive,
@@ -43,4 +42,3 @@ class Nsip2pProvisioning(Nsip2pInactive, lifecycle=[SubscriptionLifecycle.PROVIS
 
 class Nsip2p(Nsip2pProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
     virtual_circuit: VirtualCircuitBlock
-

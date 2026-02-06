@@ -13,9 +13,9 @@
 
 
 from orchestrator.types import SubscriptionLifecycle
-from pydantic_forms.validators import Choice, choice_list
 
 from products.product_blocks.port import PortMode
+from pydantic_forms.validators import Choice, choice_list
 from workflows.shared import AllowedNumberOfL2vpnPorts, subscriptions_by_product_type_and_instance_value
 
 

@@ -11,21 +11,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from orchestrator.graphql.schemas import DEFAULT_GRAPHQL_MODELS
 import strawberry
+from orchestrator.graphql.schemas import DEFAULT_GRAPHQL_MODELS
 
 from products.product_blocks.node import NodeBlockInactive as _NodeBlockInactive
 
 
 @strawberry.federation.type(keys=["id"])
-class DeviceType():
+class DeviceType:
     """The name of this class matches that in Netbox."""
+
     id: strawberry.ID
 
 
 @strawberry.experimental.pydantic.type(model=_NodeBlockInactive, all_fields=True)
 class NodeBlockInactive:
-
     @strawberry.field(description="Get netbox device by IMS ID")
     def netbox_device(self) -> DeviceType | None:
         """Add a field which contains an object with nothing but an ID.

@@ -16,13 +16,13 @@ import structlog
 from orchestrator.services.products import get_product_by_id
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import ensure_provisioning_status, modify_workflow
-from pydantic_forms.core import FormPage
-from pydantic_forms.types import FormGenerator, State, UUIDstr
-from pydantic_forms.validators import Choice, Label
 
 from products.product_blocks.shared.types import NodeStatus
 from products.product_types.node import Node, NodeProvisioning
 from products.services.description import description
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State, UUIDstr
+from pydantic_forms.validators import Choice, Label
 from workflows.node.shared.forms import NodeStatusChoice, node_role_selector, node_type_selector, site_selector
 from workflows.node.shared.steps import update_node_in_ims
 from workflows.shared import modify_summary_form

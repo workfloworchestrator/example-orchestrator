@@ -13,9 +13,9 @@
 
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import validate_workflow
-from pydantic_forms.types import State
 
 from products.product_types.nsip2p import Nsip2p
+from pydantic_forms.types import State
 
 
 @step("Validate NSIP2P in IMS")
@@ -27,4 +27,3 @@ def validate_nsip2p_in_ims(subscription: Nsip2p) -> State:
 @validate_workflow("Validate NSIP2P")
 def validate_nsip2p() -> StepList:
     return begin >> validate_nsip2p_in_ims
-

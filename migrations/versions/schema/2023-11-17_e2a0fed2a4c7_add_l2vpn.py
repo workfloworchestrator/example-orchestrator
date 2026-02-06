@@ -5,6 +5,7 @@ Revises: 1faddadd7aae
 Create Date: 2023-11-17 10:59:41.544653
 
 """
+
 from uuid import uuid4
 
 from alembic import op

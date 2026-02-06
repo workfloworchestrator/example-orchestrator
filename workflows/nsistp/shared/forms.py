@@ -20,19 +20,19 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from annotated_types import BaseMetadata, Ge, Le
-from nwastdlib.vlans import VlanRanges
 from orchestrator.db import ProductTable, db
 from orchestrator.db.models import SubscriptionTable
 from orchestrator.domain.base import SubscriptionModel
 from orchestrator.types import SubscriptionLifecycle
 from pydantic import AfterValidator, Field, ValidationInfo
-from pydantic_forms.types import UUIDstr
-from pydantic_forms.validators import Choice
 from sqlalchemy import select
 from typing_extensions import Doc
 
+from nwastdlib.vlans import VlanRanges
 from products.product_blocks.port import PortMode
 from products.product_types.nsistp import Nsistp, NsistpInactive
+from pydantic_forms.types import UUIDstr
+from pydantic_forms.validators import Choice
 from workflows.nsistp.shared.shared import MAX_SPEED_POSSIBLE
 from workflows.shared import subscriptions_by_product_type_and_instance_value
 

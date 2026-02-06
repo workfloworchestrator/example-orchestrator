@@ -1,0 +1,12 @@
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0   # pin to a specific Ruff version
+    hooks:
+      # Ruff linting (includes some type-related rules if enabled in your config)
+      - id: ruff-check
+        args:
+          - --fix
+
+      # Ruff formatting
+      - id: ruff-format

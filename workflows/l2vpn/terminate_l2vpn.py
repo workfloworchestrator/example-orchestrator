@@ -14,12 +14,12 @@
 
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import terminate_workflow
+
+from products.product_types.l2vpn import L2vpn
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import InputForm, UUIDstr
 from pydantic_forms.validators import DisplaySubscription
-
-from products.product_types.l2vpn import L2vpn
-from workflows.shared import remove_saps_in_netbox, remove_l2vpn_in_netbox
+from workflows.shared import remove_l2vpn_in_netbox, remove_saps_in_netbox
 
 
 def terminate_initial_input_form_generator(subscription_id: UUIDstr) -> InputForm:

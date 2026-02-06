@@ -81,18 +81,13 @@ def _vc_policer_status(vc: VirtualCircuitBlockProvisioning) -> str:
 
 
 def _saps_to_nodes(saps: list[SAPBlockProvisioning]) -> str:
-    return '-'.join(sorted(list(set([sap.port.node.node_name for sap in saps]))))
+    return "-".join(sorted(list(set([sap.port.node.node_name for sap in saps]))))
 
 
 @description.register
 def _(l2vpn: L2vpnProvisioning) -> str:
     vc = l2vpn.virtual_circuit
-    return (
-        f"{l2vpn.product.tag} "
-        f"{vc.speed} Mbit/s "
-        f"({_saps_to_nodes(vc.saps)})"
-        f"{_vc_policer_status(vc)}"
-    )
+    return f"{l2vpn.product.tag} {vc.speed} Mbit/s ({_saps_to_nodes(vc.saps)}){_vc_policer_status(vc)}"
 
 
 @description.register
@@ -105,12 +100,8 @@ def _(nsistp: NsistpProvisioning) -> str:
         f"{nsistp.nsistp.bandwidth} Mbit/s"
     )
 
+
 @description.register
 def _(nsip2p: Nsip2pProvisioning) -> str:
     vc = nsip2p.virtual_circuit
-    return (
-        f"{nsip2p.product.tag} "
-        f"{vc.speed} Mbit/s"
-        f"({_saps_to_nodes(vc.saps)})"
-        f"{_vc_policer_status(vc)}"
-    )
+    return f"{nsip2p.product.tag} {vc.speed} Mbit/s({_saps_to_nodes(vc.saps)}){_vc_policer_status(vc)}"

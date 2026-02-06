@@ -14,9 +14,9 @@
 
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import validate_workflow
-from pydantic_forms.types import State
 
 from products.product_types.core_link import CoreLink
+from pydantic_forms.types import State
 
 
 @step("validate core link in IMS")

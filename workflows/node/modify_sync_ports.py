@@ -19,9 +19,9 @@ from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import modify_initial_input_form_generator, modify_workflow
-from pydantic_forms.types import State
 
 from products.product_types.node import Node
+from pydantic_forms.types import State
 from services import netbox
 
 logger = structlog.get_logger(__name__)
@@ -37,7 +37,7 @@ def get_node_interface_list(node_name: str) -> List[Tuple[str, str, int]]:
     :return: list of interface tuples with name, type, and speed (kbps) details
     """
     ten_gig_interfaces = [(f"ethernet-1/{i}", "10gbase-x-xfp", 10000000) for i in range(10)]
-    hundred_gig_interfaces = [(f"ethernet-1/{i+10}", "100gbase-x-cfp", 100000000) for i in range(4)]
+    hundred_gig_interfaces = [(f"ethernet-1/{i + 10}", "100gbase-x-cfp", 100000000) for i in range(4)]
     return ten_gig_interfaces + hundred_gig_interfaces
 
 

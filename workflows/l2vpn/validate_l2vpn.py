@@ -13,9 +13,9 @@
 
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import validate_workflow
-from pydantic_forms.types import State
 
 from products.product_types.l2vpn import L2vpn
+from pydantic_forms.types import State
 
 
 @step("validate L2VPN in IMS")

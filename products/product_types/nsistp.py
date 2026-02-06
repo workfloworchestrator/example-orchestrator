@@ -12,10 +12,10 @@
 # limitations under the License.
 
 
-from nwastdlib.vlans import VlanRanges
 from orchestrator.domain.base import SubscriptionModel
 from orchestrator.types import SubscriptionLifecycle
 
+from nwastdlib.vlans import VlanRanges
 from products.product_blocks.nsistp import NsistpBlock, NsistpBlockInactive, NsistpBlockProvisioning
 
 

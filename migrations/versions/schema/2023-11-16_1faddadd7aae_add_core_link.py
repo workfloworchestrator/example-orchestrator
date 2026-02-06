@@ -5,6 +5,7 @@ Revises: c044b0da4126
 Create Date: 2023-11-16 16:40:52.193565
 
 """
+
 from uuid import uuid4
 
 from alembic import op

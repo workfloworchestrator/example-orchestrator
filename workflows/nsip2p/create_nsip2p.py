@@ -14,9 +14,9 @@
 import uuid
 from functools import partial
 from random import randrange
+from typing import Annotated, TypeAlias, cast
 
 from more_itertools import unzip
-from nwastdlib.vlans import VlanRanges
 from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
@@ -24,23 +24,30 @@ from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
 from pydantic import AfterValidator, ConfigDict
 from pydantic_core.core_schema import ValidationInfo
-from pydantic_forms.core import FormPage
-from pydantic_forms.types import FormGenerator, State, UUIDstr
-from pydantic_forms.validators import Choice
-from typing import Annotated, TypeAlias, cast
 
+from nwastdlib.vlans import VlanRanges
 from products.product_blocks.sap import SAPBlockInactive
 from products.product_types.nsip2p import Nsip2pInactive, Nsip2pProvisioning
 from products.product_types.port import Port
 from products.services.description import description
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State, UUIDstr
+from pydantic_forms.validators import Choice
 from workflows.l2vpn.shared.forms import ports_selector
-from workflows.shared import validate_vlan, validate_vlan_reserved_by_product, validate_vlan_not_used_by_product, \
-    update_ports_in_netbox, create_saps_in_netbox, create_l2vpn_in_netbox, create_l2vpn_terminations_in_netbox
+from workflows.shared import (
+    create_l2vpn_in_netbox,
+    create_l2vpn_terminations_in_netbox,
+    create_saps_in_netbox,
+    update_ports_in_netbox,
+    validate_vlan,
+    validate_vlan_not_used_by_product,
+    validate_vlan_reserved_by_product,
+)
 
 
 def validate_single_vlan(vlan: VlanRanges, info: ValidationInfo) -> VlanRanges:
     if not vlan.is_single_vlan:
-        raise ValueError(f"Only one VLAN may be selected per port for NSIP2P")
+        raise ValueError("Only one VLAN may be selected per port for NSIP2P")
     return vlan
 
 
@@ -53,9 +60,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 
     user_input = yield CreateNsip2pForm
     user_input_dict = user_input.model_dump()
-    PortsChoiceList: TypeAlias = cast(
-        type[Choice], ports_selector(2)
-    )
+    PortsChoiceList: TypeAlias = cast(type[Choice], ports_selector(2))
 
     # Validation: VLAN must be reserved by NSISTP and not used by another NSIP2P
     _validate_vlan_reserved_by_nsistp = partial(
@@ -166,8 +171,10 @@ def update_vlans_on_ports(subscription: Nsip2pProvisioning) -> State:
     payloads = update_ports_in_netbox(saps)
     return {"payloads": payloads}
 
+
 # Provisioning steps: reuse/adapt L2VPN steps, but only for 2 SAPs and single VLAN per port
 # If further customization is needed for NSIP2P, add/override steps here
+
 
 @create_workflow("Create NSIP2P", initial_input_form=initial_input_form_generator)
 def create_nsip2p() -> StepList:

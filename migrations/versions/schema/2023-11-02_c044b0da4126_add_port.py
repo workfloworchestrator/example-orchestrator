@@ -5,6 +5,7 @@ Revises: a84ca2e5e4db
 Create Date: 2023-11-02 10:46:33.372496
 
 """
+
 from uuid import uuid4
 
 from alembic import op

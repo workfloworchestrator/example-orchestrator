@@ -7,6 +7,7 @@ Create Date: 2025-08-28 13:02:03.796540
 """
 
 from alembic import op
+from orchestrator.migrations.helpers import create_workflow, delete_workflow
 
 # revision identifiers, used by Alembic.
 revision = "0e8d17ce0f06"
@@ -14,8 +15,6 @@ down_revision = "bc54616fefcf"
 branch_labels = None
 depends_on = None
 
-
-from orchestrator.migrations.helpers import create_workflow, delete_workflow
 
 new_workflows = [
     {
