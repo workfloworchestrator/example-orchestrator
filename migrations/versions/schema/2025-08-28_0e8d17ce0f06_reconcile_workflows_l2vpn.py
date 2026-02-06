@@ -16,7 +16,6 @@ branch_labels = None
 depends_on = None
 
 
-
 new_workflows = [
     {
         "name": "reconcile_l2vpn",

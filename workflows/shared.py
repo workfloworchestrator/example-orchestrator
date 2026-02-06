@@ -223,9 +223,7 @@ def validate_vlan_not_in_use(
 
     if current:
         for subscription_id in subscription_ids:
-            current_selected_service_port = filter(
-                lambda c: str(c[port_field_name]) == str(subscription_id), current
-            )
+            current_selected_service_port = filter(lambda c: str(c[port_field_name]) == str(subscription_id), current)
             current_selected_vlans = list(map(operator.itemgetter("vlan"), current_selected_service_port))
             for current_selected_vlan in current_selected_vlans:
                 if not current_selected_vlan:
@@ -252,8 +250,7 @@ def find_allocated_vlans(subscription_id: UUID | UUIDstr) -> VlanRanges:
         )
         .join(
             SubscriptionInstanceRelationTable,
-            SubscriptionInstanceValueTable.subscription_instance_id
-            == SubscriptionInstanceRelationTable.in_use_by_id,
+            SubscriptionInstanceValueTable.subscription_instance_id == SubscriptionInstanceRelationTable.in_use_by_id,
         )
         .join(
             SubscriptionInstanceTable,
@@ -290,15 +287,12 @@ def find_allocated_vlans_for_product(subscription_id: UUID | UUIDstr, product_ty
             ResourceTypeTable,
             SubscriptionInstanceValueTable.resource_type_id == ResourceTypeTable.resource_type_id,
         )
-        .join(
-            sap_si,
-            SubscriptionInstanceValueTable.subscription_instance_id == sap_si.subscription_instance_id
-        )
+        .join(sap_si, SubscriptionInstanceValueTable.subscription_instance_id == sap_si.subscription_instance_id)
         .join(sap_sub, sap_si.subscription_id == sap_sub.subscription_id)
         .join(sap_prod, sap_sub.product_id == sap_prod.product_id)
         .join(
             SubscriptionInstanceRelationTable,
-            sap_si.subscription_instance_id == SubscriptionInstanceRelationTable.in_use_by_id
+            sap_si.subscription_instance_id == SubscriptionInstanceRelationTable.in_use_by_id,
         )
         .join(
             port_si,
@@ -308,9 +302,7 @@ def find_allocated_vlans_for_product(subscription_id: UUID | UUIDstr, product_ty
             port_si.subscription_id == subscription_id,
             ResourceTypeTable.resource_type == "vlan",
             sap_prod.product_type == product_type,
-            sap_sub.status.in_(
-                [SubscriptionLifecycle.PROVISIONING, SubscriptionLifecycle.ACTIVE]
-            ),
+            sap_sub.status.in_([SubscriptionLifecycle.PROVISIONING, SubscriptionLifecycle.ACTIVE]),
         )
     )
 
@@ -321,6 +313,7 @@ def find_allocated_vlans_for_product(subscription_id: UUID | UUIDstr, product_ty
 
     logger.debug("Found VLAN values for product", values=values, product_type=product_type)
     return VlanRanges(",".join(values))
+
 
 def _get_subscription(subscription_id: UUID | UUIDstr) -> SubscriptionTable:
     return db.session.scalar(select(SubscriptionTable).where(SubscriptionTable.subscription_id == subscription_id))
@@ -337,15 +330,13 @@ def validate_vlan_reserved_by_product(
     if not (subscription_ids := _get_subscription_ids_from_info(info, port_field_name)):
         return vlan
 
-
     logger.info("validation info data", data=info.data)
     for subscription_id in subscription_ids:
         reserved_vlans = find_allocated_vlans_for_product(subscription_id, product_type)
         if not _vlan_completely_in_vlan_range(vlan, reserved_vlans):
             sub = _get_subscription(subscription_id)
             raise ValueError(
-                f"VLAN(s) {vlan} not reserved by {product_type} on {sub.description}. "
-                 f"Available vlans: {reserved_vlans}"
+                f"VLAN(s) {vlan} not reserved by {product_type} on {sub.description}. Available vlans: {reserved_vlans}"
             )
 
     return vlan
@@ -369,9 +360,7 @@ def validate_vlan_not_used_by_product(
 
     if current:
         for subscription_id in subscription_ids:
-            current_selected_service_port = filter(
-                lambda c: str(c[port_field_name]) == str(subscription_id), current
-            )
+            current_selected_service_port = filter(lambda c: str(c[port_field_name]) == str(subscription_id), current)
             current_selected_vlans = list(map(operator.itemgetter("vlan"), current_selected_service_port))
             for current_selected_vlan in current_selected_vlans:
                 if not current_selected_vlan:
@@ -401,9 +390,9 @@ def update_ports_in_netbox(saps: list[SAPBlockProvisioning]) -> list[netbox.Inte
     return [update_port(i) for i in port_subscriptions]
 
 
-def create_saps_in_netbox(saps: list[SAPBlockProvisioning], subscription: SubscriptionModel) -> list[
-    tuple[netbox.VlanGroupPayload, netbox.VlansPayload]
-]:
+def create_saps_in_netbox(
+    saps: list[SAPBlockProvisioning], subscription: SubscriptionModel
+) -> list[tuple[netbox.VlanGroupPayload, netbox.VlansPayload]]:
     """Provision the SAPs in Netbox and return the VlanGroup and Vlan payloads.
 
     Side Effects:
@@ -420,7 +409,9 @@ def create_saps_in_netbox(saps: list[SAPBlockProvisioning], subscription: Subscr
     return [create_sap(i) for i in saps]
 
 
-def create_l2vpn_in_netbox(vc: VirtualCircuitBlockProvisioning, subscription: SubscriptionModel) -> tuple[int, netbox.L2vpnPayload]:
+def create_l2vpn_in_netbox(
+    vc: VirtualCircuitBlockProvisioning, subscription: SubscriptionModel
+) -> tuple[int, netbox.L2vpnPayload]:
     """Provision the Virtual Circuit in Netbox and return the L2vpn payload."""
     payload: netbox.L2vpnPayload = build_payload(vc, subscription)
 

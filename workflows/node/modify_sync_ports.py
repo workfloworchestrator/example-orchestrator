@@ -37,7 +37,7 @@ def get_node_interface_list(node_name: str) -> List[Tuple[str, str, int]]:
     :return: list of interface tuples with name, type, and speed (kbps) details
     """
     ten_gig_interfaces = [(f"ethernet-1/{i}", "10gbase-x-xfp", 10000000) for i in range(10)]
-    hundred_gig_interfaces = [(f"ethernet-1/{i+10}", "100gbase-x-cfp", 100000000) for i in range(4)]
+    hundred_gig_interfaces = [(f"ethernet-1/{i + 10}", "100gbase-x-cfp", 100000000) for i in range(4)]
     return ten_gig_interfaces + hundred_gig_interfaces
 
 

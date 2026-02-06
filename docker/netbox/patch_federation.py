@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-NETBOX_ROOT = Path('/opt/netbox/netbox')
+NETBOX_ROOT = Path("/opt/netbox/netbox")
 
 resolve_reference = '''\
     @classmethod
@@ -19,7 +19,7 @@ def insert_import(text: str, import_stmt: str) -> str:
 
 
 def patch_types():
-    file = NETBOX_ROOT / 'dcim/graphql/types.py'
+    file = NETBOX_ROOT / "dcim/graphql/types.py"
     text = file.open().read()
 
     text = insert_import(text, "from strawberry.federation.schema_directives import Key")
@@ -34,21 +34,21 @@ def patch_types():
         text = re.sub(regex_find_class, rf"\1{method}\n", text, count=1, flags=re.DOTALL)
 
         # Add directives to the class decorator
-        regex_find_decorator  = rf"(@strawberry_django.type\(\n\s+models\.{model_name},)"
+        regex_find_decorator = rf"(@strawberry_django.type\(\n\s+models\.{model_name},)"
         text = re.sub(regex_find_decorator, rf"\1 {type_directives}", text, count=1)
 
-    with file.open(mode='w') as f:
+    with file.open(mode="w") as f:
         f.write(text)
 
 
 def patch_subscription_query():
-    file = NETBOX_ROOT / 'extras/graphql/schema.py'
+    file = NETBOX_ROOT / "extras/graphql/schema.py"
     text = file.open().read()
 
     text = re.sub("subscription:", "nb_subscription:", text, count=1)
     text = re.sub("subscription_list:", "nb_subscription_list:", text, count=1)
 
-    with file.open(mode='w') as f:
+    with file.open(mode="w") as f:
         f.write(text)
 
 
@@ -60,5 +60,5 @@ def main():
     patch_subscription_query()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

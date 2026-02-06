@@ -56,11 +56,11 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
     user_input = yield CreateL2vpnForm
     user_input_dict = user_input.model_dump()
     PortsChoiceList: TypeAlias = cast(
-        type[Choice], ports_selector(AllowedNumberOfL2vpnPorts(user_input_dict["number_of_ports"]))  # noqa: F821
+        type[Choice],
+        ports_selector(AllowedNumberOfL2vpnPorts(user_input_dict["number_of_ports"])),  # noqa: F821
     )
 
-    _validate_vlan_not_in_use = partial(validate_vlan_not_in_use,
-                                        port_field_name="ports")
+    _validate_vlan_not_in_use = partial(validate_vlan_not_in_use, port_field_name="ports")
 
     class SelectPortsForm(FormPage):
         model_config = ConfigDict(title=product_name)
@@ -166,12 +166,12 @@ def provision_l2vpn_in_nrm(subscription: L2vpnProvisioning) -> State:
 @create_workflow("Create l2vpn", initial_input_form=initial_input_form_generator)
 def create_l2vpn() -> StepList:
     return (
-            begin
-            >> construct_l2vpn_model
-            >> store_process_subscription(Target.CREATE)
-            >> ims_create_vlans
-            >> ims_create_l2vpn
-            >> ims_create_l2vpn_terminations
-            >> provision_l2vpn_in_nrm
-            >> update_vlans_on_ports
+        begin
+        >> construct_l2vpn_model
+        >> store_process_subscription(Target.CREATE)
+        >> ims_create_vlans
+        >> ims_create_l2vpn
+        >> ims_create_l2vpn_terminations
+        >> provision_l2vpn_in_nrm
+        >> update_vlans_on_ports
     )

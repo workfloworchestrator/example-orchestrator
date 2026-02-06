@@ -69,4 +69,3 @@ def modify_nsip2p() -> StepList:
 @reconcile_workflow("Reconcile NSIP2P")
 def reconcile_nsip2p() -> StepList:
     return begin >> update_nsip2p_in_external_systems
-

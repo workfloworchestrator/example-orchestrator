@@ -60,9 +60,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 
     user_input = yield CreateNsip2pForm
     user_input_dict = user_input.model_dump()
-    PortsChoiceList: TypeAlias = cast(
-        type[Choice], ports_selector(2)
-    )
+    PortsChoiceList: TypeAlias = cast(type[Choice], ports_selector(2))
 
     # Validation: VLAN must be reserved by NSISTP and not used by another NSIP2P
     _validate_vlan_reserved_by_nsistp = partial(
@@ -173,8 +171,10 @@ def update_vlans_on_ports(subscription: Nsip2pProvisioning) -> State:
     payloads = update_ports_in_netbox(saps)
     return {"payloads": payloads}
 
+
 # Provisioning steps: reuse/adapt L2VPN steps, but only for 2 SAPs and single VLAN per port
 # If further customization is needed for NSIP2P, add/override steps here
+
 
 @create_workflow("Create NSIP2P", initial_input_form=initial_input_form_generator)
 def create_nsip2p() -> StepList:

@@ -42,4 +42,3 @@ class Nsip2pProvisioning(Nsip2pInactive, lifecycle=[SubscriptionLifecycle.PROVIS
 
 class Nsip2p(Nsip2pProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
     virtual_circuit: VirtualCircuitBlock
-

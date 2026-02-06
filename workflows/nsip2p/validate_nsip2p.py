@@ -27,4 +27,3 @@ def validate_nsip2p_in_ims(subscription: Nsip2p) -> State:
 @validate_workflow("Validate NSIP2P")
 def validate_nsip2p() -> StepList:
     return begin >> validate_nsip2p_in_ims
-
