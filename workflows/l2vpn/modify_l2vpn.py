@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-from orchestrator.workflow import StepList, begin, step
+from orchestrator.workflow import StepList, begin
 from orchestrator.workflows.utils import ensure_provisioning_status, modify_workflow, reconcile_workflow
 
 from products.product_types.l2vpn import L2vpn, L2vpnProvisioning
