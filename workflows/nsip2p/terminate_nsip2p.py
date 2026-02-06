@@ -1,4 +1,4 @@
-# Copyright 2019-2023 SURF.
+# Copyright 2019-2026 SURF, Geant.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,40 +11,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+from orchestrator.forms import FormPage
+from orchestrator.forms.validators import DisplaySubscription
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import terminate_workflow
-from pydantic_forms.core import FormPage
 from pydantic_forms.types import InputForm, UUIDstr
-from pydantic_forms.validators import DisplaySubscription
 
-from products.product_types.l2vpn import L2vpn
+from products import Nsip2p
 from workflows.shared import remove_saps_in_netbox, remove_l2vpn_in_netbox
 
 
-def terminate_initial_input_form_generator(subscription_id: UUIDstr) -> InputForm:
+def terminate_initial_input_form_generator(subscription_id: UUIDstr, customer_id: UUIDstr) -> InputForm:
     temp_subscription_id = subscription_id
 
-    class TerminateForm(FormPage):
+    class TerminateNsip2pForm(FormPage):
         subscription_id: DisplaySubscription = temp_subscription_id  # type: ignore
 
-    return TerminateForm
+    return TerminateNsip2pForm
 
 
-@step("Remove L2VPN from IMS")
-def ims_remove_l2vpn(subscription: L2vpn) -> None:
+@step("Remove NSIP2P from IMS")
+def ims_remove_nsip2p(subscription: Nsip2p) -> None:
     vc = subscription.virtual_circuit
 
     remove_l2vpn_in_netbox(vc)
 
 
 @step("Remove VLANs from IMS")
-def ims_remove_vlans(subscription: L2vpn) -> None:
+def ims_remove_vlans(subscription: Nsip2p) -> None:
     saps = subscription.virtual_circuit.saps
 
     remove_saps_in_netbox(saps)
 
 
-@terminate_workflow("Terminate l2vpn", initial_input_form=terminate_initial_input_form_generator)
-def terminate_l2vpn() -> StepList:
-    return begin >> ims_remove_l2vpn >> ims_remove_vlans
+@terminate_workflow("Terminate NSIP2P", initial_input_form=terminate_initial_input_form_generator)
+def terminate_nsip2p() -> StepList:
+    return begin >> ims_remove_nsip2p >> ims_remove_vlans

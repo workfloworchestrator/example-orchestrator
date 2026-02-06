@@ -4,7 +4,7 @@ version = "0.1.0"
 requires-python = ">=3.12,<3.14"
 dependencies = [
   "deepdiff==8.6.1",
-  "orchestrator-core~=4.6.0",
+  "orchestrator-core==4.7.1",
   "pynetbox==7.4.1",
   "rich==13.9.4",
 ]
@@ -53,3 +53,8 @@ indent-width = 4
 
 # Assume Python 3.9
 target-version = "py313"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.0",
+]
