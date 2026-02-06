@@ -50,7 +50,8 @@ exclude = [
     "docker/netbox/configuration/**",
 ]
 select = [
-    "I",
+    "F", # pyflakes
+    "I", # isort
 ]
 
 [tool.ruff.lint.flake8-tidy-imports]
