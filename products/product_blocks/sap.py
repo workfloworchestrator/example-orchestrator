@@ -12,11 +12,11 @@
 # limitations under the License.
 
 
-from nwastdlib.vlans import VlanRanges
 from orchestrator.domain.base import ProductBlockModel
 from orchestrator.types import SubscriptionLifecycle
 from pydantic import computed_field
 
+from nwastdlib.vlans import VlanRanges
 from products.product_blocks.port import PortBlock, PortBlockInactive, PortBlockProvisioning
 
 

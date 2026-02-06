@@ -14,29 +14,35 @@
 
 import uuid
 from functools import partial
+from random import randrange
+from typing import Annotated, TypeAlias, cast
 
 from more_itertools.more import unzip
-from nwastdlib.vlans import VlanRanges
 from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
 from pydantic import AfterValidator, ConfigDict
-from pydantic_forms.core import FormPage
-from pydantic_forms.types import FormGenerator, State, UUIDstr
-from pydantic_forms.validators import Choice
-from random import randrange
-from typing import Annotated, TypeAlias, cast
 
+from nwastdlib.vlans import VlanRanges
 from products.product_blocks.sap import SAPBlockInactive
 from products.product_types.l2vpn import L2vpnInactive, L2vpnProvisioning
 from products.product_types.port import Port
 from products.services.description import description
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State, UUIDstr
+from pydantic_forms.validators import Choice
 from workflows.l2vpn.shared.forms import ports_selector
-from workflows.shared import AllowedNumberOfL2vpnPorts, validate_vlan, \
-    validate_vlan_not_in_use, update_ports_in_netbox, create_saps_in_netbox, create_l2vpn_in_netbox, \
-    create_l2vpn_terminations_in_netbox
+from workflows.shared import (
+    AllowedNumberOfL2vpnPorts,
+    create_l2vpn_in_netbox,
+    create_l2vpn_terminations_in_netbox,
+    create_saps_in_netbox,
+    update_ports_in_netbox,
+    validate_vlan,
+    validate_vlan_not_in_use,
+)
 
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:

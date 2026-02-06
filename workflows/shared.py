@@ -19,8 +19,6 @@ from uuid import UUID
 import structlog
 from annotated_types import Ge, Le, doc
 from deepdiff import DeepDiff
-from more_itertools import flatten
-from nwastdlib.vlans import VlanRanges
 from orchestrator.db import (
     ProductTable,
     ResourceTypeTable,
@@ -36,19 +34,19 @@ from orchestrator.services import subscriptions
 from orchestrator.types import SubscriptionLifecycle
 from pydantic import ConfigDict
 from pydantic_core.core_schema import ValidationInfo
-from pydantic_forms.core import FormPage
-from pydantic_forms.types import SummaryData, UUIDstr, State
-from pydantic_forms.validators import Choice, MigrationSummary, migration_summary
 from sqlalchemy import select
 from sqlalchemy.orm import aliased
 
+from nwastdlib.vlans import VlanRanges
 from products import Port
-from products.product_blocks.sap import SAPBlockProvisioning, SAPBlock
-from products.product_blocks.virtual_circuit import VirtualCircuitBlockProvisioning, VirtualCircuitBlock
-
+from products.product_blocks.sap import SAPBlock, SAPBlockProvisioning
+from products.product_blocks.virtual_circuit import VirtualCircuitBlock, VirtualCircuitBlockProvisioning
 from products.product_types.node import Node
 from products.services.netbox.netbox import build_payload
 from products.services.netbox.payload.sap import build_sap_vlan_group_payload
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import State, SummaryData, UUIDstr
+from pydantic_forms.validators import Choice, MigrationSummary, migration_summary
 from services import netbox
 from services.netbox import L2vpnTerminationPayload
 

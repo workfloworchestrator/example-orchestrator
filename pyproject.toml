@@ -44,6 +44,13 @@ line-length = 120
 indent-width = 4
 target-version = "py313"
 
+[tool.ruff.lint]
+exclude = [
+    "docker/netbox/configuration/**",
+]
+select = [
+    "I",
+]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"

@@ -15,9 +15,9 @@
 from orchestrator import OrchestratorCore
 from orchestrator.settings import AppSettings
 
-from graphql_federation import CUSTOM_GRAPHQL_MODELS
 import products  # noqa: F401  Side-effects
 import workflows  # noqa: F401  Side-effects
+from graphql_federation import CUSTOM_GRAPHQL_MODELS
 
 app = OrchestratorCore(base_settings=AppSettings())
 app.register_graphql(graphql_models=CUSTOM_GRAPHQL_MODELS)

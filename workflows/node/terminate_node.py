@@ -14,11 +14,11 @@
 
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import terminate_workflow
+
+from products.product_types.node import Node
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import InputForm, State, UUIDstr
 from pydantic_forms.validators import DisplaySubscription
-
-from products.product_types.node import Node
 from services import netbox
 
 

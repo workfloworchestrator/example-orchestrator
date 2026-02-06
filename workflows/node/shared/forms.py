@@ -12,9 +12,8 @@
 # limitations under the License.
 from typing import TypeAlias, cast
 
-from pydantic_forms.validators import Choice
-
 from products.product_blocks.shared.types import NodeStatus
+from pydantic_forms.validators import Choice
 from services import netbox
 
 

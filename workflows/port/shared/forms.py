@@ -12,9 +12,8 @@
 # limitations under the License.
 from typing import TypeAlias, cast
 
-from pydantic_forms.validators import Choice
-
 from products.product_blocks.port import PortMode
+from pydantic_forms.validators import Choice
 
 
 def port_mode_selector() -> Choice:

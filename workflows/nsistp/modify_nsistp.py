@@ -17,11 +17,11 @@ from orchestrator.forms import FormPage
 from orchestrator.forms.validators import Divider
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import ensure_provisioning_status, modify_workflow
-from pydantic_forms.types import FormGenerator, State, UUIDstr
-from pydantic_forms.validators import read_only_field
 
 from products.product_types.nsistp import Nsistp, NsistpProvisioning
 from products.services.description import description
+from pydantic_forms.types import FormGenerator, State, UUIDstr
+from pydantic_forms.validators import read_only_field
 from workflows.nsistp.shared.forms import IsAlias, ServiceSpeed, StpDescription, Topology
 from workflows.shared import modify_summary_form
 

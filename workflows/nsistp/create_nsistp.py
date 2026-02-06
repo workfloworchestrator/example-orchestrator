@@ -17,7 +17,6 @@ from functools import partial
 from typing import Annotated, TypeAlias, cast
 
 import structlog
-from nwastdlib.vlans import VlanRanges
 from orchestrator.forms import FormPage
 from orchestrator.forms.validators import Divider, Label
 from orchestrator.targets import Target
@@ -26,11 +25,12 @@ from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
 from pydantic import AfterValidator, ConfigDict, model_validator
-from pydantic_forms.types import FormGenerator, State, UUIDstr
-from pydantic_forms.validators import Choice
 
+from nwastdlib.vlans import VlanRanges
 from products.product_types.nsistp import NsistpInactive, NsistpProvisioning
 from products.services.description import description
+from pydantic_forms.types import FormGenerator, State, UUIDstr
+from pydantic_forms.validators import Choice
 from workflows.nsistp.shared.forms import (
     IsAlias,
     ServiceSpeed,
@@ -41,8 +41,7 @@ from workflows.nsistp.shared.forms import (
     port_selector,
     validate_both_aliases_empty_or_not,
 )
-from workflows.shared import validate_vlan, validate_vlan_not_in_use
-from workflows.shared import create_summary_form
+from workflows.shared import create_summary_form, validate_vlan, validate_vlan_not_in_use
 
 logger = structlog.get_logger(__name__)
 

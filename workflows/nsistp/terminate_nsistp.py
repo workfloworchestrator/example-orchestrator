@@ -17,8 +17,8 @@ from orchestrator.forms import FormPage
 from orchestrator.forms.validators import DisplaySubscription
 from orchestrator.workflow import StepList, begin
 from orchestrator.workflows.utils import terminate_workflow
-from pydantic_forms.types import InputForm, UUIDstr
 
+from pydantic_forms.types import InputForm, UUIDstr
 
 logger = structlog.get_logger(__name__)
 

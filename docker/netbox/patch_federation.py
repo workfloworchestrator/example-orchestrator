@@ -10,7 +10,7 @@ resolve_reference = '''\
         return models.{model_name}.objects.get(pk=id)
 '''
 
-type_directives = f"directives=[Key(fields=key, resolvable=UNSET) for key in ['id']],"
+type_directives = "directives=[Key(fields=key, resolvable=UNSET) for key in ['id']],"
 
 
 def insert_import(text: str, import_stmt: str) -> str:

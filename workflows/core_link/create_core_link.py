@@ -25,14 +25,14 @@ from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
 from pydantic import ConfigDict, model_validator
-from pydantic_forms.core import FormPage
-from pydantic_forms.types import FormGenerator, State, UUIDstr
-from pydantic_forms.validators import Choice
 
 from products.product_types.core_link import CoreLinkInactive, CoreLinkProvisioning
 from products.product_types.node import Node
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
+from pydantic_forms.core import FormPage
+from pydantic_forms.types import FormGenerator, State, UUIDstr
+from pydantic_forms.validators import Choice
 from services import netbox
 from services.lso_client import execute_playbook, lso_interaction
 from settings import settings

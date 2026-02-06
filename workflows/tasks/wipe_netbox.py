@@ -17,9 +17,9 @@ from orchestrator import workflow
 from orchestrator.targets import Target
 from orchestrator.workflow import StepList, done, init, step
 from pydantic import AfterValidator, ConfigDict
+
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State
-
 from services import netbox
 
 logger = structlog.get_logger(__name__)

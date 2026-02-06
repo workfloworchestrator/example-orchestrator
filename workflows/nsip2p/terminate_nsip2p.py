@@ -15,10 +15,10 @@ from orchestrator.forms import FormPage
 from orchestrator.forms.validators import DisplaySubscription
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import terminate_workflow
-from pydantic_forms.types import InputForm, UUIDstr
 
 from products import Nsip2p
-from workflows.shared import remove_saps_in_netbox, remove_l2vpn_in_netbox
+from pydantic_forms.types import InputForm, UUIDstr
+from workflows.shared import remove_l2vpn_in_netbox, remove_saps_in_netbox
 
 
 def terminate_initial_input_form_generator(subscription_id: UUIDstr, customer_id: UUIDstr) -> InputForm:
