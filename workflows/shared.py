@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import operator
+from collections.abc import Iterator
 from pprint import pformat
 from typing import Annotated, Generator, List, TypeAlias, cast
 from uuid import UUID
@@ -18,6 +19,7 @@ from uuid import UUID
 import structlog
 from annotated_types import Ge, Le, doc
 from deepdiff import DeepDiff
+from more_itertools import flatten
 from nwastdlib.vlans import VlanRanges
 from orchestrator.db import (
     ProductTable,
@@ -28,6 +30,7 @@ from orchestrator.db import (
     SubscriptionTable,
     db,
 )
+from orchestrator.domain import SubscriptionModel
 from orchestrator.domain.base import ProductBlockModel
 from orchestrator.services import subscriptions
 from orchestrator.types import SubscriptionLifecycle
@@ -39,8 +42,15 @@ from pydantic_forms.validators import Choice, MigrationSummary, migration_summar
 from sqlalchemy import select
 from sqlalchemy.orm import aliased
 
+from products import Port
+from products.product_blocks.sap import SAPBlockProvisioning
+from products.product_blocks.virtual_circuit import VirtualCircuitBlockProvisioning
+
 from products.product_types.node import Node
+from products.services.netbox.netbox import build_payload
+from products.services.netbox.payload.sap import build_sap_vlan_group_payload
 from services import netbox
+from services.netbox import L2vpnTerminationPayload
 
 logger = structlog.get_logger(__name__)
 
@@ -314,6 +324,9 @@ def find_allocated_vlans_for_product(subscription_id: UUID | UUIDstr, product_ty
     logger.debug("Found VLAN values for product", values=values, product_type=product_type)
     return VlanRanges(",".join(values))
 
+def _get_subscription(subscription_id: UUID | UUIDstr) -> SubscriptionTable:
+    return db.session.scalar(select(SubscriptionTable).where(SubscriptionTable.subscription_id == subscription_id))
+
 
 def validate_vlan_reserved_by_product(
     vlan: int | VlanRanges,
@@ -326,10 +339,16 @@ def validate_vlan_reserved_by_product(
     if not (subscription_ids := _get_subscription_ids_from_info(info, port_field_name)):
         return vlan
 
+
+    logger.info("validation info data", data=info.data)
     for subscription_id in subscription_ids:
         reserved_vlans = find_allocated_vlans_for_product(subscription_id, product_type)
         if not _vlan_completely_in_vlan_range(vlan, reserved_vlans):
-            raise ValueError(f"VLAN(s) {vlan} not reserved by {product_type} on port {subscription_id}")
+            sub = _get_subscription(subscription_id)
+            raise ValueError(
+                f"VLAN(s) {vlan} not reserved by {product_type} on {sub.description}. "
+                 f"Available vlans: {reserved_vlans}"
+            )
 
     return vlan
 
@@ -363,6 +382,74 @@ def validate_vlan_not_used_by_product(
                 used_vlans -= current_selected_vlan_range  # type: ignore[assignment]
 
     if _vlan_partially_in_vlan_range(vlan, used_vlans):
-        raise ValueError(f"VLAN(s) {vlan} already in use by {product_type}")
+        raise ValueError(f"VLAN(s) {vlan} already in use by {product_type}. Used vlans: {used_vlans}")
 
     return vlan
+
+
+def update_ports_in_netbox(saps: list[SAPBlockProvisioning]) -> list[netbox.InterfacePayload]:
+    """Reprovision the connected ports in Netbox and return the Interface payloads.
+
+    The VLANs from active SAPs will be provisioned in Netbox or removed otherwise.
+    """
+    port_subscription_ids = sorted({sap.port.owner_subscription_id for sap in saps})
+    port_subscriptions = [Port.from_subscription(i) for i in port_subscription_ids]
+
+    def update_port(port: Port) -> netbox.InterfacePayload:
+        payload = build_payload(port.port, port)
+        netbox.update(payload, id=port.port.ims_id)
+        return payload
+
+    return [update_port(i) for i in port_subscriptions]
+
+
+def create_saps_in_netbox(saps: list[SAPBlockProvisioning], subscription: SubscriptionModel) -> list[
+    tuple[netbox.VlanGroupPayload, netbox.VlansPayload]
+]:
+    """Provision the SAPs in Netbox and return the VlanGroup and Vlan payloads.
+
+    Side Effects:
+        - The sap.ims_id property is changed
+    """
+
+    def create_sap(sap: SAPBlockProvisioning) -> tuple[netbox.VlanGroupPayload, netbox.VlansPayload]:
+        vlan_group_payload = build_sap_vlan_group_payload(sap, subscription)
+        sap.ims_id = netbox.create(vlan_group_payload)  # Required for building vlan_payload
+        vlan_payload = build_payload(sap, subscription)
+        netbox.create(vlan_payload)
+        return vlan_group_payload, vlan_payload
+
+    return [create_sap(i) for i in saps]
+
+
+def create_l2vpn_in_netbox(vc: VirtualCircuitBlockProvisioning, subscription: SubscriptionModel) -> tuple[int, netbox.L2vpnPayload]:
+    """Provision the Virtual Circuit in Netbox and return the L2vpn payload."""
+    payload: netbox.L2vpnPayload = build_payload(vc, subscription)
+
+    # Example of implementing idempotency:
+    # If the l2vpn was already created but for some reason the calling workflow failed to save the reference to it,
+    # this check will prevent the workflow from trying (and failing) to create it again.
+    # We can rely on the name for uniqueness because it contains the subscription id.
+    if l2vpn := netbox.get_l2vpn(name=payload.name):
+        logger.debug("L2VPN already exists in Netbox", l2vpn=l2vpn)
+        return l2vpn.id, payload
+
+    ims_id = netbox.create(payload)
+    return ims_id, payload
+
+
+def create_l2vpn_terminations_in_netbox(vc: VirtualCircuitBlockProvisioning) -> list[L2vpnTerminationPayload]:
+    """Provision L2VPN terminations for the Virtual Circuit in Netbox and return the L2vpnTermination payloads."""
+    l2vpn = netbox.get_l2vpn(id=vc.ims_id)
+
+    def create_sap_payloads() -> Iterator[netbox.L2vpnTerminationPayload]:
+        for sap in vc.saps:
+            vlans = netbox.get_vlans(group_id=sap.ims_id)
+            for vlan in vlans:
+                yield netbox.L2vpnTerminationPayload(l2vpn=l2vpn.id, assigned_object_id=vlan.id)
+
+    payloads = list(create_sap_payloads())
+    for payload in payloads:
+        netbox.create(payload)
+
+    return payloads

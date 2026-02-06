@@ -18,9 +18,12 @@ from typing import Union
 from orchestrator.domain.base import ProductBlockModel, ProductModel, SubscriptionModel
 
 from products.product_blocks.core_port import CorePortBlockProvisioning
+from products.product_blocks.sap import SAPBlockProvisioning
+from products.product_blocks.virtual_circuit import VirtualCircuitBlockProvisioning
 from products.product_types.core_link import CoreLinkProvisioning
 from products.product_types.l2vpn import L2vpnProvisioning
 from products.product_types.node import NodeProvisioning
+from products.product_types.nsip2p import Nsip2pProvisioning
 from products.product_types.nsistp import NsistpProvisioning
 from products.product_types.port import PortProvisioning
 from utils.singledispatch import single_dispatch_base
@@ -73,13 +76,23 @@ def _(core_port: CorePortBlockProvisioning) -> str:
     return f"{core_port.name} {core_port.node.node_name} {core_port.port_name}"
 
 
+def _vc_policer_status(vc: VirtualCircuitBlockProvisioning) -> str:
+    return " (policer active)" if vc.speed_policer else ""
+
+
+def _saps_to_nodes(saps: list[SAPBlockProvisioning]) -> str:
+    return '-'.join(sorted(list(set([sap.port.node.node_name for sap in saps]))))
+
+
 @description.register
 def _(l2vpn: L2vpnProvisioning) -> str:
+    vc = l2vpn.virtual_circuit
     return (
         f"{l2vpn.product.tag} "
-        f"{l2vpn.virtual_circuit.speed} Mbit/s "
-        f"({'-'.join(sorted(list(set([sap.port.node.node_name for sap in l2vpn.virtual_circuit.saps]))))})"
-    ) + (" (policer active)" if l2vpn.virtual_circuit.speed_policer else "")
+        f"{vc.speed} Mbit/s "
+        f"({_saps_to_nodes(vc.saps)})"
+        f"{_vc_policer_status(vc)}"
+    )
 
 
 @description.register
@@ -90,4 +103,14 @@ def _(nsistp: NsistpProvisioning) -> str:
         f"topology {nsistp.nsistp.topology} "
         f"{nsistp.nsistp.sap.port.node.node_name} "
         f"{nsistp.nsistp.bandwidth} Mbit/s"
+    )
+
+@description.register
+def _(nsip2p: Nsip2pProvisioning) -> str:
+    vc = nsip2p.virtual_circuit
+    return (
+        f"{nsip2p.product.tag} "
+        f"{vc.speed} Mbit/s"
+        f"({_saps_to_nodes(vc.saps)})"
+        f"{_vc_policer_status(vc)}"
     )

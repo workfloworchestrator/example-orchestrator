@@ -13,6 +13,9 @@
 
 import uuid
 from functools import partial
+from random import randrange
+
+from more_itertools import unzip
 from nwastdlib.vlans import VlanRanges
 from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
@@ -20,6 +23,7 @@ from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
 from orchestrator.workflows.utils import create_workflow
 from pydantic import AfterValidator, ConfigDict
+from pydantic_core.core_schema import ValidationInfo
 from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Choice
@@ -29,9 +33,10 @@ from products.product_blocks.sap import SAPBlockInactive
 from products.product_types.nsip2p import Nsip2pInactive, Nsip2pProvisioning
 from products.product_types.port import Port
 from products.services.description import description
-from workflows.l2vpn.create_l2vpn import ims_create_vlans, ims_create_l2vpn, ims_create_l2vpn_terminations, update_vlans_on_ports, provision_l2vpn_in_nrm
 from workflows.l2vpn.shared.forms import ports_selector
 from workflows.shared import validate_vlan, validate_vlan_reserved_by_product, validate_vlan_not_used_by_product
+from workflows.shared import validate_vlan, validate_vlan_reserved_by_product, validate_vlan_not_used_by_product, \
+    update_ports_in_netbox, create_saps_in_netbox, create_l2vpn_in_netbox, create_l2vpn_terminations_in_netbox
 
 
 def initial_input_form_generator(product_name: str) -> FormGenerator:
@@ -119,6 +124,52 @@ def construct_nsip2p_model(
         "subscription_description": subscription.description,
     }
 
+
+@step("Create VLANs in IMS")
+def ims_create_vlans(subscription: Nsip2pProvisioning) -> State:
+    saps = subscription.virtual_circuit.saps
+
+    sap_payloads = create_saps_in_netbox(saps, subscription)
+    vlan_group_payloads, vlan_payloads = unzip(sap_payloads)
+
+    return {
+        "subscription": subscription,
+        "vlan_group_payloads": list(vlan_group_payloads),
+        "vlan_payloads": list(vlan_payloads),
+    }
+
+
+@step("Create NSIP2P in IMS")
+def ims_create_nsip2p(subscription: Nsip2pProvisioning) -> State:
+    vc = subscription.virtual_circuit
+
+    vc.ims_id, payload = create_l2vpn_in_netbox(vc, subscription)
+
+    return {"subscription": subscription, "payload": payload}
+
+
+@step("Create NSIP2P terminations in IMS")
+def ims_create_nsip2p_terminations(subscription: Nsip2pProvisioning) -> State:
+    vc = subscription.virtual_circuit
+
+    payloads = create_l2vpn_terminations_in_netbox(vc)
+
+    return {"payloads": payloads}
+
+
+@step("Provision NSIP2P in NRM")
+def provision_nsip2p_in_nrm(subscription: Nsip2pProvisioning) -> State:
+    """Dummy step that only creates a random NRM ID, replace with actual call to NRM."""
+    subscription.virtual_circuit.nrm_id = randrange(2**16)
+    return {"subscription": subscription}
+
+
+@step("Update VLANs on connected ports in IMS")
+def update_vlans_on_ports(subscription: Nsip2pProvisioning) -> State:
+    saps = subscription.virtual_circuit.saps
+    payloads = update_ports_in_netbox(saps)
+    return {"payloads": payloads}
+
 # Provisioning steps: reuse/adapt L2VPN steps, but only for 2 SAPs and single VLAN per port
 # If further customization is needed for NSIP2P, add/override steps here
 
@@ -129,8 +180,8 @@ def create_nsip2p() -> StepList:
         >> construct_nsip2p_model
         >> store_process_subscription(Target.CREATE)
         >> ims_create_vlans
-        >> ims_create_l2vpn
-        >> ims_create_l2vpn_terminations
-        >> provision_l2vpn_in_nrm
+        >> ims_create_nsip2p
+        >> ims_create_nsip2p_terminations
+        >> provision_nsip2p_in_nrm
         >> update_vlans_on_ports
     )
