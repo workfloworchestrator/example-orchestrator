@@ -9,13 +9,6 @@ dependencies = [
   "rich==13.9.4",
 ]
 
-[tool.black]
-line-length = 120
-
-[tool.isort]
-profile = "black"
-line_length = 120
-
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
 exclude = [
@@ -47,14 +40,27 @@ exclude = [
     "venv",
 ]
 
-# Same as Black.
 line-length = 120
 indent-width = 4
-
-# Assume Python 3.9
 target-version = "py313"
+
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-third-party = ["pynso", "pydantic"]
+known-first-party = [
+    "nwastdlib",
+    "oauth2_lib",
+    "pydantic_forms",
+]
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.5.1",
     "ruff>=0.15.0",
 ]
