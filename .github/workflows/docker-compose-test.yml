@@ -1,12 +1,13 @@
 name: Docker Compose Validation
 
 on:
-  pull_request:
-  push:
-    branches: [ main ]
+  workflow_run:
+    workflows: [Run pre-commit hooks]
+    types: [completed]
 
 jobs:
   validate-compose:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     name: Spin up and test health of services
     runs-on: ubuntu-latest
 
