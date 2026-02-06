@@ -29,7 +29,7 @@ def validate_node_in_ims(subscription: Node) -> State:
     actual = netbox.DevicePayload(
         site=device.site.id,
         device_type=device.device_type.id,
-        role=device.device_role.id,
+        role=device.role.id,
         name=device.name,
         status=device.status.value,
         primary_ip4=device.primary_ip4.id,
