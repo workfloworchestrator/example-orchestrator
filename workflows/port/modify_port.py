@@ -72,6 +72,6 @@ def update_port_in_nrm(subscription: Port) -> State:
     return {"subscription": subscription}
 
 
-@modify_workflow("Modify port", initial_input_form=initial_input_form_generator)
+@modify_workflow(initial_input_form=initial_input_form_generator)
 def modify_port() -> StepList:
     return begin >> update_subscription >> update_port_in_ims >> update_port_in_nrm

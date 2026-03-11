@@ -147,7 +147,7 @@ def provision_node_in_nrm(subscription: NodeProvisioning) -> State:
     return {"subscription": subscription}
 
 
-@create_workflow("Create node", initial_input_form=initial_input_form_generator)
+@create_workflow(initial_input_form=initial_input_form_generator)
 def create_node() -> StepList:
     return (
         begin

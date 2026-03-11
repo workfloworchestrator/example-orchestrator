@@ -214,7 +214,7 @@ def provision_core_link(
     return {"subscription": subscription}
 
 
-@create_workflow("Create core_link", initial_input_form=initial_input_form_generator)
+@create_workflow(initial_input_form=initial_input_form_generator)
 def create_core_link() -> StepList:
     return (
         begin

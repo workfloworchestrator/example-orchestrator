@@ -43,6 +43,6 @@ def validate_port_in_ims(subscription: Port) -> State:
     return {"payload": expected.dict()}
 
 
-@validate_workflow("Validate port")
+@validate_workflow()
 def validate_port() -> StepList:
     return begin >> validate_port_in_ims

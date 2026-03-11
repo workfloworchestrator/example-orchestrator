@@ -63,7 +63,7 @@ def update_interfaces(
     return {"interfaces_added": interfaces_added, "interfaces_deleted": interfaces_deleted}
 
 
-@modify_workflow("Update node interfaces", initial_input_form=modify_initial_input_form_generator)
+@modify_workflow(initial_input_form=modify_initial_input_form_generator)
 def modify_sync_ports() -> StepList:
     return (
         begin

@@ -163,7 +163,7 @@ def provision_l2vpn_in_nrm(subscription: L2vpnProvisioning) -> State:
     return {"subscription": subscription}
 
 
-@create_workflow("Create l2vpn", initial_input_form=initial_input_form_generator)
+@create_workflow(initial_input_form=initial_input_form_generator)
 def create_l2vpn() -> StepList:
     return (
         begin
