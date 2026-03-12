@@ -51,6 +51,8 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
 
         # organisation: OrganisationId
 
+        auto_add_interfaces: bool = True
+
         node_settings: Label
 
         type_id: NodeTypeChoice
