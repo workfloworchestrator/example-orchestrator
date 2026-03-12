@@ -13,7 +13,7 @@
 
 
 from orchestrator.types import SubscriptionLifecycle
-from orchestrator.workflow import StepList, begin, step
+from orchestrator.workflow import StepList, begin
 from orchestrator.workflows.steps import set_status
 from orchestrator.workflows.utils import modify_initial_input_form_generator, modify_workflow
 

@@ -36,7 +36,7 @@ from pydantic_forms.validators import Choice, Label
 from services import netbox
 from services.lso_client import execute_playbook, lso_interaction
 from workflows.node.shared.forms import NodeStatusChoice, node_role_selector, node_type_selector, site_selector
-from workflows.node.shared.steps import update_node_in_ims, if_auto_add_ifaces, update_interfaces
+from workflows.node.shared.steps import if_auto_add_ifaces, update_interfaces, update_node_in_ims
 from workflows.shared import create_summary_form
 
 

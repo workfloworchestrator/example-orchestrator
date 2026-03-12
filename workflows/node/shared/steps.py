@@ -10,15 +10,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import List, Tuple, Callable
+from typing import Callable, List, Tuple
 
-from orchestrator.workflow import step, StepList, conditional
+from orchestrator.workflow import StepList, conditional, step
 
 from products.product_types.node import Node, NodeProvisioning
 from products.services.netbox.netbox import build_payload
 from pydantic_forms.types import State
 from services import netbox
-
 
 _CHECK_AUTO_IFACES_FLAG = "auto_add_interfaces"
 if_auto_add_ifaces: Callable[..., StepList] = conditional(lambda state: state[_CHECK_AUTO_IFACES_FLAG])
@@ -48,7 +47,7 @@ def get_node_interface_list(node_name: str) -> List[Tuple[str, str, int]]:
 
 @step("Update interfaces")
 def update_interfaces(
-        subscription: NodeProvisioning,
+    subscription: NodeProvisioning,
 ) -> State:
     node_interfaces = set(get_node_interface_list(subscription.node.node_name))
     device = netbox.get_device(name=subscription.node.node_name)
