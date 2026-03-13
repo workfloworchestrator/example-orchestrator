@@ -3,6 +3,7 @@
     "fields": {
       "annihilate": "Are you sure you want to wipe the complete administration from Netbox?",
       "annihilate_info": "To continue, you have to check this box",
+      "auto_add_interfaces_info": "Auto administrate interfaces in IMS",
       "auto_negotiation": "Auto-Negotiation",
       "auto_negotiation_info": "Enable Ethernet Auto-Negotiation?",
       "lldp": "LLDP",

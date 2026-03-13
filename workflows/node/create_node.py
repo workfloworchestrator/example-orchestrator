@@ -1,4 +1,4 @@
-# Copyright 2019-2023 SURF.
+# Copyright 2019-2026 SURF.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -36,7 +36,7 @@ from pydantic_forms.validators import Choice, Label
 from services import netbox
 from services.lso_client import execute_playbook, lso_interaction
 from workflows.node.shared.forms import NodeStatusChoice, node_role_selector, node_type_selector, site_selector
-from workflows.node.shared.steps import update_node_in_ims
+from workflows.node.shared.steps import if_auto_add_ifaces, update_interfaces, update_node_in_ims
 from workflows.shared import create_summary_form
 
 
@@ -50,6 +50,8 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
         model_config = ConfigDict(title=product_name)
 
         # organisation: OrganisationId
+
+        auto_add_interfaces: bool = True
 
         node_settings: Label
 
@@ -158,4 +160,5 @@ def create_node() -> StepList:
         >> lso_interaction(provision_node)
         >> provision_node_in_nrm
         >> update_node_in_ims
+        >> if_auto_add_ifaces(update_interfaces)
     )
