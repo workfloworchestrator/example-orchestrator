@@ -29,6 +29,6 @@ def load_initial_state_nsistp(subscription: Nsistp) -> State:
     }
 
 
-@validate_workflow("Validate nsistp")
+@validate_workflow()
 def validate_nsistp() -> StepList:
     return begin >> load_initial_state_nsistp

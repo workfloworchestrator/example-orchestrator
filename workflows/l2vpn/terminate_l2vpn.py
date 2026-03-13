@@ -45,6 +45,6 @@ def ims_remove_vlans(subscription: L2vpn) -> None:
     remove_saps_in_netbox(saps)
 
 
-@terminate_workflow("Terminate l2vpn", initial_input_form=terminate_initial_input_form_generator)
+@terminate_workflow(initial_input_form=terminate_initial_input_form_generator)
 def terminate_l2vpn() -> StepList:
     return begin >> ims_remove_l2vpn >> ims_remove_vlans
