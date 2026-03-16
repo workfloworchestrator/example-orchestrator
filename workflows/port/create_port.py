@@ -151,7 +151,7 @@ def provision_port(
     return {"subscription": subscription}
 
 
-@create_workflow("Create port", initial_input_form=initial_input_form_generator)
+@create_workflow(initial_input_form=initial_input_form_generator)
 def create_port() -> StepList:
     return (
         begin

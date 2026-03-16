@@ -34,6 +34,6 @@ def validate_core_ports_in_ims(subscription: CoreLink) -> State:
     raise AssertionError("Not implemented yet")
 
 
-@validate_workflow("Validate core_link")
+@validate_workflow()
 def validate_core_link() -> StepList:
     return begin >> validate_core_link_in_ims >> validate_core_ports_in_ims

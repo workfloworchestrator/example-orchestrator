@@ -87,6 +87,6 @@ def update_node_in_nrm(subscription: Node) -> State:
     return {"subscription": subscription}
 
 
-@modify_workflow("Modify node", initial_input_form=initial_input_form_generator)
+@modify_workflow(initial_input_form=initial_input_form_generator)
 def modify_node() -> StepList:
     return begin >> update_subscription >> update_node_in_ims >> update_node_in_nrm

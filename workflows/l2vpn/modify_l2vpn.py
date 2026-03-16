@@ -63,7 +63,7 @@ def update_l2vpn_in_nrm(subscription: L2vpn) -> State:
 update_l2vpn_in_external_systems = begin >> update_l2vpn_in_nrm
 
 
-@modify_workflow("Modify l2vpn", initial_input_form=initial_input_form_generator)
+@modify_workflow(initial_input_form=initial_input_form_generator)
 def modify_l2vpn() -> StepList:
     return begin >> update_subscription >> update_l2vpn_in_external_systems
 

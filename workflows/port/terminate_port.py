@@ -42,6 +42,6 @@ def release_port(subscription: PortProvisioning) -> State:
     return {"subscription": subscription}
 
 
-@terminate_workflow("Terminate port", initial_input_form=terminate_initial_input_form_generator)
+@terminate_workflow(initial_input_form=terminate_initial_input_form_generator)
 def terminate_port() -> StepList:
     return begin >> set_status(SubscriptionLifecycle.PROVISIONING) >> release_port >> update_port_in_ims

@@ -55,6 +55,6 @@ def update_core_link_in_nrm(subscription: CoreLink) -> State:
     return {"subscription": subscription}
 
 
-@modify_workflow("Modify core_link", initial_input_form=initial_input_form_generator)
+@modify_workflow(initial_input_form=initial_input_form_generator)
 def modify_core_link() -> StepList:
     return begin >> update_subscription >> update_core_link_in_nrm
