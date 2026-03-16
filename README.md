@@ -1105,14 +1105,14 @@ Like a create workflow, the modify workflow also uses an initial input
 form but this time to only collect the values from the user that need to
 be changed. Usually, only a subset of the values may be changed. To
 assist the user, additional values can be shown in the input form using
-`ReadOnlyField`. In the example below, the name of the node is shown but
+`read_only_field`. In the example below, the name of the node is shown but
 cannot be changed, the node status can be changed and the dropdown is
 set to the current node status, and the node description is still
 optional.
 
 ```python
 class ModifyNodeForm(FormPage):
-    node_name: ReadOnlyField(port.node.node_name)
+    node_name: read_only_field(port.node.node_name)
     node_status: NodeStatusChoice = node.node_status
     node_description: str | None = node.node_description
 ```
