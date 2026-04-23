@@ -42,6 +42,6 @@ def validate_node_in_ims(subscription: Node) -> State:
     return {"payload": expected.dict()}
 
 
-@validate_workflow("Validate node")
+@validate_workflow()
 def validate_node() -> StepList:
     return begin >> validate_node_in_ims

@@ -136,6 +136,6 @@ def construct_nsistp_model(
     }
 
 
-@create_workflow("Create nsistp", initial_input_form=initial_input_form_generator)
+@create_workflow(initial_input_form=initial_input_form_generator)
 def create_nsistp() -> StepList:
     return begin >> construct_nsistp_model >> store_process_subscription(Target.CREATE)

@@ -17,6 +17,7 @@ import uuid
 from random import randrange
 from typing import TypeAlias, cast
 
+from orchestrator.forms import FormPage
 from orchestrator.services.products import get_product_by_id
 from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
@@ -30,7 +31,6 @@ from products.product_blocks.port import PortMode
 from products.product_types.node import Node
 from products.product_types.port import PortInactive, PortProvisioning
 from products.services.description import description
-from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Choice, Label
 from services import netbox
@@ -151,7 +151,7 @@ def provision_port(
     return {"subscription": subscription}
 
 
-@create_workflow("Create port", initial_input_form=initial_input_form_generator)
+@create_workflow(initial_input_form=initial_input_form_generator)
 def create_port() -> StepList:
     return (
         begin

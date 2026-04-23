@@ -30,6 +30,7 @@ from orchestrator.db import (
 )
 from orchestrator.domain import SubscriptionModel
 from orchestrator.domain.base import ProductBlockModel
+from orchestrator.forms import FormPage
 from orchestrator.services import subscriptions
 from orchestrator.types import SubscriptionLifecycle
 from pydantic import ConfigDict
@@ -44,7 +45,6 @@ from products.product_blocks.virtual_circuit import VirtualCircuitBlock, Virtual
 from products.product_types.node import Node
 from products.services.netbox.netbox import build_payload
 from products.services.netbox.payload.sap import build_sap_vlan_group_payload
-from pydantic_forms.core import FormPage
 from pydantic_forms.types import State, SummaryData, UUIDstr
 from pydantic_forms.validators import Choice, MigrationSummary, migration_summary
 from services import netbox

@@ -13,13 +13,13 @@
 
 import json
 
+from orchestrator.forms import FormPage
 from orchestrator.utils.json import json_dumps
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import terminate_workflow
 
 from products.product_types.core_link import CoreLink
 from products.services.netbox.netbox import build_payload
-from pydantic_forms.core import FormPage
 from pydantic_forms.types import InputForm, State, UUIDstr
 from pydantic_forms.validators import DisplaySubscription
 from services import netbox
@@ -90,7 +90,7 @@ def deprovision_core_link(
     return {"subscription": subscription}
 
 
-@terminate_workflow("Terminate core_link", initial_input_form=terminate_initial_input_form_generator)
+@terminate_workflow(initial_input_form=terminate_initial_input_form_generator)
 def terminate_core_link() -> StepList:
     return (
         begin

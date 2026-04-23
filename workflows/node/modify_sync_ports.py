@@ -20,7 +20,7 @@ from orchestrator.workflows.utils import modify_initial_input_form_generator, mo
 from workflows.node.shared.steps import update_interfaces
 
 
-@modify_workflow("Update node interfaces", initial_input_form=modify_initial_input_form_generator)
+@modify_workflow(initial_input_form=modify_initial_input_form_generator)
 def modify_sync_ports() -> StepList:
     return (
         begin

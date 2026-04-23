@@ -44,6 +44,6 @@ def ims_remove_vlans(subscription: Nsip2p) -> None:
     remove_saps_in_netbox(saps)
 
 
-@terminate_workflow("Terminate NSIP2P", initial_input_form=terminate_initial_input_form_generator)
+@terminate_workflow(initial_input_form=terminate_initial_input_form_generator)
 def terminate_nsip2p() -> StepList:
     return begin >> ims_remove_nsip2p >> ims_remove_vlans

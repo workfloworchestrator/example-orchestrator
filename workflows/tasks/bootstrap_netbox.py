@@ -81,6 +81,6 @@ def create_prefixes() -> State:
     return {"prefixes_created": prefixes_created}
 
 
-@workflow("Bootstrap Netbox", target=Target.SYSTEM)
+@workflow(target=Target.SYSTEM)
 def task_bootstrap_netbox() -> StepList:
     return init >> create_initial_set_of_objects >> create_prefixes >> done

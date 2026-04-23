@@ -24,6 +24,6 @@ def validate_nsip2p_in_ims(subscription: Nsip2p) -> State:
     raise AssertionError("NSIP2P validation not implemented")
 
 
-@validate_workflow("Validate NSIP2P")
+@validate_workflow()
 def validate_nsip2p() -> StepList:
     return begin >> validate_nsip2p_in_ims

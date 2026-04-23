@@ -12,12 +12,12 @@
 # limitations under the License.
 
 
+from orchestrator.forms import FormPage
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.utils import ensure_provisioning_status, modify_workflow
 
 from products.product_types.core_link import CoreLink, CoreLinkProvisioning
 from products.services.description import description
-from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 from workflows.shared import modify_summary_form
 
@@ -55,6 +55,6 @@ def update_core_link_in_nrm(subscription: CoreLink) -> State:
     return {"subscription": subscription}
 
 
-@modify_workflow("Modify core_link", initial_input_form=initial_input_form_generator)
+@modify_workflow(initial_input_form=initial_input_form_generator)
 def modify_core_link() -> StepList:
     return begin >> update_subscription >> update_core_link_in_nrm

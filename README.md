@@ -1500,7 +1500,7 @@ WFO and NetBox both use the GraphQL framework Strawberry[^9] which supports Apol
 
 The following is required to facilitate GraphQL federation on top of WFO and other GraphQL backend(s):
 
-- WFO must be configured with `FEDERATION_ENABLED=True`
+- WFO must be configured with `FEDERATION_VERSION=2.9`
   - [`docker/orchestrator/orchestrator.env`](docker/orchestrator/orchestrator.env)
 - The other backend must also enable federation
   - NetBox: [`docker/netbox/Dockerfile`](docker/netbox/Dockerfile)

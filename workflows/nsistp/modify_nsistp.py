@@ -83,6 +83,6 @@ def update_subscription(
     return {"subscription": subscription}
 
 
-@modify_workflow("Modify nsistp", initial_input_form=initial_input_form_generator)
+@modify_workflow(initial_input_form=initial_input_form_generator)
 def modify_nsistp() -> StepList:
     return begin >> update_subscription
