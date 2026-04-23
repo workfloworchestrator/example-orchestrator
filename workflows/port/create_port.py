@@ -19,7 +19,6 @@ from typing import TypeAlias, cast
 
 from orchestrator.forms import FormPage
 from orchestrator.services.products import get_product_by_id
-from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.utils.json import json_dumps
 from orchestrator.workflow import StepList, begin, step
@@ -156,7 +155,7 @@ def create_port() -> StepList:
     return (
         begin
         >> construct_port_model
-        >> store_process_subscription(Target.CREATE)
+        >> store_process_subscription()
         >> enable_port
         >> lso_interaction(provision_port)
         >> provision_port_in_nrm

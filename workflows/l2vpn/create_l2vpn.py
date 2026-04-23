@@ -19,7 +19,6 @@ from typing import Annotated, TypeAlias, cast
 
 from more_itertools.more import unzip
 from orchestrator.forms import FormPage
-from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
@@ -168,7 +167,7 @@ def create_l2vpn() -> StepList:
     return (
         begin
         >> construct_l2vpn_model
-        >> store_process_subscription(Target.CREATE)
+        >> store_process_subscription()
         >> ims_create_vlans
         >> ims_create_l2vpn
         >> ims_create_l2vpn_terminations

@@ -19,7 +19,6 @@ from typing import TypeAlias, cast
 
 from orchestrator.forms import FormPage
 from orchestrator.services.products import get_product_by_id
-from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.utils.json import json_dumps
 from orchestrator.workflow import StepList, begin, step
@@ -219,7 +218,7 @@ def create_core_link() -> StepList:
     return (
         begin
         >> construct_core_link_model
-        >> store_process_subscription(Target.CREATE)
+        >> store_process_subscription()
         >> assign_ipv6_prefix
         >> assign_side_a_ipv6_prefix
         >> assign_side_b_ipv6_prefix

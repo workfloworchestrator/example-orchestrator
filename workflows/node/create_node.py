@@ -19,7 +19,6 @@ from typing import TypeAlias, cast
 
 from orchestrator.forms import FormPage
 from orchestrator.services.products import get_product_by_id
-from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.utils.json import json_dumps
 from orchestrator.workflow import StepList, begin, step
@@ -154,7 +153,7 @@ def create_node() -> StepList:
     return (
         begin
         >> construct_node_model
-        >> store_process_subscription(Target.CREATE)
+        >> store_process_subscription()
         >> create_node_in_ims
         >> reserve_loopback_addresses
         >> lso_interaction(provision_node)

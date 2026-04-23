@@ -18,7 +18,6 @@ from typing import Annotated, TypeAlias, cast
 
 from more_itertools import unzip
 from orchestrator.forms import FormPage
-from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
@@ -181,7 +180,7 @@ def create_nsip2p() -> StepList:
     return (
         begin
         >> construct_nsip2p_model
-        >> store_process_subscription(Target.CREATE)
+        >> store_process_subscription()
         >> ims_create_vlans
         >> ims_create_nsip2p
         >> ims_create_nsip2p_terminations
