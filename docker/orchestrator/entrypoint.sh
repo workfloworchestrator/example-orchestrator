@@ -11,9 +11,7 @@ source .venv/bin/activate
 if [ -f ${CORE_OVERRIDE}/pyproject.toml ]; then
     echo "⏭️ Use editable install of orchestrator-core"
 
-    extras=""
-    [ "${AGENT_ENABLED,,}" = "true" ] && extras+="agent,"
-    [ "${SEARCH_ENABLED,,}" = "true" ] && extras+="search,"
+    extras=""  # comma delimited list of extras
 
     install_spec="$CORE_OVERRIDE"
     if [ -n "$extras" ]; then

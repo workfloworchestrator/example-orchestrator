@@ -16,15 +16,14 @@ To use embeddings for search and agent features, add these to your `.env` file (
 
 ```env
 AGENT_ENABLED=True
-SEARCH_ENABLED=True
-OPENAI_API_KEY=your-api-key-here  # Optional: only needed for agent features or when using OpenAI embeddings
+EMBEDDING_API_KEY=your-api-key-here  # Optional: only needed for agent features or when using OpenAI embeddings
 ```
 
 ## Local Embeddings (Default)
 
 This setup uses a local embedding service with no external API required. The default configuration in `embeddings.env` is:
 
-- `OPENAI_BASE_URL=http://embeddings:80/v1`
+- `EMBEDDING_API_BASE=http://embeddings:80/v1`
 - `EMBEDDING_DIMENSION=384`
 
 ### Start the orchestrator
@@ -44,7 +43,7 @@ If you prefer to use OpenAI's embedding service instead of running a local model
 Override the embedding settings by editing `docker/overrides/embeddings/embeddings.env`:
 
 ```env
-OPENAI_BASE_URL=https://api.openai.com/v1
+EMBEDDING_API_BASE=https://api.openai.com/v1
 EMBEDDING_DIMENSION=1536
 ```
 

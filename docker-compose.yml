@@ -170,8 +170,6 @@ services:
         required: false
     environment:
       LSO_ENABLED: ${COMPOSE_PROFILES:+True}
-      AGENT_ENABLED: ${AGENT_ENABLED:-False}
-      SEARCH_ENABLED: ${SEARCH_ENABLED:-False}
     ports:
       - "8080:8080"
       - "5678:5678" #Enable Python debugger
