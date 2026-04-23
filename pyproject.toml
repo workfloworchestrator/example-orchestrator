@@ -1,10 +1,12 @@
 [project]
 name = "example-orchestrator"
 version = "0.1.0"
-requires-python = ">=3.12,<3.14"
+# Python version should match https://github.com/workfloworchestrator/orchestrator-core/blob/main/Dockerfile
+requires-python = "==3.13.*"
 dependencies = [
   "deepdiff==8.6.2",
-  "orchestrator-core==5.0.0rc1",
+  # TODO: Change back to a tagged release (5.0.0rc2) once available
+  "orchestrator-core @ git+https://github.com/workfloworchestrator/orchestrator-core.git@da645b961c97c20ca3967a3fe0eb6eb3e356c943",
   "pynetbox==7.4.1",
   "rich==13.9.4",
 ]
