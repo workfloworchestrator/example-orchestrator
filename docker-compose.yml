@@ -162,7 +162,9 @@ services:
 
   orchestrator:
     container_name: orchestrator
-    image: ${ORCH_BACKEND_TAG:-ghcr.io/workfloworchestrator/orchestrator-core:latest}
+    # TODO revert back to latest when 5.0 is released as stable
+    image: ${ORCH_BACKEND_TAG:-ghcr.io/workfloworchestrator/orchestrator-core:edge}
+#    image: ${ORCH_BACKEND_TAG:-ghcr.io/workfloworchestrator/orchestrator-core:latest}
     env_file:
       - ./docker/orchestrator/orchestrator.env
       - ./docker/embeddings/embeddings.env
