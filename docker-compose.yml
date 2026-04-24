@@ -73,7 +73,7 @@ services:
 
   embeddings:
     container_name: embeddings
-     platform: linux/amd64
+    platform: linux/amd64
     image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.8
     command: --model-id sentence-transformers/all-MiniLM-L6-v2
     profiles:
