@@ -370,7 +370,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "deepdiff", specifier = "==8.6.2" },
-    { name = "orchestrator-core", git = "https://github.com/workfloworchestrator/orchestrator-core.git?rev=da645b961c97c20ca3967a3fe0eb6eb3e356c943" },
+    { name = "orchestrator-core", git = "https://github.com/workfloworchestrator/orchestrator-core.git?rev=fixes-for-5.0.0rc1-part2" },
     { name = "pynetbox", specifier = "==7.4.1" },
     { name = "rich", specifier = "==13.9.4" },
 ]
@@ -986,7 +986,7 @@ wheels = [
 [[package]]
 name = "orchestrator-core"
 version = "5.0.0rc1"
-source = { git = "https://github.com/workfloworchestrator/orchestrator-core.git?rev=da645b961c97c20ca3967a3fe0eb6eb3e356c943#da645b961c97c20ca3967a3fe0eb6eb3e356c943" }
+source = { git = "https://github.com/workfloworchestrator/orchestrator-core.git?rev=fixes-for-5.0.0rc1-part2#9ffd3fbbdef577bec6bc2db2105c1ce9003aadf4" }
 dependencies = [
     { name = "alembic" },
     { name = "anyio" },
