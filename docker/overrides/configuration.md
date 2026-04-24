@@ -4,7 +4,7 @@ Some configuration options for the docker compose services can be overriden.
 
 ## Environment variables
 
-For each service you can create a `.env` file to override certain variables, see `docker-compose.yml` for the expected filenames.
+For each service you can create a `<service>.env` file to override certain variables, see `docker-compose.yml` for the expected filenames.
 
 For example to set/change orchestrator variables, create the file in `docker/overrides/orchestrator/orchestrator.env`.
 

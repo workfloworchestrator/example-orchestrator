@@ -1,13 +1,33 @@
-# Testing orchestrator-core upgrades
+# Orchestrator
 
-> Note: If you are looking for _development_ on the orchestrator-core, see `./docker/overrides/configuration.md`.
- 
+This directory configures the orchestrator service through:
+- `entrypoint.sh`: the container entrypoint
+- `orchestrator.env`: default environment variables to set
+- `.bashrc`: configuration for opening a shell
+- `is_healthy.py`: defines a docker compose health check
+
+## Configuration options
+
+### Orchestrator
+
+You can override the orchestrator's environment variables as described in `./docker/overrides/configuration.md`.
+
+### Search and Embeddings
+
+The default configuration is set up to provide structured/fuzzy search without the need for embeddings.
+
+For more powerful search capabalities, consult `./docker/embeddings/README.md` on how to set up embeddings.
+
+## Development
+
+### Testing orchestrator-core upgrades
+
 The below instructions are for testing changes that require recreating the orchestrator docker compose service, such as:
 - updates to the `ghcr.io/workfloworchestrator/orchestrator-core` image
 - changes to the entrypoint.sh
 - changes to pyproject.toml
 
-## 1. Start clean and up to date
+#### 1. Start clean and up to date
 
 Stop containers and remove all volumes:
 
@@ -23,7 +43,7 @@ docker compose pull && docker compose build && docker compose up
 
 So far everything should work out of the box, if not then there are pre-existing issues that should be resolved.
 
-## 2. Make your changes
+#### 2. Make your changes
 
 Now you can make your changes, for example temporarily using a pre-release of the orchestrator-core by changing `.env` to:
 
@@ -33,7 +53,7 @@ ORCH_BACKEND_TAG=ghcr.io/workfloworchestrator/orchestrator-core:edge
 
 You can also make changes to pyproject.toml/uv.lock or entrypoint.sh (in this folder)
 
-## 3. Recreate the container
+#### 3. Recreate the container
 
 To test the changes from step 2, run:
 

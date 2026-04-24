@@ -12,47 +12,59 @@ The embeddings service provides an OpenAI-compatible API for generating text emb
 
 ## Prerequisites
 
-To use embeddings for search and agent features, add these to your `.env` file (see `.env.example`):
+First, please familiarize yourself with these pages:
+- `./docker/overrides/configuration.md`: how to configure variables per docker compose service
+- `./docker/orchestrator/README.md`: the section about Search
 
-```env
-AGENT_ENABLED=True
-EMBEDDING_API_KEY=your-api-key-here  # Optional: only needed for agent features or when using OpenAI embeddings
+To enable embeddings for search and agent features, set the following `orchestrator` variables:
+
+```dotenv
+EMBEDDING_API_ENABLED=True
+
+# Optional: only needed for agent features or when using OpenAI embeddings
+EMBEDDING_API_KEY=your-api-key-here
 ```
 
 ## Local Embeddings (Default)
 
-This setup uses a local embedding service with no external API required. The default configuration in `embeddings.env` is:
+This setup uses a local embedding service with no external API required, you can inspect the default configuration in `orchestrator.env`.
 
-- `EMBEDDING_API_BASE=http://embeddings:80/v1`
-- `EMBEDDING_DIMENSION=384`
+### 1. Configuration
 
-### Start the orchestrator
+Set the following `orchestrator` variables:
 
-Start the orchestrator with the local embeddings service:
+```dotenv
+EMBEDDING_API_ENABLED=True
+```
+
+### 2. Start services
+
+Start the docker compose stack with the embeddings profile:
 
 ```bash
-docker compose --profile embeddings up orchestrator
+docker compose --profile embeddings up
 ```
 
 ## Alternative: Using OpenAI Embeddings
 
 If you prefer to use OpenAI's embedding service instead of running a local model:
 
-### Configuration
+### 1. Configuration
 
-Override the embedding settings by editing `docker/overrides/embeddings/embeddings.env`:
+Set the following `orchestrator` variables:
 
-```env
+```dotenv
+EMBEDDING_API_ENABLED=True
 EMBEDDING_API_BASE=https://api.openai.com/v1
 EMBEDDING_DIMENSION=1536
 ```
 
-### Start the orchestrator
+### 2. Start services
 
-Start only the orchestrator (skips the local embeddings service):
+Start only docker compose stack as normal (skips the local embeddings service):
 
 ```bash
-docker compose up orchestrator
+docker compose up
 ```
 
 ## Post-Setup Steps
@@ -79,9 +91,11 @@ docker compose exec orchestrator /home/orchestrator/.venv/bin/python main.py ind
 
 ## Advanced Configuration
 
-The following configurations use conservative defaults for local/unknown models:
+The following `orchestrator` variables are configured with conservative defaults for local/unknown models:
 
 - `EMBEDDING_FALLBACK_MAX_TOKENS=512`: Maximum tokens per embedding request
 - `EMBEDDING_MAX_BATCH_SIZE=32`: Maximum batch size for embedding requests
 
-**Note**: These settings are only used as fallbacks for local or unknown models (like the example in this setup). For known providers and models, the system automatically retrieves the correct values via LiteLLM. The fallback values are already configured safely for local models, but can be adjusted if needed in `docker/overrides/embeddings/embeddings.env`.
+**Note**: These settings are only used as fallbacks for local or unknown models (like the example in this setup). 
+For known providers and models, the system automatically retrieves the correct values via LiteLLM. 
+The fallback values are already configured safely for local models, but can be adjusted in the `orchestrator` variables.
