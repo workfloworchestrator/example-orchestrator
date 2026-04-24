@@ -57,6 +57,7 @@ Set the following `orchestrator` variables:
 ```dotenv
 EMBEDDING_API_ENABLED=True
 EMBEDDING_API_BASE=https://api.openai.com/v1
+EMBEDDING_API_KEY=your-api-key-here
 EMBEDDING_DIMENSION=1536
 ```
 
