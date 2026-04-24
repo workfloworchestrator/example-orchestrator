@@ -17,6 +17,7 @@ from orchestrator.cli.main import app as core_cli
 from orchestrator.db import init_database
 from orchestrator.log_config import LOGGER_OVERRIDES
 
+import products  # noqa: F401  Registers SUBSCRIPTION_MODEL_REGISTRY entries
 from nwastdlib.logging import initialise_logging
 
 
