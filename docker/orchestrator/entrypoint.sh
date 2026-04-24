@@ -1,21 +1,30 @@
 #!/bin/bash
 
-# Ensure all pip installed executables are on the path
-PATH=$PATH:~/.local/bin
+# Exit on errors or unset variables
+set -eu
 
-# Install extra requirements for orchestrator
-pip install uv
+# Tell uv not to ever download python, but use whatever version is set in https://github.com/workfloworchestrator/orchestrator-core/blob/main/Dockerfile
+# This version should match with pyproject.toml
+export UV_PYTHON_DOWNLOADS=never
+
+# Install extra requirements for example-orchestrator
 uv sync
 source .venv/bin/activate
 
 setup() {
-    # Run any missing migrations on the database
+    echo "▶ db upgrade heads"
     python main.py db upgrade heads
 
-    # Build search indexes (idempotent)
+    echo "▶ index subscriptions"
     python main.py index subscriptions
+
+    echo "▶ index products"
     python main.py index products
+
+    echo "▶ index processes"
     python main.py index processes
+
+    echo "▶ index workflows"
     python main.py index workflows
 }
 
@@ -35,7 +44,7 @@ if [ -f ${CORE_OVERRIDE}/pyproject.toml ]; then
 
     setup
 
-    uvicorn --host 0.0.0.0 --port 8080 $UVICORN_ARGS wsgi:app --reload --proxy-headers \
+    uvicorn --host 0.0.0.0 --port 8080 ${UVICORN_ARGS:-} wsgi:app --reload --proxy-headers \
         --reload-dir $CORE_OVERRIDE \
         --reload-dir products \
         --reload-dir services \
@@ -46,5 +55,5 @@ else
     setup
 
     echo "⏭️ Use orchestrator-core as specified in pyproject.toml $(uv pip freeze | grep orchestrator-core)"
-    uvicorn --host 0.0.0.0 --port 8080 $UVICORN_ARGS wsgi:app --reload --proxy-headers
+    uvicorn --host 0.0.0.0 --port 8080 ${UVICORN_ARGS:-} wsgi:app --reload --proxy-headers
 fi
