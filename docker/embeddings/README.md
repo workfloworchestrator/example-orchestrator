@@ -27,7 +27,8 @@ EMBEDDING_API_KEY=your-api-key-here
 
 ## Local Embeddings (Default)
 
-This setup uses a local embedding service with no external API required, you can inspect the default configuration in `orchestrator.env`.
+This setup uses a local embedding service with no external API required.
+You can inspect the default configuration in `orchestrator.env`.
 
 ### 1. Configuration
 
@@ -61,7 +62,7 @@ EMBEDDING_DIMENSION=1536
 
 ### 2. Start services
 
-Start only docker compose stack as normal (skips the local embeddings service):
+Start the docker compose stack as normal (skips the local embeddings service):
 
 ```bash
 docker compose up

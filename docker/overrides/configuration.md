@@ -1,6 +1,6 @@
 # Configuration
 
-Some configuration options for the docker compose services can be overriden.
+Some configuration options for the docker compose services can be overridden.
 
 ## Environment variables
 
@@ -36,8 +36,8 @@ tag defaults to use the artifacts built in the workfloworchestrator project's
 Github Container Registry, but can be overridden by setting environment
 variables.
 
-### For Example
+### Example
 
 ```bash
-ORCH_UI_IMAGE=my-local-image:tag docker compose up -d --force-recreate
+ORCH_UI_TAG=my-local-image:tag docker compose up -d --force-recreate
 ```

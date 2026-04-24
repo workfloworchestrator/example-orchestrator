@@ -16,7 +16,7 @@ You can override the orchestrator's environment variables as described in `./doc
 
 The default configuration is set up to provide structured/fuzzy search without the need for embeddings.
 
-For more powerful search capabalities, consult `./docker/embeddings/README.md` on how to set up embeddings.
+For more powerful search capabilities, consult `./docker/embeddings/README.md` on how to set up embeddings.
 
 ## Development
 
