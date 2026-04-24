@@ -17,8 +17,8 @@ import uuid
 from random import randrange
 from typing import TypeAlias, cast
 
+from orchestrator.forms import FormPage
 from orchestrator.services.products import get_product_by_id
-from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.utils.json import json_dumps
 from orchestrator.workflow import StepList, begin, step
@@ -30,7 +30,6 @@ from products.product_blocks.shared.types import NodeStatus
 from products.product_types.node import NodeInactive, NodeProvisioning
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
-from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Choice, Label
 from services import netbox
@@ -149,12 +148,12 @@ def provision_node_in_nrm(subscription: NodeProvisioning) -> State:
     return {"subscription": subscription}
 
 
-@create_workflow("Create node", initial_input_form=initial_input_form_generator)
+@create_workflow(initial_input_form=initial_input_form_generator)
 def create_node() -> StepList:
     return (
         begin
         >> construct_node_model
-        >> store_process_subscription(Target.CREATE)
+        >> store_process_subscription()
         >> create_node_in_ims
         >> reserve_loopback_addresses
         >> lso_interaction(provision_node)

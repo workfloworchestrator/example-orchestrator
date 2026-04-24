@@ -17,8 +17,8 @@ import uuid
 from random import randrange
 from typing import TypeAlias, cast
 
+from orchestrator.forms import FormPage
 from orchestrator.services.products import get_product_by_id
-from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.utils.json import json_dumps
 from orchestrator.workflow import StepList, begin, step
@@ -30,7 +30,6 @@ from products.product_types.core_link import CoreLinkInactive, CoreLinkProvision
 from products.product_types.node import Node
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
-from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Choice
 from services import netbox
@@ -214,12 +213,12 @@ def provision_core_link(
     return {"subscription": subscription}
 
 
-@create_workflow("Create core_link", initial_input_form=initial_input_form_generator)
+@create_workflow(initial_input_form=initial_input_form_generator)
 def create_core_link() -> StepList:
     return (
         begin
         >> construct_core_link_model
-        >> store_process_subscription(Target.CREATE)
+        >> store_process_subscription()
         >> assign_ipv6_prefix
         >> assign_side_a_ipv6_prefix
         >> assign_side_b_ipv6_prefix

@@ -19,7 +19,6 @@ from typing import Annotated, TypeAlias, cast
 import structlog
 from orchestrator.forms import FormPage
 from orchestrator.forms.validators import Divider, Label
-from orchestrator.targets import Target
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
@@ -136,6 +135,6 @@ def construct_nsistp_model(
     }
 
 
-@create_workflow("Create nsistp", initial_input_form=initial_input_form_generator)
+@create_workflow(initial_input_form=initial_input_form_generator)
 def create_nsistp() -> StepList:
-    return begin >> construct_nsistp_model >> store_process_subscription(Target.CREATE)
+    return begin >> construct_nsistp_model >> store_process_subscription()

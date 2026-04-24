@@ -17,7 +17,7 @@ from random import randrange
 from typing import Annotated, TypeAlias, cast
 
 from more_itertools import unzip
-from orchestrator.targets import Target
+from orchestrator.forms import FormPage
 from orchestrator.types import SubscriptionLifecycle
 from orchestrator.workflow import StepList, begin, step
 from orchestrator.workflows.steps import store_process_subscription
@@ -30,7 +30,6 @@ from products.product_blocks.sap import SAPBlockInactive
 from products.product_types.nsip2p import Nsip2pInactive, Nsip2pProvisioning
 from products.product_types.port import Port
 from products.services.description import description
-from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Choice
 from workflows.l2vpn.shared.forms import ports_selector
@@ -176,12 +175,12 @@ def update_vlans_on_ports(subscription: Nsip2pProvisioning) -> State:
 # If further customization is needed for NSIP2P, add/override steps here
 
 
-@create_workflow("Create NSIP2P", initial_input_form=initial_input_form_generator)
+@create_workflow(initial_input_form=initial_input_form_generator)
 def create_nsip2p() -> StepList:
     return (
         begin
         >> construct_nsip2p_model
-        >> store_process_subscription(Target.CREATE)
+        >> store_process_subscription()
         >> ims_create_vlans
         >> ims_create_nsip2p
         >> ims_create_nsip2p_terminations

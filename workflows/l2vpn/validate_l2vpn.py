@@ -40,6 +40,6 @@ def validate_vlans_on_ports_in_ims(subscription: L2vpn) -> State:
     raise AssertionError("Not implemented yet")
 
 
-@validate_workflow("Validate l2vpn")
+@validate_workflow()
 def validate_l2vpn() -> StepList:
     return begin >> validate_l2vpn_in_ims >> validate_l2vpn_terminations_in_ims >> validate_vlans_on_ports_in_ims
