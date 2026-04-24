@@ -5,8 +5,7 @@ version = "0.1.0"
 requires-python = "==3.13.*"
 dependencies = [
   "deepdiff==8.6.2",
-  # TODO: Change back to a tagged release (5.0.0rc2) once available
-  "orchestrator-core @ git+https://github.com/workfloworchestrator/orchestrator-core.git@fixes-for-5.0.0rc1-part2",
+  "orchestrator-core==5.0.0rc2",
   "pynetbox==7.4.1",
   "rich==13.9.4",
 ]

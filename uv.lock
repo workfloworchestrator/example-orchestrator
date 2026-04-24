@@ -370,7 +370,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "deepdiff", specifier = "==8.6.2" },
-    { name = "orchestrator-core", git = "https://github.com/workfloworchestrator/orchestrator-core.git?rev=fixes-for-5.0.0rc1-part2" },
+    { name = "orchestrator-core", specifier = "==5.0.0rc2" },
     { name = "pynetbox", specifier = "==7.4.1" },
     { name = "rich", specifier = "==13.9.4" },
 ]
@@ -985,8 +985,8 @@ wheels = [
 
 [[package]]
 name = "orchestrator-core"
-version = "5.0.0rc1"
-source = { git = "https://github.com/workfloworchestrator/orchestrator-core.git?rev=fixes-for-5.0.0rc1-part2#9ffd3fbbdef577bec6bc2db2105c1ce9003aadf4" }
+version = "5.0.0rc2"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "alembic" },
     { name = "anyio" },
@@ -1022,6 +1022,10 @@ dependencies = [
     { name = "tabulate" },
     { name = "typer" },
     { name = "uvicorn", extra = ["standard"] },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/91/53/12e6d02f3d3eb67427a2f078b36b8ba6c9015a948f138e324bcfb48281fe/orchestrator_core-5.0.0rc2.tar.gz", hash = "sha256:54b1db10e1bf6af76c078a8d0ff848206f58c38870505f38e76928390f5c6242", size = 346983, upload-time = "2026-04-24T13:12:54.887Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2a/42/7662314128673cc73a11aeb8208c98c36011104d574c82efcac624e707c5/orchestrator_core-5.0.0rc2-py3-none-any.whl", hash = "sha256:703e85f9fc236b668dfc4de5ee190c93531add908822af8a6278d25bdedd1133", size = 571293, upload-time = "2026-04-24T13:12:52.973Z" },
 ]
 
 [[package]]
