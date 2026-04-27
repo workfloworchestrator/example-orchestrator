@@ -46,6 +46,6 @@ def delete_node_from_ims(ims_id: int) -> State:
     return {}
 
 
-@terminate_workflow("Terminate node", initial_input_form=terminate_initial_input_form_generator)
+@terminate_workflow(initial_input_form=terminate_initial_input_form_generator)
 def terminate_node() -> StepList:
     return begin >> load_initial_state >> delete_node_from_ims

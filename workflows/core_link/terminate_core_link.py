@@ -90,7 +90,7 @@ def deprovision_core_link(
     return {"subscription": subscription}
 
 
-@terminate_workflow("Terminate core_link", initial_input_form=terminate_initial_input_form_generator)
+@terminate_workflow(initial_input_form=terminate_initial_input_form_generator)
 def terminate_core_link() -> StepList:
     return (
         begin

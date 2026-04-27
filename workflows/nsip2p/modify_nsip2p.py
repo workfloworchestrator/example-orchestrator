@@ -61,7 +61,7 @@ def update_nsip2p_in_nrm(subscription: Nsip2p) -> State:
 update_nsip2p_in_external_systems = begin >> update_nsip2p_in_nrm
 
 
-@modify_workflow("Modify NSIP2P", initial_input_form=initial_input_form_generator)
+@modify_workflow(initial_input_form=initial_input_form_generator)
 def modify_nsip2p() -> StepList:
     return begin >> update_subscription >> update_nsip2p_in_external_systems
 

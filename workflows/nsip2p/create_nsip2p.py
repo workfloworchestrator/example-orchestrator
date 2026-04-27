@@ -176,7 +176,7 @@ def update_vlans_on_ports(subscription: Nsip2pProvisioning) -> State:
 # If further customization is needed for NSIP2P, add/override steps here
 
 
-@create_workflow("Create NSIP2P", initial_input_form=initial_input_form_generator)
+@create_workflow(initial_input_form=initial_input_form_generator)
 def create_nsip2p() -> StepList:
     return (
         begin
