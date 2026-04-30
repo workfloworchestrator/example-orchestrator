@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-from orchestrator.types import SubscriptionLifecycle
+from orchestrator.core.types import SubscriptionLifecycle
 
 from products.product_blocks.port import PortMode
 from pydantic_forms.validators import Choice, choice_list

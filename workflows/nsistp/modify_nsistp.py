@@ -13,10 +13,10 @@
 
 
 import structlog
-from orchestrator.forms import FormPage
-from orchestrator.forms.validators import Divider
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import ensure_provisioning_status, modify_workflow
+from orchestrator.core.forms import FormPage
+from orchestrator.core.forms.validators import Divider
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.utils import ensure_provisioning_status, modify_workflow
 
 from products.product_types.nsistp import Nsistp, NsistpProvisioning
 from products.services.description import description
@@ -83,6 +83,6 @@ def update_subscription(
     return {"subscription": subscription}
 
 
-@modify_workflow("Modify nsistp", initial_input_form=initial_input_form_generator)
+@modify_workflow(initial_input_form=initial_input_form_generator)
 def modify_nsistp() -> StepList:
     return begin >> update_subscription

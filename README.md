@@ -353,8 +353,8 @@ The `wsgi.py` can be as simple as shown below, and can be deployed by a
 ASGI server like Uvicorn[^5].
 
 ```python
-from orchestrator import OrchestratorCore
-from orchestrator.settings import AppSettings
+from orchestrator.core import OrchestratorCore
+from orchestrator.core.settings import AppSettings
 
 import products
 import workflows
@@ -373,7 +373,7 @@ uvicorn --host localhost --port 8080 wsgi:app
 To use the orchestrator command line interface create a `main.py` like below:
 
 ```python
-from orchestrator.cli.main import app as core_cli
+from orchestrator.core.cli.main import app as core_cli
 
 if __name__ == "__main__":
     core_cli()
@@ -658,7 +658,7 @@ to be added to the `SUBSCRIPTION_MODEL_REGISTRY`, in
 `products/__init__.py`, as shown below.
 
 ```python
-from orchestrator.domain import SUBSCRIPTION_MODEL_REGISTRY
+from orchestrator.core.domain import SUBSCRIPTION_MODEL_REGISTRY
 from products.product_types.core_link import CoreLink
 
 SUBSCRIPTION_MODEL_REGISTRY.update(
@@ -676,7 +676,7 @@ an argument, see below. Notice that the name of the product and the
 product type need to match with the subscription model registry.
 
 ```python
-from orchestrator.migrations.helpers import create
+from orchestrator.core.migrations.helpers import create
 
 new_products = {
     "products": {
@@ -1105,14 +1105,14 @@ Like a create workflow, the modify workflow also uses an initial input
 form but this time to only collect the values from the user that need to
 be changed. Usually, only a subset of the values may be changed. To
 assist the user, additional values can be shown in the input form using
-`ReadOnlyField`. In the example below, the name of the node is shown but
+`read_only_field`. In the example below, the name of the node is shown but
 cannot be changed, the node status can be changed and the dropdown is
 set to the current node status, and the node description is still
 optional.
 
 ```python
 class ModifyNodeForm(FormPage):
-    node_name: ReadOnlyField(port.node.node_name)
+    node_name: read_only_field(port.node.node_name)
     node_status: NodeStatusChoice = node.node_status
     node_description: str | None = node.node_description
 ```
@@ -1500,7 +1500,7 @@ WFO and NetBox both use the GraphQL framework Strawberry[^9] which supports Apol
 
 The following is required to facilitate GraphQL federation on top of WFO and other GraphQL backend(s):
 
-- WFO must be configured with `FEDERATION_ENABLED=True`
+- WFO must be configured with `FEDERATION_VERSION=2.9`
   - [`docker/orchestrator/orchestrator.env`](docker/orchestrator/orchestrator.env)
 - The other backend must also enable federation
   - NetBox: [`docker/netbox/Dockerfile`](docker/netbox/Dockerfile)

@@ -12,12 +12,12 @@
 # limitations under the License.
 
 
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import ensure_provisioning_status, modify_workflow, reconcile_workflow
+from orchestrator.core.forms import FormPage
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.utils import ensure_provisioning_status, modify_workflow, reconcile_workflow
 
 from products.product_types.l2vpn import L2vpn, L2vpnProvisioning
 from products.services.description import description
-from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 from workflows.shared import modify_summary_form
 
@@ -63,11 +63,11 @@ def update_l2vpn_in_nrm(subscription: L2vpn) -> State:
 update_l2vpn_in_external_systems = begin >> update_l2vpn_in_nrm
 
 
-@modify_workflow("Modify l2vpn", initial_input_form=initial_input_form_generator)
+@modify_workflow(initial_input_form=initial_input_form_generator)
 def modify_l2vpn() -> StepList:
     return begin >> update_subscription >> update_l2vpn_in_external_systems
 
 
-@reconcile_workflow("Reconcile l2vpn")
+@reconcile_workflow()
 def reconcile_l2vpn() -> StepList:
     return begin >> update_l2vpn_in_external_systems

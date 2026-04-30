@@ -12,8 +12,8 @@
 # limitations under the License.
 
 
-from orchestrator.domain.base import SubscriptionModel
-from orchestrator.types import SubscriptionLifecycle
+from orchestrator.core.domain.base import SubscriptionModel
+from orchestrator.core.types import SubscriptionLifecycle
 
 from products.product_blocks.virtual_circuit import (
     VirtualCircuitBlock,

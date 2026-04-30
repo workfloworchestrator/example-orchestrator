@@ -8,8 +8,8 @@ Create Date: 2023-12-04 17:30:42.545271
 
 import sqlalchemy as sa
 from alembic import op
-from orchestrator.migrations.helpers import delete_workflow
-from orchestrator.targets import Target
+from orchestrator.core.migrations.helpers import delete_workflow
+from orchestrator.core.targets import Target
 
 # revision identifiers, used by Alembic.
 revision = "d946c20663d3"

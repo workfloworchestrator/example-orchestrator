@@ -12,8 +12,8 @@
 # limitations under the License.
 
 
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import validate_workflow
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.utils import validate_workflow
 
 from products.product_types.core_link import CoreLink
 from pydantic_forms.types import State
@@ -34,6 +34,6 @@ def validate_core_ports_in_ims(subscription: CoreLink) -> State:
     raise AssertionError("Not implemented yet")
 
 
-@validate_workflow("Validate core_link")
+@validate_workflow()
 def validate_core_link() -> StepList:
     return begin >> validate_core_link_in_ims >> validate_core_ports_in_ims

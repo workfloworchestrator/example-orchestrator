@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-from orchestrator.workflows import LazyWorkflowInstance
+from orchestrator.core.workflows import LazyWorkflowInstance
 
 LazyWorkflowInstance("workflows.node.create_node", "create_node")
 LazyWorkflowInstance("workflows.node.modify_node", "modify_node")

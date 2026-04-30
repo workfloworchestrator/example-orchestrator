@@ -12,8 +12,8 @@
 # limitations under the License.
 
 
-from orchestrator import OrchestratorCore
-from orchestrator.settings import AppSettings
+from orchestrator.core import OrchestratorCore
+from orchestrator.core.settings import AppSettings
 
 import products  # noqa: F401  Side-effects
 import workflows  # noqa: F401  Side-effects

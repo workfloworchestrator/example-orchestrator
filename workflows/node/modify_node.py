@@ -13,14 +13,14 @@
 from typing import TypeAlias, cast
 
 import structlog
-from orchestrator.services.products import get_product_by_id
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import ensure_provisioning_status, modify_workflow
+from orchestrator.core.forms import FormPage
+from orchestrator.core.services.products import get_product_by_id
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.utils import ensure_provisioning_status, modify_workflow
 
 from products.product_blocks.shared.types import NodeStatus
 from products.product_types.node import Node, NodeProvisioning
 from products.services.description import description
-from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Choice, Label
 from workflows.node.shared.forms import NodeStatusChoice, node_role_selector, node_type_selector, site_selector
@@ -87,6 +87,6 @@ def update_node_in_nrm(subscription: Node) -> State:
     return {"subscription": subscription}
 
 
-@modify_workflow("Modify node", initial_input_form=initial_input_form_generator)
+@modify_workflow(initial_input_form=initial_input_form_generator)
 def modify_node() -> StepList:
     return begin >> update_subscription >> update_node_in_ims >> update_node_in_nrm

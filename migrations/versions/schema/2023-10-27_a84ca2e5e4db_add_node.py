@@ -9,14 +9,14 @@ Create Date: 2023-10-27 11:25:40.994878
 from uuid import uuid4
 
 from alembic import op
-from orchestrator.migrations.helpers import (
+from orchestrator.core.migrations.helpers import (
     create,
     create_workflow,
     delete,
     delete_workflow,
     ensure_default_workflows,
 )
-from orchestrator.targets import Target
+from orchestrator.core.targets import Target
 
 # revision identifiers, used by Alembic.
 revision = "a84ca2e5e4db"

@@ -19,7 +19,7 @@ from uuid import UUID
 import structlog
 from annotated_types import Ge, Le, doc
 from deepdiff import DeepDiff
-from orchestrator.db import (
+from orchestrator.core.db import (
     ProductTable,
     ResourceTypeTable,
     SubscriptionInstanceRelationTable,
@@ -28,10 +28,11 @@ from orchestrator.db import (
     SubscriptionTable,
     db,
 )
-from orchestrator.domain import SubscriptionModel
-from orchestrator.domain.base import ProductBlockModel
-from orchestrator.services import subscriptions
-from orchestrator.types import SubscriptionLifecycle
+from orchestrator.core.domain import SubscriptionModel
+from orchestrator.core.domain.base import ProductBlockModel
+from orchestrator.core.forms import FormPage
+from orchestrator.core.services import subscriptions
+from orchestrator.core.types import SubscriptionLifecycle
 from pydantic import ConfigDict
 from pydantic_core.core_schema import ValidationInfo
 from sqlalchemy import select
@@ -44,7 +45,6 @@ from products.product_blocks.virtual_circuit import VirtualCircuitBlock, Virtual
 from products.product_types.node import Node
 from products.services.netbox.netbox import build_payload
 from products.services.netbox.payload.sap import build_sap_vlan_group_payload
-from pydantic_forms.core import FormPage
 from pydantic_forms.types import State, SummaryData, UUIDstr
 from pydantic_forms.validators import Choice, MigrationSummary, migration_summary
 from services import netbox

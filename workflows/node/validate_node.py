@@ -13,8 +13,8 @@
 
 
 from deepdiff import DeepDiff
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import validate_workflow
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.utils import validate_workflow
 
 from products.product_types.node import Node
 from products.services.netbox.netbox import build_payload
@@ -42,6 +42,6 @@ def validate_node_in_ims(subscription: Node) -> State:
     return {"payload": expected.dict()}
 
 
-@validate_workflow("Validate node")
+@validate_workflow()
 def validate_node() -> StepList:
     return begin >> validate_node_in_ims

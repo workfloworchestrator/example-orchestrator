@@ -13,10 +13,10 @@
 
 
 import structlog
-from orchestrator.forms import FormPage
-from orchestrator.forms.validators import DisplaySubscription
-from orchestrator.workflow import StepList, begin
-from orchestrator.workflows.utils import terminate_workflow
+from orchestrator.core.forms import FormPage
+from orchestrator.core.forms.validators import DisplaySubscription
+from orchestrator.core.workflow import StepList, begin
+from orchestrator.core.workflows.utils import terminate_workflow
 
 from pydantic_forms.types import InputForm, UUIDstr
 
@@ -32,7 +32,7 @@ def terminate_initial_input_form_generator(subscription_id: UUIDstr, customer_id
     return TerminateNsistpForm
 
 
-@terminate_workflow("Terminate nsistp", initial_input_form=terminate_initial_input_form_generator)
+@terminate_workflow(initial_input_form=terminate_initial_input_form_generator)
 def terminate_nsistp() -> StepList:
     return (
         begin
