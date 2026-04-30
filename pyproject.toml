@@ -5,8 +5,7 @@ version = "0.1.0"
 requires-python = "==3.13.*"
 dependencies = [
   "deepdiff==8.6.2",
-  # TODO: switch back to release once feature/1471-namespace-package is merged: "orchestrator-core==5.0.0rc3",
-  "orchestrator-core @ git+https://github.com/workfloworchestrator/orchestrator-core.git@feature/1471-namespace-package",
+  "orchestrator-core==5.0.0rc3",
   "pynetbox==7.4.1",
   "rich==13.9.4",
 ]
