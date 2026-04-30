@@ -13,10 +13,10 @@
 
 import json
 
-from orchestrator.forms import FormPage
-from orchestrator.utils.json import json_dumps
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import terminate_workflow
+from orchestrator.core.forms import FormPage
+from orchestrator.core.utils.json import json_dumps
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.utils import terminate_workflow
 
 from products.product_types.core_link import CoreLink
 from products.services.netbox.netbox import build_payload

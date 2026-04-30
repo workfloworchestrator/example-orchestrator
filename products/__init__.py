@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-from orchestrator.domain import SUBSCRIPTION_MODEL_REGISTRY
+from orchestrator.core.domain import SUBSCRIPTION_MODEL_REGISTRY
 
 from products.product_types.core_link import CoreLink
 from products.product_types.l2vpn import L2vpn

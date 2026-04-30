@@ -1,3 +1,3 @@
-# from orchestrator.migrations.helpers import *
+# from orchestrator.core.migrations.helpers import *
 
 # Write your own helper functions below this line.

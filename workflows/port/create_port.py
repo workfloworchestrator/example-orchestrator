@@ -17,13 +17,13 @@ import uuid
 from random import randrange
 from typing import TypeAlias, cast
 
-from orchestrator.forms import FormPage
-from orchestrator.services.products import get_product_by_id
-from orchestrator.types import SubscriptionLifecycle
-from orchestrator.utils.json import json_dumps
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.steps import store_process_subscription
-from orchestrator.workflows.utils import create_workflow
+from orchestrator.core.forms import FormPage
+from orchestrator.core.services.products import get_product_by_id
+from orchestrator.core.types import SubscriptionLifecycle
+from orchestrator.core.utils.json import json_dumps
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.steps import store_process_subscription
+from orchestrator.core.workflows.utils import create_workflow
 from pydantic import ConfigDict
 
 from products.product_blocks.port import PortMode

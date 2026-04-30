@@ -16,7 +16,7 @@ from collections.abc import Callable
 from uuid import UUID
 
 import structlog
-from orchestrator.db import SubscriptionTable
+from orchestrator.core.db import SubscriptionTable
 
 logger = structlog.get_logger(__name__)
 

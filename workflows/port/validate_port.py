@@ -13,8 +13,8 @@
 
 
 from deepdiff import DeepDiff
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import validate_workflow
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.utils import validate_workflow
 
 from products.product_types.port import Port
 from products.services.netbox.netbox import build_payload

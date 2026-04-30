@@ -12,8 +12,8 @@
 # limitations under the License.
 
 
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import validate_workflow
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.utils import validate_workflow
 
 from products.product_types.core_link import CoreLink
 from pydantic_forms.types import State

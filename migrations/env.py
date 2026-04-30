@@ -1,7 +1,7 @@
 import structlog
 from alembic import context
-from orchestrator.db.database import BaseModel
-from orchestrator.settings import app_settings
+from orchestrator.core.db.database import BaseModel
+from orchestrator.core.settings import app_settings
 from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides
