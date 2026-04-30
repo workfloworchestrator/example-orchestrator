@@ -11,9 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from orchestrator.forms import FormPage
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import ensure_provisioning_status, modify_workflow, reconcile_workflow
+from orchestrator.core.forms import FormPage
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.utils import ensure_provisioning_status, modify_workflow, reconcile_workflow
 
 from products.product_types.nsip2p import Nsip2p, Nsip2pProvisioning
 from products.services.description import description

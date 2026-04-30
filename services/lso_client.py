@@ -21,11 +21,11 @@ from os import getenv
 from typing import Any
 
 import requests
-from orchestrator import step
-from orchestrator.config.assignee import Assignee
-from orchestrator.forms import FormPage
-from orchestrator.utils.errors import ProcessFailureError
-from orchestrator.workflow import Step, StepList, begin, callback_step, conditional, inputstep
+from orchestrator.core import step
+from orchestrator.core.config.assignee import Assignee
+from orchestrator.core.forms import FormPage
+from orchestrator.core.utils.errors import ProcessFailureError
+from orchestrator.core.workflow import Step, StepList, begin, callback_step, conditional, inputstep
 
 from pydantic_forms.types import FormGenerator, State
 from pydantic_forms.validators import LongText

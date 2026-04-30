@@ -11,10 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from orchestrator.forms import FormPage
-from orchestrator.forms.validators import DisplaySubscription
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import terminate_workflow
+from orchestrator.core.forms import FormPage
+from orchestrator.core.forms.validators import DisplaySubscription
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.utils import terminate_workflow
 
 from products import Nsip2p
 from pydantic_forms.types import InputForm, UUIDstr

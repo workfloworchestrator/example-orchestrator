@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-from orchestrator.workflow import step
+from orchestrator.core.workflow import step
 
 from products.product_types.port import Port
 from products.services.netbox.netbox import build_payload

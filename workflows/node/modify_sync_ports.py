@@ -12,10 +12,10 @@
 # limitations under the License.
 
 
-from orchestrator.types import SubscriptionLifecycle
-from orchestrator.workflow import StepList, begin
-from orchestrator.workflows.steps import set_status
-from orchestrator.workflows.utils import modify_initial_input_form_generator, modify_workflow
+from orchestrator.core.types import SubscriptionLifecycle
+from orchestrator.core.workflow import StepList, begin
+from orchestrator.core.workflows.steps import set_status
+from orchestrator.core.workflows.utils import modify_initial_input_form_generator, modify_workflow
 
 from workflows.node.shared.steps import update_interfaces
 

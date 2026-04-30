@@ -15,7 +15,7 @@
 from functools import singledispatch
 from typing import Any
 
-from orchestrator.domain.base import ProductBlockModel, SubscriptionModel
+from orchestrator.core.domain.base import ProductBlockModel, SubscriptionModel
 
 from products.product_blocks.core_link import CoreLinkBlockProvisioning
 from products.product_blocks.core_port import CorePortBlockProvisioning

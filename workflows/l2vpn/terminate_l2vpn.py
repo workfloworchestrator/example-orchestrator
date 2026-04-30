@@ -12,9 +12,9 @@
 # limitations under the License.
 
 
-from orchestrator.forms import FormPage
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import terminate_workflow
+from orchestrator.core.forms import FormPage
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.utils import terminate_workflow
 
 from products.product_types.l2vpn import L2vpn
 from pydantic_forms.types import InputForm, UUIDstr

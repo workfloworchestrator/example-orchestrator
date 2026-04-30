@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import strawberry
-from orchestrator.graphql.schemas import DEFAULT_GRAPHQL_MODELS
+from orchestrator.core.graphql.schemas import DEFAULT_GRAPHQL_MODELS
 
 from products.product_blocks.node import NodeBlockInactive as _NodeBlockInactive
 
