@@ -10,7 +10,6 @@
       "first_name": "",
       "last_name": "",
       "email": "admin@admin.admin",
-      "is_staff": true,
       "is_active": true,
       "date_joined": "2023-04-03T20:31:46.411Z",
       "groups": [],
@@ -44,13 +43,18 @@
     "model": "users.token",
     "pk": 1,
     "fields": {
+      "version": 2,
       "user": 1,
-      "created": "2023-04-04T20:50:21.369Z",
-      "expires": null,
-      "last_used": "2023-04-04T20:51:55.276Z",
-      "key": "e744057d755255a31818bf74df2350c26eeabe54",
-      "write_enabled": true,
       "description": "",
+      "created": "2026-05-01T16:46:57.511Z",
+      "expires": null,
+      "last_used": null,
+      "enabled": true,
+      "write_enabled": true,
+      "plaintext": null,
+      "key": "sDx3hakFeTCZ",
+      "pepper_id": 1,
+      "hmac_digest": "f36541405acbc41c5b26209011628b3bff980d390b103dae8c43e848168e0a6d",
       "allowed_ips": []
     }
   }

@@ -9,7 +9,7 @@ x-netbox: &netbox
     - ./docker/netbox/netbox.env
     - path: ./docker/overrides/netbox/netbox.env
       required: false
-  user: "unit:root"
+  user: "1000:0"
   healthcheck:
     start_period: 360s
     timeout: 3s
