@@ -110,7 +110,7 @@ services:
 
   federation:
     container_name: federation
-    image: ghcr.io/apollographql/router:v2.6.2
+    image: ghcr.io/apollographql/router:v2.14.0
     ports:
       - "4000:4000"
     depends_on:
