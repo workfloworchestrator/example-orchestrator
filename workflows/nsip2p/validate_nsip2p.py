@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import validate_workflow
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.utils import validate_workflow
 
 from products.product_types.nsip2p import Nsip2p
 from pydantic_forms.types import State
@@ -24,6 +24,6 @@ def validate_nsip2p_in_ims(subscription: Nsip2p) -> State:
     raise AssertionError("NSIP2P validation not implemented")
 
 
-@validate_workflow("Validate NSIP2P")
+@validate_workflow()
 def validate_nsip2p() -> StepList:
     return begin >> validate_nsip2p_in_ims

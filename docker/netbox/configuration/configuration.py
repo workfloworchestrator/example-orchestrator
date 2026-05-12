@@ -108,6 +108,7 @@ REDIS = {
 # symbols. NetBox will not run without this defined. For more information, see
 # https://docs.djangoproject.com/en/stable/ref/settings/#std:setting-SECRET_KEY
 SECRET_KEY = _read_secret('secret_key', environ.get('SECRET_KEY', ''))
+API_TOKEN_PEPPERS = { 1: _read_secret('api_token_pepper', environ.get('API_TOKEN_PEPPER', ''))}
 
 
 #########################
