@@ -2,8 +2,10 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 17.7 (Debian 17.7-3.pgdg12+1)
--- Dumped by pg_dump version 17.5
+\restrict 1m8jA9R8BKYOP6LunkbQyolOQtQKPMaPzDT1qxB6GYvER2lBazVbKuCpQ8N07uO
+
+-- Dumped from database version 17.9 (Debian 17.9-1.pgdg12+1)
+-- Dumped by pg_dump version 17.9 (Debian 17.9-1.pgdg12+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -26,7 +28,9 @@ CREATE DATABASE netbox WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PROVID
 
 ALTER DATABASE netbox OWNER TO nwa;
 
+\unrestrict 1m8jA9R8BKYOP6LunkbQyolOQtQKPMaPzDT1qxB6GYvER2lBazVbKuCpQ8N07uO
 \connect netbox
+\restrict 1m8jA9R8BKYOP6LunkbQyolOQtQKPMaPzDT1qxB6GYvER2lBazVbKuCpQ8N07uO
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -159,6 +163,7 @@ CREATE TABLE public.circuits_circuit (
     _abs_distance numeric(13,4),
     distance numeric(8,2),
     distance_unit character varying(50),
+    owner_id bigint,
     CONSTRAINT circuits_circuit_commit_rate_check CHECK ((commit_rate >= 0))
 );
 
@@ -191,7 +196,9 @@ CREATE TABLE public.circuits_circuitgroup (
     name character varying(100) NOT NULL,
     slug character varying(100) NOT NULL,
     description character varying(200) NOT NULL,
-    tenant_id bigint
+    tenant_id bigint,
+    owner_id bigint,
+    comments text NOT NULL
 );
 
 
@@ -270,6 +277,9 @@ CREATE TABLE public.circuits_circuittermination (
     _region_id bigint,
     _site_id bigint,
     _site_group_id bigint,
+    cable_connector smallint,
+    cable_positions smallint[],
+    CONSTRAINT circuits_circuittermination_cable_connector_check CHECK ((cable_connector >= 0)),
     CONSTRAINT circuits_circuittermination_port_speed_check CHECK ((port_speed >= 0)),
     CONSTRAINT circuits_circuittermination_termination_id_check CHECK ((termination_id >= 0)),
     CONSTRAINT circuits_circuittermination_upstream_speed_check CHECK ((upstream_speed >= 0))
@@ -304,7 +314,9 @@ CREATE TABLE public.circuits_circuittype (
     name character varying(100) NOT NULL,
     slug character varying(100) NOT NULL,
     description character varying(200) NOT NULL,
-    color character varying(6) NOT NULL
+    color character varying(6) NOT NULL,
+    owner_id bigint,
+    comments text NOT NULL
 );
 
 
@@ -336,7 +348,8 @@ CREATE TABLE public.circuits_provider (
     name character varying(100) NOT NULL COLLATE public.natural_sort,
     slug character varying(100) NOT NULL,
     comments text NOT NULL,
-    description character varying(200) NOT NULL
+    description character varying(200) NOT NULL,
+    owner_id bigint
 );
 
 
@@ -396,7 +409,8 @@ CREATE TABLE public.circuits_provideraccount (
     comments text NOT NULL,
     account character varying(100) NOT NULL,
     name character varying(100) NOT NULL,
-    provider_id bigint NOT NULL
+    provider_id bigint NOT NULL,
+    owner_id bigint
 );
 
 
@@ -429,7 +443,8 @@ CREATE TABLE public.circuits_providernetwork (
     description character varying(200) NOT NULL,
     comments text NOT NULL,
     provider_id bigint NOT NULL,
-    service_id character varying(100) NOT NULL
+    service_id character varying(100) NOT NULL,
+    owner_id bigint
 );
 
 
@@ -465,7 +480,8 @@ CREATE TABLE public.circuits_virtualcircuit (
     provider_account_id bigint,
     provider_network_id bigint NOT NULL,
     type_id bigint NOT NULL,
-    tenant_id bigint
+    tenant_id bigint,
+    owner_id bigint
 );
 
 
@@ -529,7 +545,9 @@ CREATE TABLE public.circuits_virtualcircuittype (
     name character varying(100) NOT NULL,
     slug character varying(100) NOT NULL,
     description character varying(200) NOT NULL,
-    color character varying(6) NOT NULL
+    color character varying(6) NOT NULL,
+    owner_id bigint,
+    comments text NOT NULL
 );
 
 
@@ -586,7 +604,8 @@ CREATE TABLE public.core_configrevision (
     id bigint NOT NULL,
     created timestamp with time zone NOT NULL,
     comment character varying(200) NOT NULL,
-    data jsonb
+    data jsonb,
+    active boolean NOT NULL
 );
 
 
@@ -645,6 +664,7 @@ CREATE TABLE public.core_datasource (
     parameters jsonb,
     last_synced timestamp with time zone,
     sync_interval smallint,
+    owner_id bigint,
     CONSTRAINT core_datasource_sync_interval_check CHECK ((sync_interval >= 0))
 );
 
@@ -685,6 +705,7 @@ CREATE TABLE public.core_job (
     user_id bigint,
     error text NOT NULL,
     log_entries jsonb[] NOT NULL,
+    queue_name character varying(100) NOT NULL,
     CONSTRAINT core_job_interval_check CHECK (("interval" >= 0)),
     CONSTRAINT core_job_object_id_check CHECK ((object_id >= 0))
 );
@@ -811,7 +832,9 @@ CREATE TABLE public.dcim_cable (
     _abs_length numeric(10,4),
     tenant_id bigint,
     comments text NOT NULL,
-    description character varying(200) NOT NULL
+    description character varying(200) NOT NULL,
+    owner_id bigint,
+    profile character varying(50) NOT NULL
 );
 
 
@@ -877,6 +900,9 @@ CREATE TABLE public.dcim_cabletermination (
     _site_id bigint,
     created timestamp with time zone,
     last_updated timestamp with time zone,
+    connector smallint,
+    positions smallint[],
+    CONSTRAINT dcim_cabletermination_connector_check CHECK ((connector >= 0)),
     CONSTRAINT dcim_cabletermination_termination_id_check CHECK ((termination_id >= 0))
 );
 
@@ -920,6 +946,10 @@ CREATE TABLE public.dcim_consoleport (
     _location_id bigint,
     _rack_id bigint,
     _site_id bigint,
+    owner_id bigint,
+    cable_connector smallint,
+    cable_positions smallint[],
+    CONSTRAINT dcim_consoleport_cable_connector_check CHECK ((cable_connector >= 0)),
     CONSTRAINT dcim_consoleport_speed_check CHECK ((speed >= 0))
 );
 
@@ -996,6 +1026,10 @@ CREATE TABLE public.dcim_consoleserverport (
     _location_id bigint,
     _rack_id bigint,
     _site_id bigint,
+    owner_id bigint,
+    cable_connector smallint,
+    cable_positions smallint[],
+    CONSTRAINT dcim_consoleserverport_cable_connector_check CHECK ((cable_connector >= 0)),
     CONSTRAINT dcim_consoleserverport_speed_check CHECK ((speed >= 0))
 );
 
@@ -1095,6 +1129,7 @@ CREATE TABLE public.dcim_device (
     device_bay_count bigint NOT NULL,
     module_bay_count bigint NOT NULL,
     inventory_item_count bigint NOT NULL,
+    owner_id bigint,
     CONSTRAINT dcim_device_vc_position_check CHECK ((vc_position >= 0)),
     CONSTRAINT dcim_device_vc_priority_check CHECK ((vc_priority >= 0))
 );
@@ -1132,7 +1167,8 @@ CREATE TABLE public.dcim_devicebay (
     installed_device_id bigint,
     _location_id bigint,
     _rack_id bigint,
-    _site_id bigint
+    _site_id bigint,
+    owner_id bigint
 );
 
 
@@ -1204,6 +1240,7 @@ CREATE TABLE public.dcim_devicerole (
     tree_id integer NOT NULL,
     parent_id bigint,
     comments text NOT NULL,
+    owner_id bigint,
     CONSTRAINT dcim_devicerole_level_check CHECK ((level >= 0)),
     CONSTRAINT dcim_devicerole_lft_check CHECK ((lft >= 0)),
     CONSTRAINT dcim_devicerole_rght_check CHECK ((rght >= 0)),
@@ -1263,6 +1300,8 @@ CREATE TABLE public.dcim_devicetype (
     module_bay_template_count bigint NOT NULL,
     inventory_item_template_count bigint NOT NULL,
     exclude_from_utilization boolean NOT NULL,
+    owner_id bigint,
+    device_count bigint NOT NULL,
     CONSTRAINT dcim_devicetype__abs_weight_check CHECK ((_abs_weight >= 0))
 );
 
@@ -1297,17 +1336,20 @@ CREATE TABLE public.dcim_frontport (
     description character varying(200) NOT NULL,
     mark_connected boolean NOT NULL,
     type character varying(50) NOT NULL,
-    rear_port_position smallint NOT NULL,
     cable_id bigint,
     device_id bigint NOT NULL,
-    rear_port_id bigint NOT NULL,
     color character varying(6) NOT NULL,
     module_id bigint,
     cable_end character varying(1),
     _location_id bigint,
     _rack_id bigint,
     _site_id bigint,
-    CONSTRAINT dcim_frontport_rear_port_position_check CHECK ((rear_port_position >= 0))
+    owner_id bigint,
+    cable_connector smallint,
+    cable_positions smallint[],
+    positions smallint NOT NULL,
+    CONSTRAINT dcim_frontport_cable_connector_check CHECK ((cable_connector >= 0)),
+    CONSTRAINT dcim_frontport_positions_check CHECK ((positions >= 0))
 );
 
 
@@ -1339,12 +1381,11 @@ CREATE TABLE public.dcim_frontporttemplate (
     label character varying(64) NOT NULL,
     description character varying(200) NOT NULL,
     type character varying(50) NOT NULL,
-    rear_port_position smallint NOT NULL,
     device_type_id bigint,
-    rear_port_id bigint NOT NULL,
     color character varying(6) NOT NULL,
     module_type_id bigint,
-    CONSTRAINT dcim_frontporttemplate_rear_port_position_check CHECK ((rear_port_position >= 0))
+    positions smallint NOT NULL,
+    CONSTRAINT dcim_frontporttemplate_positions_check CHECK ((positions >= 0))
 );
 
 
@@ -1400,7 +1441,7 @@ CREATE TABLE public.dcim_interface (
     module_id bigint,
     vrf_id bigint,
     duplex character varying(50),
-    speed integer,
+    speed bigint,
     poe_mode character varying(50),
     poe_type character varying(50),
     cable_end character varying(1),
@@ -1410,6 +1451,10 @@ CREATE TABLE public.dcim_interface (
     _location_id bigint,
     _rack_id bigint,
     _site_id bigint,
+    owner_id bigint,
+    cable_connector smallint,
+    cable_positions smallint[],
+    CONSTRAINT dcim_interface_cable_connector_check CHECK ((cable_connector >= 0)),
     CONSTRAINT dcim_interface_mtu_check CHECK ((mtu >= 0)),
     CONSTRAINT dcim_interface_speed_check CHECK ((speed >= 0))
 );
@@ -1582,6 +1627,7 @@ CREATE TABLE public.dcim_inventoryitem (
     _location_id bigint,
     _rack_id bigint,
     _site_id bigint,
+    owner_id bigint,
     CONSTRAINT dcim_inventoryitem_component_id_check CHECK ((component_id >= 0)),
     CONSTRAINT dcim_inventoryitem_level_check CHECK ((level >= 0)),
     CONSTRAINT dcim_inventoryitem_lft_check CHECK ((lft >= 0)),
@@ -1618,7 +1664,9 @@ CREATE TABLE public.dcim_inventoryitemrole (
     name character varying(100) NOT NULL,
     slug character varying(100) NOT NULL,
     color character varying(6) NOT NULL,
-    description character varying(200) NOT NULL
+    description character varying(200) NOT NULL,
+    owner_id bigint,
+    comments text NOT NULL
 );
 
 
@@ -1706,6 +1754,7 @@ CREATE TABLE public.dcim_location (
     status character varying(50) NOT NULL,
     facility character varying(50) NOT NULL,
     comments text NOT NULL,
+    owner_id bigint,
     CONSTRAINT dcim_location_level_check CHECK ((level >= 0)),
     CONSTRAINT dcim_location_lft_check CHECK ((lft >= 0)),
     CONSTRAINT dcim_location_rght_check CHECK ((rght >= 0)),
@@ -1743,6 +1792,7 @@ CREATE TABLE public.dcim_macaddress (
     mac_address macaddr NOT NULL,
     assigned_object_id bigint,
     assigned_object_type_id integer,
+    owner_id bigint,
     CONSTRAINT dcim_macaddress_assigned_object_id_check CHECK ((assigned_object_id >= 0))
 );
 
@@ -1774,7 +1824,9 @@ CREATE TABLE public.dcim_manufacturer (
     id bigint NOT NULL,
     name character varying(100) NOT NULL,
     slug character varying(100) NOT NULL,
-    description character varying(200) NOT NULL
+    description character varying(200) NOT NULL,
+    owner_id bigint,
+    comments text NOT NULL
 );
 
 
@@ -1811,7 +1863,8 @@ CREATE TABLE public.dcim_module (
     module_bay_id bigint NOT NULL,
     module_type_id bigint NOT NULL,
     description character varying(200) NOT NULL,
-    status character varying(50) NOT NULL
+    status character varying(50) NOT NULL,
+    owner_id bigint
 );
 
 
@@ -1854,6 +1907,7 @@ CREATE TABLE public.dcim_modulebay (
     _location_id bigint,
     _rack_id bigint,
     _site_id bigint,
+    owner_id bigint,
     CONSTRAINT dcim_modulebay_level_check CHECK ((level >= 0)),
     CONSTRAINT dcim_modulebay_lft_check CHECK ((lft >= 0)),
     CONSTRAINT dcim_modulebay_rght_check CHECK ((rght >= 0)),
@@ -1930,6 +1984,8 @@ CREATE TABLE public.dcim_moduletype (
     airflow character varying(50),
     attribute_data jsonb,
     profile_id bigint,
+    owner_id bigint,
+    module_count bigint NOT NULL,
     CONSTRAINT dcim_moduletype__abs_weight_check CHECK ((_abs_weight >= 0))
 );
 
@@ -1962,7 +2018,8 @@ CREATE TABLE public.dcim_moduletypeprofile (
     description character varying(200) NOT NULL,
     comments text NOT NULL,
     name character varying(100) NOT NULL,
-    schema jsonb
+    schema jsonb,
+    owner_id bigint
 );
 
 
@@ -2002,6 +2059,7 @@ CREATE TABLE public.dcim_platform (
     rght integer NOT NULL,
     tree_id integer NOT NULL,
     comments text NOT NULL,
+    owner_id bigint,
     CONSTRAINT dcim_platform_level_check CHECK ((level >= 0)),
     CONSTRAINT dcim_platform_lft_check CHECK ((lft >= 0)),
     CONSTRAINT dcim_platform_rght_check CHECK ((rght >= 0)),
@@ -2017,6 +2075,71 @@ ALTER TABLE public.dcim_platform OWNER TO nwa;
 
 ALTER TABLE public.dcim_platform ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
     SEQUENCE NAME public.dcim_platform_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: dcim_portmapping; Type: TABLE; Schema: public; Owner: nwa
+--
+
+CREATE TABLE public.dcim_portmapping (
+    id bigint NOT NULL,
+    front_port_position smallint NOT NULL,
+    rear_port_position smallint NOT NULL,
+    device_id bigint NOT NULL,
+    front_port_id bigint NOT NULL,
+    rear_port_id bigint NOT NULL,
+    CONSTRAINT dcim_portmapping_front_port_position_check CHECK ((front_port_position >= 0)),
+    CONSTRAINT dcim_portmapping_rear_port_position_check CHECK ((rear_port_position >= 0))
+);
+
+
+ALTER TABLE public.dcim_portmapping OWNER TO nwa;
+
+--
+-- Name: dcim_portmapping_id_seq; Type: SEQUENCE; Schema: public; Owner: nwa
+--
+
+ALTER TABLE public.dcim_portmapping ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.dcim_portmapping_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: dcim_porttemplatemapping; Type: TABLE; Schema: public; Owner: nwa
+--
+
+CREATE TABLE public.dcim_porttemplatemapping (
+    id bigint NOT NULL,
+    front_port_position smallint NOT NULL,
+    rear_port_position smallint NOT NULL,
+    device_type_id bigint,
+    module_type_id bigint,
+    front_port_id bigint NOT NULL,
+    rear_port_id bigint NOT NULL,
+    CONSTRAINT dcim_porttemplatemapping_front_port_position_check CHECK ((front_port_position >= 0)),
+    CONSTRAINT dcim_porttemplatemapping_rear_port_position_check CHECK ((rear_port_position >= 0))
+);
+
+
+ALTER TABLE public.dcim_porttemplatemapping OWNER TO nwa;
+
+--
+-- Name: dcim_porttemplatemapping_id_seq; Type: SEQUENCE; Schema: public; Owner: nwa
+--
+
+ALTER TABLE public.dcim_porttemplatemapping ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.dcim_porttemplatemapping_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -2052,8 +2175,12 @@ CREATE TABLE public.dcim_powerfeed (
     cable_end character varying(1),
     description character varying(200) NOT NULL,
     tenant_id bigint,
+    owner_id bigint,
+    cable_connector smallint,
+    cable_positions smallint[],
     CONSTRAINT dcim_powerfeed_amperage_check CHECK ((amperage >= 0)),
     CONSTRAINT dcim_powerfeed_available_power_check CHECK ((available_power >= 0)),
+    CONSTRAINT dcim_powerfeed_cable_connector_check CHECK ((cable_connector >= 0)),
     CONSTRAINT dcim_powerfeed_max_utilization_check CHECK ((max_utilization >= 0))
 );
 
@@ -2099,7 +2226,11 @@ CREATE TABLE public.dcim_poweroutlet (
     status character varying(50) NOT NULL,
     _location_id bigint,
     _rack_id bigint,
-    _site_id bigint
+    _site_id bigint,
+    owner_id bigint,
+    cable_connector smallint,
+    cable_positions smallint[],
+    CONSTRAINT dcim_poweroutlet_cable_connector_check CHECK ((cable_connector >= 0))
 );
 
 
@@ -2134,7 +2265,8 @@ CREATE TABLE public.dcim_poweroutlettemplate (
     feed_leg character varying(50),
     device_type_id bigint,
     power_port_id bigint,
-    module_type_id bigint
+    module_type_id bigint,
+    color character varying(6) NOT NULL
 );
 
 
@@ -2167,7 +2299,8 @@ CREATE TABLE public.dcim_powerpanel (
     location_id bigint,
     site_id bigint NOT NULL,
     comments text NOT NULL,
-    description character varying(200) NOT NULL
+    description character varying(200) NOT NULL,
+    owner_id bigint
 );
 
 
@@ -2211,7 +2344,11 @@ CREATE TABLE public.dcim_powerport (
     _location_id bigint,
     _rack_id bigint,
     _site_id bigint,
+    owner_id bigint,
+    cable_connector smallint,
+    cable_positions smallint[],
     CONSTRAINT dcim_powerport_allocated_draw_check CHECK ((allocated_draw >= 0)),
+    CONSTRAINT dcim_powerport_cable_connector_check CHECK ((cable_connector >= 0)),
     CONSTRAINT dcim_powerport_maximum_draw_check CHECK ((maximum_draw >= 0))
 );
 
@@ -2306,6 +2443,7 @@ CREATE TABLE public.dcim_rack (
     rack_type_id bigint,
     airflow character varying(50),
     outer_height smallint,
+    owner_id bigint,
     CONSTRAINT dcim_rack__abs_max_weight_check CHECK ((_abs_max_weight >= 0)),
     CONSTRAINT dcim_rack__abs_weight_check CHECK ((_abs_weight >= 0)),
     CONSTRAINT dcim_rack_max_weight_check CHECK ((max_weight >= 0)),
@@ -2350,7 +2488,8 @@ CREATE TABLE public.dcim_rackreservation (
     tenant_id bigint,
     user_id bigint NOT NULL,
     comments text NOT NULL,
-    status character varying(50) NOT NULL
+    status character varying(50) NOT NULL,
+    owner_id bigint
 );
 
 
@@ -2382,7 +2521,9 @@ CREATE TABLE public.dcim_rackrole (
     name character varying(100) NOT NULL,
     slug character varying(100) NOT NULL,
     color character varying(6) NOT NULL,
-    description character varying(200) NOT NULL
+    description character varying(200) NOT NULL,
+    owner_id bigint,
+    comments text NOT NULL
 );
 
 
@@ -2431,6 +2572,8 @@ CREATE TABLE public.dcim_racktype (
     _abs_max_weight bigint,
     mounting_depth smallint,
     outer_height smallint,
+    owner_id bigint,
+    rack_count bigint NOT NULL,
     CONSTRAINT dcim_racktype__abs_max_weight_check CHECK ((_abs_max_weight >= 0)),
     CONSTRAINT dcim_racktype__abs_weight_check CHECK ((_abs_weight >= 0)),
     CONSTRAINT dcim_racktype_max_weight_check CHECK ((max_weight >= 0)),
@@ -2483,6 +2626,10 @@ CREATE TABLE public.dcim_rearport (
     _location_id bigint,
     _rack_id bigint,
     _site_id bigint,
+    owner_id bigint,
+    cable_connector smallint,
+    cable_positions smallint[],
+    CONSTRAINT dcim_rearport_cable_connector_check CHECK ((cable_connector >= 0)),
     CONSTRAINT dcim_rearport_positions_check CHECK ((positions >= 0))
 );
 
@@ -2557,6 +2704,7 @@ CREATE TABLE public.dcim_region (
     level integer NOT NULL,
     parent_id bigint,
     comments text NOT NULL,
+    owner_id bigint,
     CONSTRAINT dcim_region_level_check CHECK ((level >= 0)),
     CONSTRAINT dcim_region_lft_check CHECK ((lft >= 0)),
     CONSTRAINT dcim_region_rght_check CHECK ((rght >= 0)),
@@ -2602,7 +2750,8 @@ CREATE TABLE public.dcim_site (
     comments text NOT NULL,
     group_id bigint,
     region_id bigint,
-    tenant_id bigint
+    tenant_id bigint,
+    owner_id bigint
 );
 
 
@@ -2667,6 +2816,7 @@ CREATE TABLE public.dcim_sitegroup (
     level integer NOT NULL,
     parent_id bigint,
     comments text NOT NULL,
+    owner_id bigint,
     CONSTRAINT dcim_sitegroup_level_check CHECK ((level >= 0)),
     CONSTRAINT dcim_sitegroup_lft_check CHECK ((lft >= 0)),
     CONSTRAINT dcim_sitegroup_rght_check CHECK ((rght >= 0)),
@@ -2704,7 +2854,8 @@ CREATE TABLE public.dcim_virtualchassis (
     master_id bigint,
     comments text NOT NULL,
     description character varying(200) NOT NULL,
-    member_count bigint NOT NULL
+    member_count bigint NOT NULL,
+    owner_id bigint
 );
 
 
@@ -2742,6 +2893,7 @@ CREATE TABLE public.dcim_virtualdevicecontext (
     primary_ip4_id bigint,
     primary_ip6_id bigint,
     tenant_id bigint,
+    owner_id bigint,
     CONSTRAINT dcim_virtualdevicecontext_identifier_check CHECK ((identifier >= 0))
 );
 
@@ -2899,6 +3051,7 @@ CREATE TABLE public.extras_configcontext (
     auto_sync_enabled boolean NOT NULL,
     data_synced timestamp with time zone,
     profile_id bigint,
+    owner_id bigint,
     CONSTRAINT extras_configcontext_weight_check CHECK ((weight >= 0))
 );
 
@@ -3287,7 +3440,8 @@ CREATE TABLE public.extras_configcontextprofile (
     description character varying(200) NOT NULL,
     schema jsonb,
     data_file_id bigint,
-    data_source_id bigint
+    data_source_id bigint,
+    owner_id bigint
 );
 
 
@@ -3341,7 +3495,8 @@ CREATE TABLE public.extras_configtemplate (
     as_attachment boolean NOT NULL,
     file_extension character varying(15) NOT NULL,
     file_name character varying(200) NOT NULL,
-    mime_type character varying(50) NOT NULL
+    mime_type character varying(50) NOT NULL,
+    owner_id bigint
 );
 
 
@@ -3390,6 +3545,7 @@ CREATE TABLE public.extras_customfield (
     comments text NOT NULL,
     "unique" boolean NOT NULL,
     related_object_filter jsonb,
+    owner_id bigint,
     CONSTRAINT extras_customfield_search_weight_check CHECK ((search_weight >= 0)),
     CONSTRAINT extras_customfield_weight_check CHECK ((weight >= 0))
 );
@@ -3450,7 +3606,8 @@ CREATE TABLE public.extras_customfieldchoiceset (
     description character varying(200) NOT NULL,
     base_choices character varying(50),
     extra_choices character varying(100)[],
-    order_alphabetically boolean NOT NULL
+    order_alphabetically boolean NOT NULL,
+    owner_id bigint
 );
 
 
@@ -3486,6 +3643,7 @@ CREATE TABLE public.extras_customlink (
     created timestamp with time zone,
     last_updated timestamp with time zone,
     enabled boolean NOT NULL,
+    owner_id bigint,
     CONSTRAINT extras_customlink_weight_check CHECK ((weight >= 0))
 );
 
@@ -3580,6 +3738,7 @@ CREATE TABLE public.extras_eventrule (
     comments text NOT NULL,
     action_object_type_id integer NOT NULL,
     event_types character varying(50)[] NOT NULL,
+    owner_id bigint,
     CONSTRAINT extras_eventrule_action_object_id_check CHECK ((action_object_id >= 0))
 );
 
@@ -3647,7 +3806,8 @@ CREATE TABLE public.extras_exporttemplate (
     auto_sync_enabled boolean NOT NULL,
     data_synced timestamp with time zone,
     file_name character varying(200) NOT NULL,
-    environment_params jsonb
+    environment_params jsonb,
+    owner_id bigint
 );
 
 
@@ -3897,6 +4057,7 @@ CREATE TABLE public.extras_savedfilter (
     shared boolean NOT NULL,
     parameters jsonb NOT NULL,
     user_id bigint,
+    owner_id bigint,
     CONSTRAINT extras_savedfilter_weight_check CHECK ((weight >= 0))
 );
 
@@ -4053,6 +4214,7 @@ CREATE TABLE public.extras_tag (
     color character varying(6) NOT NULL,
     description character varying(200) NOT NULL,
     weight smallint NOT NULL,
+    owner_id bigint,
     CONSTRAINT extras_tag_weight_check CHECK ((weight >= 0))
 );
 
@@ -4146,7 +4308,8 @@ CREATE TABLE public.extras_webhook (
     created timestamp with time zone,
     last_updated timestamp with time zone,
     custom_field_data jsonb NOT NULL,
-    description character varying(200) NOT NULL
+    description character varying(200) NOT NULL,
+    owner_id bigint
 );
 
 
@@ -4180,7 +4343,8 @@ CREATE TABLE public.ipam_aggregate (
     description character varying(200) NOT NULL,
     rir_id bigint NOT NULL,
     tenant_id bigint,
-    comments text NOT NULL
+    comments text NOT NULL,
+    owner_id bigint
 );
 
 
@@ -4213,7 +4377,8 @@ CREATE TABLE public.ipam_asn (
     description character varying(200) NOT NULL,
     rir_id bigint NOT NULL,
     tenant_id bigint,
-    comments text NOT NULL
+    comments text NOT NULL,
+    owner_id bigint
 );
 
 
@@ -4248,7 +4413,9 @@ CREATE TABLE public.ipam_asnrange (
     start bigint NOT NULL,
     "end" bigint NOT NULL,
     rir_id bigint NOT NULL,
-    tenant_id bigint
+    tenant_id bigint,
+    owner_id bigint,
+    comments text NOT NULL
 );
 
 
@@ -4284,6 +4451,7 @@ CREATE TABLE public.ipam_fhrpgroup (
     description character varying(200) NOT NULL,
     name character varying(100) NOT NULL,
     comments text NOT NULL,
+    owner_id bigint,
     CONSTRAINT ipam_fhrpgroup_group_id_check CHECK ((group_id >= 0))
 );
 
@@ -4357,6 +4525,7 @@ CREATE TABLE public.ipam_ipaddress (
     tenant_id bigint,
     vrf_id bigint,
     comments text NOT NULL,
+    owner_id bigint,
     CONSTRAINT ipam_ipaddress_assigned_object_id_check CHECK ((assigned_object_id >= 0))
 );
 
@@ -4397,6 +4566,7 @@ CREATE TABLE public.ipam_iprange (
     comments text NOT NULL,
     mark_utilized boolean NOT NULL,
     mark_populated boolean NOT NULL,
+    owner_id bigint,
     CONSTRAINT ipam_iprange_size_check CHECK ((size >= 0))
 );
 
@@ -4444,6 +4614,7 @@ CREATE TABLE public.ipam_prefix (
     _region_id bigint,
     _site_id bigint,
     _site_group_id bigint,
+    owner_id bigint,
     CONSTRAINT ipam_prefix__children_check CHECK ((_children >= 0)),
     CONSTRAINT ipam_prefix__depth_check CHECK ((_depth >= 0)),
     CONSTRAINT ipam_prefix_scope_id_check CHECK ((scope_id >= 0))
@@ -4478,7 +4649,9 @@ CREATE TABLE public.ipam_rir (
     name character varying(100) NOT NULL,
     slug character varying(100) NOT NULL,
     is_private boolean NOT NULL,
-    description character varying(200) NOT NULL
+    description character varying(200) NOT NULL,
+    owner_id bigint,
+    comments text NOT NULL
 );
 
 
@@ -4511,6 +4684,8 @@ CREATE TABLE public.ipam_role (
     slug character varying(100) NOT NULL,
     weight smallint NOT NULL,
     description character varying(200) NOT NULL,
+    owner_id bigint,
+    comments text NOT NULL,
     CONSTRAINT ipam_role_weight_check CHECK ((weight >= 0))
 );
 
@@ -4543,7 +4718,8 @@ CREATE TABLE public.ipam_routetarget (
     name character varying(21) NOT NULL COLLATE public.natural_sort,
     description character varying(200) NOT NULL,
     tenant_id bigint,
-    comments text NOT NULL
+    comments text NOT NULL,
+    owner_id bigint
 );
 
 
@@ -4579,6 +4755,7 @@ CREATE TABLE public.ipam_service (
     comments text NOT NULL,
     parent_object_id bigint NOT NULL,
     parent_object_type_id integer NOT NULL,
+    owner_id bigint,
     CONSTRAINT ipam_service_parent_object_id_check CHECK ((parent_object_id >= 0))
 );
 
@@ -4639,7 +4816,8 @@ CREATE TABLE public.ipam_servicetemplate (
     ports integer[] NOT NULL,
     description character varying(200) NOT NULL,
     name character varying(100) NOT NULL,
-    comments text NOT NULL
+    comments text NOT NULL,
+    owner_id bigint
 );
 
 
@@ -4679,6 +4857,7 @@ CREATE TABLE public.ipam_vlan (
     comments text NOT NULL,
     qinq_role character varying(50),
     qinq_svlan_id bigint,
+    owner_id bigint,
     CONSTRAINT ipam_vlan_vid_check CHECK ((vid >= 0))
 );
 
@@ -4716,6 +4895,8 @@ CREATE TABLE public.ipam_vlangroup (
     vid_ranges int4range[] NOT NULL,
     _total_vlan_ids bigint NOT NULL,
     tenant_id bigint,
+    owner_id bigint,
+    comments text NOT NULL,
     CONSTRAINT ipam_vlangroup__total_vlan_ids_check CHECK ((_total_vlan_ids >= 0)),
     CONSTRAINT ipam_vlangroup_scope_id_check CHECK ((scope_id >= 0))
 );
@@ -4748,7 +4929,8 @@ CREATE TABLE public.ipam_vlantranslationpolicy (
     custom_field_data jsonb NOT NULL,
     comments text NOT NULL,
     name character varying(100) NOT NULL,
-    description character varying(200) NOT NULL
+    description character varying(200) NOT NULL,
+    owner_id bigint
 );
 
 
@@ -4816,7 +4998,8 @@ CREATE TABLE public.ipam_vrf (
     enforce_unique boolean NOT NULL,
     description character varying(200) NOT NULL,
     tenant_id bigint,
-    comments text NOT NULL
+    comments text NOT NULL,
+    owner_id bigint
 );
 
 
@@ -5112,7 +5295,8 @@ CREATE TABLE public.tenancy_contact (
     address character varying(200) NOT NULL,
     comments text NOT NULL,
     link character varying(200) NOT NULL,
-    description character varying(200) NOT NULL
+    description character varying(200) NOT NULL,
+    owner_id bigint
 );
 
 
@@ -5211,6 +5395,7 @@ CREATE TABLE public.tenancy_contactgroup (
     level integer NOT NULL,
     parent_id bigint,
     comments text NOT NULL,
+    owner_id bigint,
     CONSTRAINT tenancy_contactgroup_level_check CHECK ((level >= 0)),
     CONSTRAINT tenancy_contactgroup_lft_check CHECK ((lft >= 0)),
     CONSTRAINT tenancy_contactgroup_rght_check CHECK ((rght >= 0)),
@@ -5245,7 +5430,9 @@ CREATE TABLE public.tenancy_contactrole (
     custom_field_data jsonb NOT NULL,
     name character varying(100) NOT NULL,
     slug character varying(100) NOT NULL,
-    description character varying(200) NOT NULL
+    description character varying(200) NOT NULL,
+    owner_id bigint,
+    comments text NOT NULL
 );
 
 
@@ -5278,7 +5465,8 @@ CREATE TABLE public.tenancy_tenant (
     slug character varying(100) NOT NULL,
     description character varying(200) NOT NULL,
     comments text NOT NULL,
-    group_id bigint
+    group_id bigint,
+    owner_id bigint
 );
 
 
@@ -5316,6 +5504,7 @@ CREATE TABLE public.tenancy_tenantgroup (
     level integer NOT NULL,
     parent_id bigint,
     comments text NOT NULL,
+    owner_id bigint,
     CONSTRAINT tenancy_tenantgroup_level_check CHECK ((level >= 0)),
     CONSTRAINT tenancy_tenantgroup_lft_check CHECK ((lft >= 0)),
     CONSTRAINT tenancy_tenantgroup_rght_check CHECK ((rght >= 0)),
@@ -5490,6 +5679,115 @@ ALTER TABLE public.users_objectpermission_object_types ALTER COLUMN id ADD GENER
 
 
 --
+-- Name: users_owner; Type: TABLE; Schema: public; Owner: nwa
+--
+
+CREATE TABLE public.users_owner (
+    id bigint NOT NULL,
+    name character varying(100) NOT NULL,
+    description character varying(200) NOT NULL,
+    group_id bigint
+);
+
+
+ALTER TABLE public.users_owner OWNER TO nwa;
+
+--
+-- Name: users_owner_id_seq; Type: SEQUENCE; Schema: public; Owner: nwa
+--
+
+ALTER TABLE public.users_owner ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.users_owner_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: users_owner_user_groups; Type: TABLE; Schema: public; Owner: nwa
+--
+
+CREATE TABLE public.users_owner_user_groups (
+    id bigint NOT NULL,
+    owner_id bigint NOT NULL,
+    group_id bigint NOT NULL
+);
+
+
+ALTER TABLE public.users_owner_user_groups OWNER TO nwa;
+
+--
+-- Name: users_owner_user_groups_id_seq; Type: SEQUENCE; Schema: public; Owner: nwa
+--
+
+ALTER TABLE public.users_owner_user_groups ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.users_owner_user_groups_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: users_owner_users; Type: TABLE; Schema: public; Owner: nwa
+--
+
+CREATE TABLE public.users_owner_users (
+    id bigint NOT NULL,
+    owner_id bigint NOT NULL,
+    user_id bigint NOT NULL
+);
+
+
+ALTER TABLE public.users_owner_users OWNER TO nwa;
+
+--
+-- Name: users_owner_users_id_seq; Type: SEQUENCE; Schema: public; Owner: nwa
+--
+
+ALTER TABLE public.users_owner_users ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.users_owner_users_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: users_ownergroup; Type: TABLE; Schema: public; Owner: nwa
+--
+
+CREATE TABLE public.users_ownergroup (
+    id bigint NOT NULL,
+    description character varying(200) NOT NULL,
+    name character varying(100) NOT NULL
+);
+
+
+ALTER TABLE public.users_ownergroup OWNER TO nwa;
+
+--
+-- Name: users_ownergroup_id_seq; Type: SEQUENCE; Schema: public; Owner: nwa
+--
+
+ALTER TABLE public.users_ownergroup ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.users_ownergroup_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: users_token; Type: TABLE; Schema: public; Owner: nwa
 --
 
@@ -5497,12 +5795,20 @@ CREATE TABLE public.users_token (
     id bigint NOT NULL,
     created timestamp with time zone NOT NULL,
     expires timestamp with time zone,
-    key character varying(40) NOT NULL,
+    plaintext character varying(40),
     write_enabled boolean NOT NULL,
     description character varying(200) NOT NULL,
     user_id bigint NOT NULL,
     allowed_ips cidr[],
-    last_used timestamp with time zone
+    last_used timestamp with time zone,
+    enabled boolean NOT NULL,
+    version smallint NOT NULL,
+    key character varying(12),
+    pepper_id smallint,
+    hmac_digest character varying(64),
+    CONSTRAINT enforce_version_dependent_fields CHECK ((((hmac_digest IS NULL) AND (key IS NULL) AND (pepper_id IS NULL) AND (plaintext IS NOT NULL) AND (version = 1)) OR ((hmac_digest IS NOT NULL) AND (key IS NOT NULL) AND (pepper_id IS NOT NULL) AND (plaintext IS NULL) AND (version = 2)))),
+    CONSTRAINT users_token_pepper_id_check CHECK ((pepper_id >= 0)),
+    CONSTRAINT users_token_version_check CHECK ((version >= 0))
 );
 
 
@@ -5535,7 +5841,6 @@ CREATE TABLE public.users_user (
     first_name character varying(150) NOT NULL,
     last_name character varying(150) NOT NULL,
     email character varying(254) NOT NULL,
-    is_staff boolean NOT NULL,
     is_active boolean NOT NULL,
     date_joined timestamp with time zone NOT NULL
 );
@@ -5687,6 +5992,7 @@ CREATE TABLE public.virtualization_cluster (
     _region_id bigint,
     _site_id bigint,
     _site_group_id bigint,
+    owner_id bigint,
     CONSTRAINT virtualization_cluster_scope_id_check CHECK ((scope_id >= 0))
 );
 
@@ -5718,7 +6024,9 @@ CREATE TABLE public.virtualization_clustergroup (
     id bigint NOT NULL,
     name character varying(100) NOT NULL,
     slug character varying(100) NOT NULL,
-    description character varying(200) NOT NULL
+    description character varying(200) NOT NULL,
+    owner_id bigint,
+    comments text NOT NULL
 );
 
 
@@ -5749,7 +6057,9 @@ CREATE TABLE public.virtualization_clustertype (
     id bigint NOT NULL,
     name character varying(100) NOT NULL,
     slug character varying(100) NOT NULL,
-    description character varying(200) NOT NULL
+    description character varying(200) NOT NULL,
+    owner_id bigint,
+    comments text NOT NULL
 );
 
 
@@ -5782,6 +6092,7 @@ CREATE TABLE public.virtualization_virtualdisk (
     description character varying(200) NOT NULL,
     size integer NOT NULL,
     virtual_machine_id bigint NOT NULL,
+    owner_id bigint,
     CONSTRAINT virtualization_virtualdisk_size_check CHECK ((size >= 0))
 );
 
@@ -5831,6 +6142,8 @@ CREATE TABLE public.virtualization_virtualmachine (
     config_template_id bigint,
     virtual_disk_count bigint NOT NULL,
     serial character varying(50) NOT NULL,
+    owner_id bigint,
+    start_on_boot character varying(32) NOT NULL,
     CONSTRAINT virtualization_virtualmachine_disk_check CHECK ((disk >= 0)),
     CONSTRAINT virtualization_virtualmachine_memory_check CHECK ((memory >= 0))
 );
@@ -5875,6 +6188,7 @@ CREATE TABLE public.virtualization_vminterface (
     vlan_translation_policy_id bigint,
     qinq_svlan_id bigint,
     primary_mac_address_id bigint,
+    owner_id bigint,
     CONSTRAINT virtualization_vminterface_mtu_check CHECK ((mtu >= 0))
 );
 
@@ -5937,6 +6251,7 @@ CREATE TABLE public.vpn_ikepolicy (
     version smallint NOT NULL,
     mode character varying,
     preshared_key text NOT NULL,
+    owner_id bigint,
     CONSTRAINT vpn_ikepolicy_version_check CHECK ((version >= 0))
 );
 
@@ -6001,6 +6316,7 @@ CREATE TABLE public.vpn_ikeproposal (
     authentication_algorithm character varying,
     "group" smallint NOT NULL,
     sa_lifetime integer,
+    owner_id bigint,
     CONSTRAINT vpn_ikeproposal_group_check CHECK (("group" >= 0)),
     CONSTRAINT vpn_ikeproposal_sa_lifetime_check CHECK ((sa_lifetime >= 0))
 );
@@ -6035,6 +6351,7 @@ CREATE TABLE public.vpn_ipsecpolicy (
     comments text NOT NULL,
     name character varying(100) NOT NULL COLLATE public.natural_sort,
     pfs_group smallint,
+    owner_id bigint,
     CONSTRAINT vpn_ipsecpolicy_pfs_group_check CHECK ((pfs_group >= 0))
 );
 
@@ -6096,7 +6413,8 @@ CREATE TABLE public.vpn_ipsecprofile (
     name character varying(100) NOT NULL COLLATE public.natural_sort,
     mode character varying NOT NULL,
     ike_policy_id bigint NOT NULL,
-    ipsec_policy_id bigint NOT NULL
+    ipsec_policy_id bigint NOT NULL,
+    owner_id bigint
 );
 
 
@@ -6132,6 +6450,7 @@ CREATE TABLE public.vpn_ipsecproposal (
     authentication_algorithm character varying,
     sa_lifetime_seconds integer,
     sa_lifetime_data integer,
+    owner_id bigint,
     CONSTRAINT vpn_ipsecproposal_sa_lifetime_data_check CHECK ((sa_lifetime_data >= 0)),
     CONSTRAINT vpn_ipsecproposal_sa_lifetime_seconds_check CHECK ((sa_lifetime_seconds >= 0))
 );
@@ -6169,7 +6488,8 @@ CREATE TABLE public.vpn_l2vpn (
     description character varying(200) NOT NULL,
     tenant_id bigint,
     comments text NOT NULL,
-    status character varying(50) NOT NULL
+    status character varying(50) NOT NULL,
+    owner_id bigint
 );
 
 
@@ -6293,6 +6613,7 @@ CREATE TABLE public.vpn_tunnel (
     tunnel_id bigint,
     ipsec_profile_id bigint,
     tenant_id bigint,
+    owner_id bigint,
     CONSTRAINT vpn_tunnel_tunnel_id_check CHECK ((tunnel_id >= 0))
 );
 
@@ -6324,7 +6645,9 @@ CREATE TABLE public.vpn_tunnelgroup (
     custom_field_data jsonb NOT NULL,
     name character varying(100) NOT NULL,
     slug character varying(100) NOT NULL,
-    description character varying(200) NOT NULL
+    description character varying(200) NOT NULL,
+    owner_id bigint,
+    comments text NOT NULL
 );
 
 
@@ -6403,6 +6726,7 @@ CREATE TABLE public.wireless_wirelesslan (
     _site_group_id bigint,
     scope_id bigint,
     scope_type_id integer,
+    owner_id bigint,
     CONSTRAINT wireless_wirelesslan_scope_id_check CHECK ((scope_id >= 0))
 );
 
@@ -6441,6 +6765,7 @@ CREATE TABLE public.wireless_wirelesslangroup (
     level integer NOT NULL,
     parent_id bigint,
     comments text NOT NULL,
+    owner_id bigint,
     CONSTRAINT wireless_wirelesslangroup_level_check CHECK ((level >= 0)),
     CONSTRAINT wireless_wirelesslangroup_lft_check CHECK ((lft >= 0)),
     CONSTRAINT wireless_wirelesslangroup_rght_check CHECK ((rght >= 0)),
@@ -6487,7 +6812,8 @@ CREATE TABLE public.wireless_wirelesslink (
     comments text NOT NULL,
     _abs_distance numeric(13,4),
     distance numeric(8,2),
-    distance_unit character varying(50)
+    distance_unit character varying(50),
+    owner_id bigint
 );
 
 
@@ -6612,10 +6938,10 @@ COPY public.auth_permission (id, name, content_type_id, codename) FROM stdin;
 82	Can change token	33	change_usertoken
 83	Can delete token	33	delete_usertoken
 84	Can view token	33	view_usertoken
-85	Can add circuit	8	add_circuit
-86	Can change circuit	8	change_circuit
-87	Can delete circuit	8	delete_circuit
-88	Can view circuit	8	view_circuit
+85	Can add circuit	10	add_circuit
+86	Can change circuit	10	change_circuit
+87	Can delete circuit	10	delete_circuit
+88	Can view circuit	10	view_circuit
 89	Can add circuit termination	37	add_circuittermination
 90	Can change circuit termination	37	change_circuittermination
 91	Can delete circuit termination	37	delete_circuittermination
@@ -6628,10 +6954,10 @@ COPY public.auth_permission (id, name, content_type_id, codename) FROM stdin;
 98	Can change provider	38	change_provider
 99	Can delete provider	38	delete_provider
 100	Can view provider	38	view_provider
-101	Can add provider network	7	add_providernetwork
-102	Can change provider network	7	change_providernetwork
-103	Can delete provider network	7	delete_providernetwork
-104	Can view provider network	7	view_providernetwork
+101	Can add provider network	9	add_providernetwork
+102	Can change provider network	9	change_providernetwork
+103	Can delete provider network	9	delete_providernetwork
+104	Can view provider network	9	view_providernetwork
 105	Can add provider account	39	add_provideraccount
 106	Can change provider account	39	change_provideraccount
 107	Can delete provider account	39	delete_provideraccount
@@ -6656,471 +6982,487 @@ COPY public.auth_permission (id, name, content_type_id, codename) FROM stdin;
 126	Can change virtual circuit termination	42	change_virtualcircuittermination
 127	Can delete virtual circuit termination	42	delete_virtualcircuittermination
 128	Can view virtual circuit termination	42	view_virtualcircuittermination
-129	Can add cable	53	add_cable
-130	Can change cable	53	change_cable
-131	Can delete cable	53	delete_cable
-132	Can view cable	53	view_cable
-133	Can add cable path	55	add_cablepath
-134	Can change cable path	55	change_cablepath
-135	Can delete cable path	55	delete_cablepath
-136	Can view cable path	55	view_cablepath
+129	Can add cable	54	add_cable
+130	Can change cable	54	change_cable
+131	Can delete cable	54	delete_cable
+132	Can view cable	54	view_cable
+133	Can add cable path	56	add_cablepath
+134	Can change cable path	56	change_cablepath
+135	Can delete cable path	56	delete_cablepath
+136	Can view cable path	56	view_cablepath
 137	Can add console port	43	add_consoleport
 138	Can change console port	43	change_consoleport
 139	Can delete console port	43	delete_consoleport
 140	Can view console port	43	view_consoleport
-141	Can add console port template	56	add_consoleporttemplate
-142	Can change console port template	56	change_consoleporttemplate
-143	Can delete console port template	56	delete_consoleporttemplate
-144	Can view console port template	56	view_consoleporttemplate
+141	Can add console port template	57	add_consoleporttemplate
+142	Can change console port template	57	change_consoleporttemplate
+143	Can delete console port template	57	delete_consoleporttemplate
+144	Can view console port template	57	view_consoleporttemplate
 145	Can add console server port	44	add_consoleserverport
 146	Can change console server port	44	change_consoleserverport
 147	Can delete console server port	44	delete_consoleserverport
 148	Can view console server port	44	view_consoleserverport
-149	Can add console server port template	57	add_consoleserverporttemplate
-150	Can change console server port template	57	change_consoleserverporttemplate
-151	Can delete console server port template	57	delete_consoleserverporttemplate
-152	Can view console server port template	57	view_consoleserverporttemplate
+149	Can add console server port template	58	add_consoleserverporttemplate
+150	Can change console server port template	58	change_consoleserverporttemplate
+151	Can delete console server port template	58	delete_consoleserverporttemplate
+152	Can view console server port template	58	view_consoleserverporttemplate
 153	Can add device	12	add_device
 154	Can change device	12	change_device
 155	Can delete device	12	delete_device
 156	Can view device	12	view_device
-157	Can add device bay	50	add_devicebay
-158	Can change device bay	50	change_devicebay
-159	Can delete device bay	50	delete_devicebay
-160	Can view device bay	50	view_devicebay
-161	Can add device bay template	64	add_devicebaytemplate
-162	Can change device bay template	64	change_devicebaytemplate
-163	Can delete device bay template	64	delete_devicebaytemplate
-164	Can view device bay template	64	view_devicebaytemplate
-165	Can add device role	70	add_devicerole
-166	Can change device role	70	change_devicerole
-167	Can delete device role	70	delete_devicerole
-168	Can view device role	70	view_devicerole
-169	Can add device type	69	add_devicetype
-170	Can change device type	69	change_devicetype
-171	Can delete device type	69	delete_devicetype
-172	Can view device type	69	view_devicetype
-173	Can add front port	47	add_frontport
-174	Can change front port	47	change_frontport
-175	Can delete front port	47	delete_frontport
-176	Can view front port	47	view_frontport
-177	Can add front port template	61	add_frontporttemplate
-178	Can change front port template	61	change_frontporttemplate
-179	Can delete front port template	61	delete_frontporttemplate
-180	Can view front port template	61	view_frontporttemplate
-181	Can add interface	9	add_interface
-182	Can change interface	9	change_interface
-183	Can delete interface	9	delete_interface
-184	Can view interface	9	view_interface
-185	Can add interface template	60	add_interfacetemplate
-186	Can change interface template	60	change_interfacetemplate
-187	Can delete interface template	60	delete_interfacetemplate
-188	Can view interface template	60	view_interfacetemplate
-189	Can add inventory item	52	add_inventoryitem
-190	Can change inventory item	52	change_inventoryitem
-191	Can delete inventory item	52	delete_inventoryitem
-192	Can view inventory item	52	view_inventoryitem
-193	Can add location	83	add_location
-194	Can change location	83	change_location
-195	Can delete location	83	delete_location
-196	Can view location	83	view_location
-197	Can add manufacturer	68	add_manufacturer
-198	Can change manufacturer	68	change_manufacturer
-199	Can delete manufacturer	68	delete_manufacturer
-200	Can view manufacturer	68	view_manufacturer
-201	Can add platform	71	add_platform
-202	Can change platform	71	change_platform
-203	Can delete platform	71	delete_platform
-204	Can view platform	71	view_platform
-205	Can add power feed	76	add_powerfeed
-206	Can change power feed	76	change_powerfeed
-207	Can delete power feed	76	delete_powerfeed
-208	Can view power feed	76	view_powerfeed
+157	Can add device bay	51	add_devicebay
+158	Can change device bay	51	change_devicebay
+159	Can delete device bay	51	delete_devicebay
+160	Can view device bay	51	view_devicebay
+161	Can add device bay template	66	add_devicebaytemplate
+162	Can change device bay template	66	change_devicebaytemplate
+163	Can delete device bay template	66	delete_devicebaytemplate
+164	Can view device bay template	66	view_devicebaytemplate
+165	Can add device role	72	add_devicerole
+166	Can change device role	72	change_devicerole
+167	Can delete device role	72	delete_devicerole
+168	Can view device role	72	view_devicerole
+169	Can add device type	71	add_devicetype
+170	Can change device type	71	change_devicetype
+171	Can delete device type	71	delete_devicetype
+172	Can view device type	71	view_devicetype
+173	Can add front port	48	add_frontport
+174	Can change front port	48	change_frontport
+175	Can delete front port	48	delete_frontport
+176	Can view front port	48	view_frontport
+177	Can add front port template	63	add_frontporttemplate
+178	Can change front port template	63	change_frontporttemplate
+179	Can delete front port template	63	delete_frontporttemplate
+180	Can view front port template	63	view_frontporttemplate
+181	Can add interface	7	add_interface
+182	Can change interface	7	change_interface
+183	Can delete interface	7	delete_interface
+184	Can view interface	7	view_interface
+185	Can add interface template	61	add_interfacetemplate
+186	Can change interface template	61	change_interfacetemplate
+187	Can delete interface template	61	delete_interfacetemplate
+188	Can view interface template	61	view_interfacetemplate
+189	Can add inventory item	53	add_inventoryitem
+190	Can change inventory item	53	change_inventoryitem
+191	Can delete inventory item	53	delete_inventoryitem
+192	Can view inventory item	53	view_inventoryitem
+193	Can add location	85	add_location
+194	Can change location	85	change_location
+195	Can delete location	85	delete_location
+196	Can view location	85	view_location
+197	Can add manufacturer	70	add_manufacturer
+198	Can change manufacturer	70	change_manufacturer
+199	Can delete manufacturer	70	delete_manufacturer
+200	Can view manufacturer	70	view_manufacturer
+201	Can add platform	73	add_platform
+202	Can change platform	73	change_platform
+203	Can delete platform	73	delete_platform
+204	Can view platform	73	view_platform
+205	Can add power feed	78	add_powerfeed
+206	Can change power feed	78	change_powerfeed
+207	Can delete power feed	78	delete_powerfeed
+208	Can view power feed	78	view_powerfeed
 209	Can add power outlet	46	add_poweroutlet
 210	Can change power outlet	46	change_poweroutlet
 211	Can delete power outlet	46	delete_poweroutlet
 212	Can view power outlet	46	view_poweroutlet
-213	Can add power outlet template	59	add_poweroutlettemplate
-214	Can change power outlet template	59	change_poweroutlettemplate
-215	Can delete power outlet template	59	delete_poweroutlettemplate
-216	Can view power outlet template	59	view_poweroutlettemplate
-217	Can add power panel	75	add_powerpanel
-218	Can change power panel	75	change_powerpanel
-219	Can delete power panel	75	delete_powerpanel
-220	Can view power panel	75	view_powerpanel
+213	Can add power outlet template	60	add_poweroutlettemplate
+214	Can change power outlet template	60	change_poweroutlettemplate
+215	Can delete power outlet template	60	delete_poweroutlettemplate
+216	Can view power outlet template	60	view_poweroutlettemplate
+217	Can add power panel	77	add_powerpanel
+218	Can change power panel	77	change_powerpanel
+219	Can delete power panel	77	delete_powerpanel
+220	Can view power panel	77	view_powerpanel
 221	Can add power port	45	add_powerport
 222	Can change power port	45	change_powerport
 223	Can delete power port	45	delete_powerport
 224	Can view power port	45	view_powerport
-225	Can add power port template	58	add_powerporttemplate
-226	Can change power port template	58	change_powerporttemplate
-227	Can delete power port template	58	delete_powerporttemplate
-228	Can view power port template	58	view_powerporttemplate
-229	Can add rack	79	add_rack
-230	Can change rack	79	change_rack
-231	Can delete rack	79	delete_rack
-232	Can view rack	79	view_rack
-233	Can add rack reservation	80	add_rackreservation
-234	Can change rack reservation	80	change_rackreservation
-235	Can delete rack reservation	80	delete_rackreservation
-236	Can view rack reservation	80	view_rackreservation
-237	Can add rack role	78	add_rackrole
-238	Can change rack role	78	change_rackrole
-239	Can delete rack role	78	delete_rackrole
-240	Can view rack role	78	view_rackrole
-241	Can add rear port	48	add_rearport
-242	Can change rear port	48	change_rearport
-243	Can delete rear port	48	delete_rearport
-244	Can view rear port	48	view_rearport
-245	Can add rear port template	62	add_rearporttemplate
-246	Can change rear port template	62	change_rearporttemplate
-247	Can delete rear port template	62	delete_rearporttemplate
-248	Can view rear port template	62	view_rearporttemplate
-249	Can add region	81	add_region
-250	Can change region	81	change_region
-251	Can delete region	81	delete_region
-252	Can view region	81	view_region
+225	Can add power port template	59	add_powerporttemplate
+226	Can change power port template	59	change_powerporttemplate
+227	Can delete power port template	59	delete_powerporttemplate
+228	Can view power port template	59	view_powerporttemplate
+229	Can add rack	81	add_rack
+230	Can change rack	81	change_rack
+231	Can delete rack	81	delete_rack
+232	Can view rack	81	view_rack
+233	Can add rack reservation	82	add_rackreservation
+234	Can change rack reservation	82	change_rackreservation
+235	Can delete rack reservation	82	delete_rackreservation
+236	Can view rack reservation	82	view_rackreservation
+237	Can add rack role	80	add_rackrole
+238	Can change rack role	80	change_rackrole
+239	Can delete rack role	80	delete_rackrole
+240	Can view rack role	80	view_rackrole
+241	Can add rear port	49	add_rearport
+242	Can change rear port	49	change_rearport
+243	Can delete rear port	49	delete_rearport
+244	Can view rear port	49	view_rearport
+245	Can add rear port template	64	add_rearporttemplate
+246	Can change rear port template	64	change_rearporttemplate
+247	Can delete rear port template	64	delete_rearporttemplate
+248	Can view rear port template	64	view_rearporttemplate
+249	Can add region	83	add_region
+250	Can change region	83	change_region
+251	Can delete region	83	delete_region
+252	Can view region	83	view_region
 253	Can add site	6	add_site
 254	Can change site	6	change_site
 255	Can delete site	6	delete_site
 256	Can view site	6	view_site
-257	Can add site group	82	add_sitegroup
-258	Can change site group	82	change_sitegroup
-259	Can delete site group	82	delete_sitegroup
-260	Can view site group	82	view_sitegroup
-261	Can add virtual chassis	72	add_virtualchassis
-262	Can change virtual chassis	72	change_virtualchassis
-263	Can delete virtual chassis	72	delete_virtualchassis
-264	Can view virtual chassis	72	view_virtualchassis
-265	Can add module type	66	add_moduletype
-266	Can change module type	66	change_moduletype
-267	Can delete module type	66	delete_moduletype
-268	Can view module type	66	view_moduletype
-269	Can add module bay	49	add_modulebay
-270	Can change module bay	49	change_modulebay
-271	Can delete module bay	49	delete_modulebay
-272	Can view module bay	49	view_modulebay
-273	Can add module	67	add_module
-274	Can change module	67	change_module
-275	Can delete module	67	delete_module
-276	Can view module	67	view_module
-277	Can add inventory item role	51	add_inventoryitemrole
-278	Can change inventory item role	51	change_inventoryitemrole
-279	Can delete inventory item role	51	delete_inventoryitemrole
-280	Can view inventory item role	51	view_inventoryitemrole
-281	Can add inventory item template	65	add_inventoryitemtemplate
-282	Can change inventory item template	65	change_inventoryitemtemplate
-283	Can delete inventory item template	65	delete_inventoryitemtemplate
-284	Can view inventory item template	65	view_inventoryitemtemplate
-285	Can add module bay template	63	add_modulebaytemplate
-286	Can change module bay template	63	change_modulebaytemplate
-287	Can delete module bay template	63	delete_modulebaytemplate
-288	Can view module bay template	63	view_modulebaytemplate
-289	Can add cable termination	54	add_cabletermination
-290	Can change cable termination	54	change_cabletermination
-291	Can delete cable termination	54	delete_cabletermination
-292	Can view cable termination	54	view_cabletermination
-293	Can add virtual device context	73	add_virtualdevicecontext
-294	Can change virtual device context	73	change_virtualdevicecontext
-295	Can delete virtual device context	73	delete_virtualdevicecontext
-296	Can view virtual device context	73	view_virtualdevicecontext
-297	Can add racktype	77	add_racktype
-298	Can change racktype	77	change_racktype
-299	Can delete racktype	77	delete_racktype
-300	Can view racktype	77	view_racktype
-301	Can add MAC address	74	add_macaddress
-302	Can change MAC address	74	change_macaddress
-303	Can delete MAC address	74	delete_macaddress
-304	Can view MAC address	74	view_macaddress
-305	Can add module type profile	10	add_moduletypeprofile
-306	Can change module type profile	10	change_moduletypeprofile
-307	Can delete module type profile	10	delete_moduletypeprofile
-308	Can view module type profile	10	view_moduletypeprofile
-309	Can add aggregate	91	add_aggregate
-310	Can change aggregate	91	change_aggregate
-311	Can delete aggregate	91	delete_aggregate
-312	Can view aggregate	91	view_aggregate
-313	Can add IP address	95	add_ipaddress
-314	Can change IP address	95	change_ipaddress
-315	Can delete IP address	95	delete_ipaddress
-316	Can view IP address	95	view_ipaddress
-317	Can add prefix	93	add_prefix
-318	Can change prefix	93	change_prefix
-319	Can delete prefix	93	delete_prefix
-320	Can view prefix	93	view_prefix
-321	Can add RIR	90	add_rir
-322	Can change RIR	90	change_rir
-323	Can delete RIR	90	delete_rir
-324	Can view RIR	90	view_rir
-325	Can add role	92	add_role
-326	Can change role	92	change_role
-327	Can delete role	92	delete_role
-328	Can view role	92	view_role
-329	Can add route target	89	add_routetarget
-330	Can change route target	89	change_routetarget
-331	Can delete route target	89	delete_routetarget
-332	Can view route target	89	view_routetarget
-333	Can add VRF	88	add_vrf
-334	Can change VRF	88	change_vrf
-335	Can delete VRF	88	delete_vrf
-336	Can view VRF	88	view_vrf
-337	Can add VLAN group	98	add_vlangroup
-338	Can change VLAN group	98	change_vlangroup
-339	Can delete VLAN group	98	delete_vlangroup
-340	Can view VLAN group	98	view_vlangroup
-341	Can add VLAN	99	add_vlan
-342	Can change VLAN	99	change_vlan
-343	Can delete VLAN	99	delete_vlan
-344	Can view VLAN	99	view_vlan
-345	Can add service	97	add_service
-346	Can change service	97	change_service
-347	Can delete service	97	delete_service
-348	Can view service	97	view_service
-349	Can add IP range	94	add_iprange
-350	Can change IP range	94	change_iprange
-351	Can delete IP range	94	delete_iprange
-352	Can view IP range	94	view_iprange
-353	Can add FHRP group	86	add_fhrpgroup
-354	Can change FHRP group	86	change_fhrpgroup
-355	Can delete FHRP group	86	delete_fhrpgroup
-356	Can view FHRP group	86	view_fhrpgroup
-357	Can add FHRP group assignment	87	add_fhrpgroupassignment
-358	Can change FHRP group assignment	87	change_fhrpgroupassignment
-359	Can delete FHRP group assignment	87	delete_fhrpgroupassignment
-360	Can view FHRP group assignment	87	view_fhrpgroupassignment
-361	Can add ASN	85	add_asn
-362	Can change ASN	85	change_asn
-363	Can delete ASN	85	delete_asn
-364	Can view ASN	85	view_asn
-365	Can add service template	96	add_servicetemplate
-366	Can change service template	96	change_servicetemplate
-367	Can delete service template	96	delete_servicetemplate
-368	Can view service template	96	view_servicetemplate
-369	Can add ASN range	84	add_asnrange
-370	Can change ASN range	84	change_asnrange
-371	Can delete ASN range	84	delete_asnrange
-372	Can view ASN range	84	view_asnrange
-373	Can add VLAN translation policy	100	add_vlantranslationpolicy
-374	Can change VLAN translation policy	100	change_vlantranslationpolicy
-375	Can delete VLAN translation policy	100	delete_vlantranslationpolicy
-376	Can view VLAN translation policy	100	view_vlantranslationpolicy
-377	Can add VLAN translation rule	101	add_vlantranslationrule
-378	Can change VLAN translation rule	101	change_vlantranslationrule
-379	Can delete VLAN translation rule	101	delete_vlantranslationrule
-380	Can view VLAN translation rule	101	view_vlantranslationrule
-381	Can add script	2	add_script
-382	Can change script	2	change_script
-383	Can delete script	2	delete_script
-384	Can view script	2	view_script
-385	Can add config context	105	add_configcontext
-386	Can change config context	105	change_configcontext
-387	Can delete config context	105	delete_configcontext
-388	Can view config context	105	view_configcontext
-389	Can add tag	102	add_tag
-390	Can change tag	102	change_tag
-391	Can delete tag	102	delete_tag
-392	Can view tag	102	view_tag
-393	Can add webhook	1	add_webhook
-394	Can change webhook	1	change_webhook
-395	Can delete webhook	1	delete_webhook
-396	Can view webhook	1	view_webhook
-397	Can add tagged item	103	add_taggeditem
-398	Can change tagged item	103	change_taggeditem
-399	Can delete tagged item	103	delete_taggeditem
-400	Can view tagged item	103	view_taggeditem
-401	Can add journal entry	116	add_journalentry
-402	Can change journal entry	116	change_journalentry
-403	Can delete journal entry	116	delete_journalentry
-404	Can view journal entry	116	view_journalentry
-405	Can add image attachment	115	add_imageattachment
-406	Can change image attachment	115	change_imageattachment
-407	Can delete image attachment	115	delete_imageattachment
-408	Can view image attachment	115	view_imageattachment
-409	Can add export template	112	add_exporttemplate
-410	Can change export template	112	change_exporttemplate
-411	Can delete export template	112	delete_exporttemplate
-412	Can view export template	112	view_exporttemplate
-413	Can add custom link	111	add_customlink
-414	Can change custom link	111	change_customlink
-415	Can delete custom link	111	delete_customlink
-416	Can view custom link	111	view_customlink
-417	Can add custom field	107	add_customfield
-418	Can change custom field	107	change_customfield
-419	Can delete custom field	107	delete_customfield
-420	Can view custom field	107	view_customfield
-421	Can add saved filter	113	add_savedfilter
-422	Can change saved filter	113	change_savedfilter
-423	Can delete saved filter	113	delete_savedfilter
-424	Can view saved filter	113	view_savedfilter
-425	Can add cached value	121	add_cachedvalue
-426	Can change cached value	121	change_cachedvalue
-427	Can delete cached value	121	delete_cachedvalue
-428	Can view cached value	121	view_cachedvalue
-429	Can add config template	106	add_configtemplate
-430	Can change config template	106	change_configtemplate
-431	Can delete config template	106	delete_configtemplate
-432	Can view config template	106	view_configtemplate
-433	Can add dashboard	109	add_dashboard
-434	Can change dashboard	109	change_dashboard
-435	Can delete dashboard	109	delete_dashboard
-436	Can view dashboard	109	view_dashboard
-437	Can add script module	3	add_scriptmodule
-438	Can change script module	3	change_scriptmodule
-439	Can delete script module	3	delete_scriptmodule
-440	Can view script module	3	view_scriptmodule
-441	Can add bookmark	117	add_bookmark
-442	Can change bookmark	117	change_bookmark
-443	Can delete bookmark	117	delete_bookmark
-444	Can view bookmark	117	view_bookmark
-445	Can add custom field choice set	108	add_customfieldchoiceset
-446	Can change custom field choice set	108	change_customfieldchoiceset
-447	Can delete custom field choice set	108	delete_customfieldchoiceset
-448	Can view custom field choice set	108	view_customfieldchoiceset
-449	Can add eventrule	110	add_eventrule
-450	Can change eventrule	110	change_eventrule
-451	Can delete eventrule	110	delete_eventrule
-452	Can view eventrule	110	view_eventrule
-453	Can add notification group	119	add_notificationgroup
-454	Can change notification group	119	change_notificationgroup
-455	Can delete notification group	119	delete_notificationgroup
-456	Can view notification group	119	view_notificationgroup
-457	Can add subscription	120	add_subscription
-458	Can change subscription	120	change_subscription
-459	Can delete subscription	120	delete_subscription
-460	Can view subscription	120	view_subscription
-461	Can add notification	118	add_notification
-462	Can change notification	118	change_notification
-463	Can delete notification	118	delete_notification
-464	Can view notification	118	view_notification
-465	Can add table config	114	add_tableconfig
-466	Can change table config	114	change_tableconfig
-467	Can delete table config	114	delete_tableconfig
-468	Can view table config	114	view_tableconfig
-469	Can add config context profile	104	add_configcontextprofile
-470	Can change config context profile	104	change_configcontextprofile
-471	Can delete config context profile	104	delete_configcontextprofile
-472	Can view config context profile	104	view_configcontextprofile
-473	Can add tenant group	126	add_tenantgroup
-474	Can change tenant group	126	change_tenantgroup
-475	Can delete tenant group	126	delete_tenantgroup
-476	Can view tenant group	126	view_tenantgroup
-477	Can add tenant	127	add_tenant
-478	Can change tenant	127	change_tenant
-479	Can delete tenant	127	delete_tenant
-480	Can view tenant	127	view_tenant
-481	Can add contact role	123	add_contactrole
-482	Can change contact role	123	change_contactrole
-483	Can delete contact role	123	delete_contactrole
-484	Can view contact role	123	view_contactrole
-485	Can add contact group	122	add_contactgroup
-486	Can change contact group	122	change_contactgroup
-487	Can delete contact group	122	delete_contactgroup
-488	Can view contact group	122	view_contactgroup
-489	Can add contact	124	add_contact
-490	Can change contact	124	change_contact
-491	Can delete contact	124	delete_contact
-492	Can view contact	124	view_contact
-493	Can add contact assignment	125	add_contactassignment
-494	Can change contact assignment	125	change_contactassignment
-495	Can delete contact assignment	125	delete_contactassignment
-496	Can view contact assignment	125	view_contactassignment
-497	Can add user	129	add_user
-498	Can change user	129	change_user
-499	Can delete user	129	delete_user
-500	Can view user	129	view_user
-501	Can add User Preferences	130	add_userconfig
-502	Can change User Preferences	130	change_userconfig
-503	Can delete User Preferences	130	delete_userconfig
-504	Can view User Preferences	130	view_userconfig
-505	Can add token	131	add_token
-506	Can change token	131	change_token
-507	Can delete token	131	delete_token
-508	Can view token	131	view_token
-509	Can add permission	132	add_objectpermission
-510	Can change permission	132	change_objectpermission
-511	Can delete permission	132	delete_objectpermission
-512	Can view permission	132	view_objectpermission
-513	Can add group	128	add_group
-514	Can change group	128	change_group
-515	Can delete group	128	delete_group
-516	Can view group	128	view_group
-517	Can add cluster	135	add_cluster
-518	Can change cluster	135	change_cluster
-519	Can delete cluster	135	delete_cluster
-520	Can view cluster	135	view_cluster
-521	Can add cluster group	134	add_clustergroup
-522	Can change cluster group	134	change_clustergroup
-523	Can delete cluster group	134	delete_clustergroup
-524	Can view cluster group	134	view_clustergroup
-525	Can add cluster type	133	add_clustertype
-526	Can change cluster type	133	change_clustertype
-527	Can delete cluster type	133	delete_clustertype
-528	Can view cluster type	133	view_clustertype
-529	Can add virtual machine	13	add_virtualmachine
-530	Can change virtual machine	13	change_virtualmachine
-531	Can delete virtual machine	13	delete_virtualmachine
-532	Can view virtual machine	13	view_virtualmachine
-533	Can add interface	11	add_vminterface
-534	Can change interface	11	change_vminterface
-535	Can delete interface	11	delete_vminterface
-536	Can view interface	11	view_vminterface
-537	Can add virtual disk	136	add_virtualdisk
-538	Can change virtual disk	136	change_virtualdisk
-539	Can delete virtual disk	136	delete_virtualdisk
-540	Can view virtual disk	136	view_virtualdisk
-541	Can add IKE proposal	137	add_ikeproposal
-542	Can change IKE proposal	137	change_ikeproposal
-543	Can delete IKE proposal	137	delete_ikeproposal
-544	Can view IKE proposal	137	view_ikeproposal
-545	Can add IKE policy	138	add_ikepolicy
-546	Can change IKE policy	138	change_ikepolicy
-547	Can delete IKE policy	138	delete_ikepolicy
-548	Can view IKE policy	138	view_ikepolicy
-549	Can add IPSec proposal	139	add_ipsecproposal
-550	Can change IPSec proposal	139	change_ipsecproposal
-551	Can delete IPSec proposal	139	delete_ipsecproposal
-552	Can view IPSec proposal	139	view_ipsecproposal
-553	Can add IPSec policy	140	add_ipsecpolicy
-554	Can change IPSec policy	140	change_ipsecpolicy
-555	Can delete IPSec policy	140	delete_ipsecpolicy
-556	Can view IPSec policy	140	view_ipsecpolicy
-557	Can add IPSec profile	141	add_ipsecprofile
-558	Can change IPSec profile	141	change_ipsecprofile
-559	Can delete IPSec profile	141	delete_ipsecprofile
-560	Can view IPSec profile	141	view_ipsecprofile
-561	Can add tunnel group	144	add_tunnelgroup
-562	Can change tunnel group	144	change_tunnelgroup
-563	Can delete tunnel group	144	delete_tunnelgroup
-564	Can view tunnel group	144	view_tunnelgroup
-565	Can add tunnel	145	add_tunnel
-566	Can change tunnel	145	change_tunnel
-567	Can delete tunnel	145	delete_tunnel
-568	Can view tunnel	145	view_tunnel
-569	Can add tunnel termination	146	add_tunneltermination
-570	Can change tunnel termination	146	change_tunneltermination
-571	Can delete tunnel termination	146	delete_tunneltermination
-572	Can view tunnel termination	146	view_tunneltermination
-573	Can add L2VPN	142	add_l2vpn
-574	Can change L2VPN	142	change_l2vpn
-575	Can delete L2VPN	142	delete_l2vpn
-576	Can view L2VPN	142	view_l2vpn
-577	Can add L2VPN termination	143	add_l2vpntermination
-578	Can change L2VPN termination	143	change_l2vpntermination
-579	Can delete L2VPN termination	143	delete_l2vpntermination
-580	Can view L2VPN termination	143	view_l2vpntermination
-581	Can add Wireless LAN Group	147	add_wirelesslangroup
-582	Can change Wireless LAN Group	147	change_wirelesslangroup
-583	Can delete Wireless LAN Group	147	delete_wirelesslangroup
-584	Can view Wireless LAN Group	147	view_wirelesslangroup
-585	Can add Wireless LAN	148	add_wirelesslan
-586	Can change Wireless LAN	148	change_wirelesslan
-587	Can delete Wireless LAN	148	delete_wirelesslan
-588	Can view Wireless LAN	148	view_wirelesslan
-589	Can add wireless link	149	add_wirelesslink
-590	Can change wireless link	149	change_wirelesslink
-591	Can delete wireless link	149	delete_wirelesslink
-592	Can view wireless link	149	view_wirelesslink
-593	Access admin page	150	view
+257	Can add site group	84	add_sitegroup
+258	Can change site group	84	change_sitegroup
+259	Can delete site group	84	delete_sitegroup
+260	Can view site group	84	view_sitegroup
+261	Can add virtual chassis	74	add_virtualchassis
+262	Can change virtual chassis	74	change_virtualchassis
+263	Can delete virtual chassis	74	delete_virtualchassis
+264	Can view virtual chassis	74	view_virtualchassis
+265	Can add module type	68	add_moduletype
+266	Can change module type	68	change_moduletype
+267	Can delete module type	68	delete_moduletype
+268	Can view module type	68	view_moduletype
+269	Can add module bay	50	add_modulebay
+270	Can change module bay	50	change_modulebay
+271	Can delete module bay	50	delete_modulebay
+272	Can view module bay	50	view_modulebay
+273	Can add module	69	add_module
+274	Can change module	69	change_module
+275	Can delete module	69	delete_module
+276	Can view module	69	view_module
+277	Can add inventory item role	52	add_inventoryitemrole
+278	Can change inventory item role	52	change_inventoryitemrole
+279	Can delete inventory item role	52	delete_inventoryitemrole
+280	Can view inventory item role	52	view_inventoryitemrole
+281	Can add inventory item template	67	add_inventoryitemtemplate
+282	Can change inventory item template	67	change_inventoryitemtemplate
+283	Can delete inventory item template	67	delete_inventoryitemtemplate
+284	Can view inventory item template	67	view_inventoryitemtemplate
+285	Can add module bay template	65	add_modulebaytemplate
+286	Can change module bay template	65	change_modulebaytemplate
+287	Can delete module bay template	65	delete_modulebaytemplate
+288	Can view module bay template	65	view_modulebaytemplate
+289	Can add cable termination	55	add_cabletermination
+290	Can change cable termination	55	change_cabletermination
+291	Can delete cable termination	55	delete_cabletermination
+292	Can view cable termination	55	view_cabletermination
+293	Can add virtual device context	75	add_virtualdevicecontext
+294	Can change virtual device context	75	change_virtualdevicecontext
+295	Can delete virtual device context	75	delete_virtualdevicecontext
+296	Can view virtual device context	75	view_virtualdevicecontext
+297	Can add racktype	79	add_racktype
+298	Can change racktype	79	change_racktype
+299	Can delete racktype	79	delete_racktype
+300	Can view racktype	79	view_racktype
+301	Can add MAC address	76	add_macaddress
+302	Can change MAC address	76	change_macaddress
+303	Can delete MAC address	76	delete_macaddress
+304	Can view MAC address	76	view_macaddress
+305	Can add module type profile	8	add_moduletypeprofile
+306	Can change module type profile	8	change_moduletypeprofile
+307	Can delete module type profile	8	delete_moduletypeprofile
+308	Can view module type profile	8	view_moduletypeprofile
+309	Can add port template mapping	62	add_porttemplatemapping
+310	Can change port template mapping	62	change_porttemplatemapping
+311	Can delete port template mapping	62	delete_porttemplatemapping
+312	Can view port template mapping	62	view_porttemplatemapping
+313	Can add port mapping	47	add_portmapping
+314	Can change port mapping	47	change_portmapping
+315	Can delete port mapping	47	delete_portmapping
+316	Can view port mapping	47	view_portmapping
+317	Can add aggregate	91	add_aggregate
+318	Can change aggregate	91	change_aggregate
+319	Can delete aggregate	91	delete_aggregate
+320	Can view aggregate	91	view_aggregate
+321	Can add IP address	95	add_ipaddress
+322	Can change IP address	95	change_ipaddress
+323	Can delete IP address	95	delete_ipaddress
+324	Can view IP address	95	view_ipaddress
+325	Can add prefix	93	add_prefix
+326	Can change prefix	93	change_prefix
+327	Can delete prefix	93	delete_prefix
+328	Can view prefix	93	view_prefix
+329	Can add RIR	90	add_rir
+330	Can change RIR	90	change_rir
+331	Can delete RIR	90	delete_rir
+332	Can view RIR	90	view_rir
+333	Can add role	92	add_role
+334	Can change role	92	change_role
+335	Can delete role	92	delete_role
+336	Can view role	92	view_role
+337	Can add route target	103	add_routetarget
+338	Can change route target	103	change_routetarget
+339	Can delete route target	103	delete_routetarget
+340	Can view route target	103	view_routetarget
+341	Can add VRF	102	add_vrf
+342	Can change VRF	102	change_vrf
+343	Can delete VRF	102	delete_vrf
+344	Can view VRF	102	view_vrf
+345	Can add VLAN group	98	add_vlangroup
+346	Can change VLAN group	98	change_vlangroup
+347	Can delete VLAN group	98	delete_vlangroup
+348	Can view VLAN group	98	view_vlangroup
+349	Can add VLAN	99	add_vlan
+350	Can change VLAN	99	change_vlan
+351	Can delete VLAN	99	delete_vlan
+352	Can view VLAN	99	view_vlan
+353	Can add service	97	add_service
+354	Can change service	97	change_service
+355	Can delete service	97	delete_service
+356	Can view service	97	view_service
+357	Can add IP range	94	add_iprange
+358	Can change IP range	94	change_iprange
+359	Can delete IP range	94	delete_iprange
+360	Can view IP range	94	view_iprange
+361	Can add FHRP group	88	add_fhrpgroup
+362	Can change FHRP group	88	change_fhrpgroup
+363	Can delete FHRP group	88	delete_fhrpgroup
+364	Can view FHRP group	88	view_fhrpgroup
+365	Can add FHRP group assignment	89	add_fhrpgroupassignment
+366	Can change FHRP group assignment	89	change_fhrpgroupassignment
+367	Can delete FHRP group assignment	89	delete_fhrpgroupassignment
+368	Can view FHRP group assignment	89	view_fhrpgroupassignment
+369	Can add ASN	87	add_asn
+370	Can change ASN	87	change_asn
+371	Can delete ASN	87	delete_asn
+372	Can view ASN	87	view_asn
+373	Can add service template	96	add_servicetemplate
+374	Can change service template	96	change_servicetemplate
+375	Can delete service template	96	delete_servicetemplate
+376	Can view service template	96	view_servicetemplate
+377	Can add ASN range	86	add_asnrange
+378	Can change ASN range	86	change_asnrange
+379	Can delete ASN range	86	delete_asnrange
+380	Can view ASN range	86	view_asnrange
+381	Can add VLAN translation policy	100	add_vlantranslationpolicy
+382	Can change VLAN translation policy	100	change_vlantranslationpolicy
+383	Can delete VLAN translation policy	100	delete_vlantranslationpolicy
+384	Can view VLAN translation policy	100	view_vlantranslationpolicy
+385	Can add VLAN translation rule	101	add_vlantranslationrule
+386	Can change VLAN translation rule	101	change_vlantranslationrule
+387	Can delete VLAN translation rule	101	delete_vlantranslationrule
+388	Can view VLAN translation rule	101	view_vlantranslationrule
+389	Can add script	2	add_script
+390	Can change script	2	change_script
+391	Can delete script	2	delete_script
+392	Can view script	2	view_script
+393	Can add config context	107	add_configcontext
+394	Can change config context	107	change_configcontext
+395	Can delete config context	107	delete_configcontext
+396	Can view config context	107	view_configcontext
+397	Can add tag	104	add_tag
+398	Can change tag	104	change_tag
+399	Can delete tag	104	delete_tag
+400	Can view tag	104	view_tag
+401	Can add webhook	1	add_webhook
+402	Can change webhook	1	change_webhook
+403	Can delete webhook	1	delete_webhook
+404	Can view webhook	1	view_webhook
+405	Can add tagged item	105	add_taggeditem
+406	Can change tagged item	105	change_taggeditem
+407	Can delete tagged item	105	delete_taggeditem
+408	Can view tagged item	105	view_taggeditem
+409	Can add journal entry	118	add_journalentry
+410	Can change journal entry	118	change_journalentry
+411	Can delete journal entry	118	delete_journalentry
+412	Can view journal entry	118	view_journalentry
+413	Can add image attachment	117	add_imageattachment
+414	Can change image attachment	117	change_imageattachment
+415	Can delete image attachment	117	delete_imageattachment
+416	Can view image attachment	117	view_imageattachment
+417	Can add export template	114	add_exporttemplate
+418	Can change export template	114	change_exporttemplate
+419	Can delete export template	114	delete_exporttemplate
+420	Can view export template	114	view_exporttemplate
+421	Can add custom link	113	add_customlink
+422	Can change custom link	113	change_customlink
+423	Can delete custom link	113	delete_customlink
+424	Can view custom link	113	view_customlink
+425	Can add custom field	109	add_customfield
+426	Can change custom field	109	change_customfield
+427	Can delete custom field	109	delete_customfield
+428	Can view custom field	109	view_customfield
+429	Can add saved filter	115	add_savedfilter
+430	Can change saved filter	115	change_savedfilter
+431	Can delete saved filter	115	delete_savedfilter
+432	Can view saved filter	115	view_savedfilter
+433	Can add cached value	123	add_cachedvalue
+434	Can change cached value	123	change_cachedvalue
+435	Can delete cached value	123	delete_cachedvalue
+436	Can view cached value	123	view_cachedvalue
+437	Can add config template	108	add_configtemplate
+438	Can change config template	108	change_configtemplate
+439	Can delete config template	108	delete_configtemplate
+440	Can view config template	108	view_configtemplate
+441	Can add dashboard	111	add_dashboard
+442	Can change dashboard	111	change_dashboard
+443	Can delete dashboard	111	delete_dashboard
+444	Can view dashboard	111	view_dashboard
+445	Can add script module	3	add_scriptmodule
+446	Can change script module	3	change_scriptmodule
+447	Can delete script module	3	delete_scriptmodule
+448	Can view script module	3	view_scriptmodule
+449	Can add bookmark	119	add_bookmark
+450	Can change bookmark	119	change_bookmark
+451	Can delete bookmark	119	delete_bookmark
+452	Can view bookmark	119	view_bookmark
+453	Can add custom field choice set	110	add_customfieldchoiceset
+454	Can change custom field choice set	110	change_customfieldchoiceset
+455	Can delete custom field choice set	110	delete_customfieldchoiceset
+456	Can view custom field choice set	110	view_customfieldchoiceset
+457	Can add eventrule	112	add_eventrule
+458	Can change eventrule	112	change_eventrule
+459	Can delete eventrule	112	delete_eventrule
+460	Can view eventrule	112	view_eventrule
+461	Can add notification group	121	add_notificationgroup
+462	Can change notification group	121	change_notificationgroup
+463	Can delete notification group	121	delete_notificationgroup
+464	Can view notification group	121	view_notificationgroup
+465	Can add subscription	122	add_subscription
+466	Can change subscription	122	change_subscription
+467	Can delete subscription	122	delete_subscription
+468	Can view subscription	122	view_subscription
+469	Can add notification	120	add_notification
+470	Can change notification	120	change_notification
+471	Can delete notification	120	delete_notification
+472	Can view notification	120	view_notification
+473	Can add table config	116	add_tableconfig
+474	Can change table config	116	change_tableconfig
+475	Can delete table config	116	delete_tableconfig
+476	Can view table config	116	view_tableconfig
+477	Can add config context profile	106	add_configcontextprofile
+478	Can change config context profile	106	change_configcontextprofile
+479	Can delete config context profile	106	delete_configcontextprofile
+480	Can view config context profile	106	view_configcontextprofile
+481	Can add tenant group	128	add_tenantgroup
+482	Can change tenant group	128	change_tenantgroup
+483	Can delete tenant group	128	delete_tenantgroup
+484	Can view tenant group	128	view_tenantgroup
+485	Can add tenant	129	add_tenant
+486	Can change tenant	129	change_tenant
+487	Can delete tenant	129	delete_tenant
+488	Can view tenant	129	view_tenant
+489	Can add contact role	125	add_contactrole
+490	Can change contact role	125	change_contactrole
+491	Can delete contact role	125	delete_contactrole
+492	Can view contact role	125	view_contactrole
+493	Can add contact group	124	add_contactgroup
+494	Can change contact group	124	change_contactgroup
+495	Can delete contact group	124	delete_contactgroup
+496	Can view contact group	124	view_contactgroup
+497	Can add contact	126	add_contact
+498	Can change contact	126	change_contact
+499	Can delete contact	126	delete_contact
+500	Can view contact	126	view_contact
+501	Can add contact assignment	127	add_contactassignment
+502	Can change contact assignment	127	change_contactassignment
+503	Can delete contact assignment	127	delete_contactassignment
+504	Can view contact assignment	127	view_contactassignment
+505	Can add user	136	add_user
+506	Can change user	136	change_user
+507	Can delete user	136	delete_user
+508	Can view user	136	view_user
+509	Can add User Preferences	133	add_userconfig
+510	Can change User Preferences	133	change_userconfig
+511	Can delete User Preferences	133	delete_userconfig
+512	Can view User Preferences	133	view_userconfig
+513	Can add token	134	add_token
+514	Can change token	134	change_token
+515	Can delete token	134	delete_token
+516	Can view token	134	view_token
+517	Can add permission	132	add_objectpermission
+518	Can change permission	132	change_objectpermission
+519	Can delete permission	132	delete_objectpermission
+520	Can view permission	132	view_objectpermission
+521	Can add group	135	add_group
+522	Can change group	135	change_group
+523	Can delete group	135	delete_group
+524	Can view group	135	view_group
+525	Can add owner group	130	add_ownergroup
+526	Can change owner group	130	change_ownergroup
+527	Can delete owner group	130	delete_ownergroup
+528	Can view owner group	130	view_ownergroup
+529	Can add owner	131	add_owner
+530	Can change owner	131	change_owner
+531	Can delete owner	131	delete_owner
+532	Can view owner	131	view_owner
+533	Can add cluster	139	add_cluster
+534	Can change cluster	139	change_cluster
+535	Can delete cluster	139	delete_cluster
+536	Can view cluster	139	view_cluster
+537	Can add cluster group	138	add_clustergroup
+538	Can change cluster group	138	change_clustergroup
+539	Can delete cluster group	138	delete_clustergroup
+540	Can view cluster group	138	view_clustergroup
+541	Can add cluster type	137	add_clustertype
+542	Can change cluster type	137	change_clustertype
+543	Can delete cluster type	137	delete_clustertype
+544	Can view cluster type	137	view_clustertype
+545	Can add virtual machine	13	add_virtualmachine
+546	Can change virtual machine	13	change_virtualmachine
+547	Can delete virtual machine	13	delete_virtualmachine
+548	Can view virtual machine	13	view_virtualmachine
+549	Can add interface	11	add_vminterface
+550	Can change interface	11	change_vminterface
+551	Can delete interface	11	delete_vminterface
+552	Can view interface	11	view_vminterface
+553	Can add virtual disk	140	add_virtualdisk
+554	Can change virtual disk	140	change_virtualdisk
+555	Can delete virtual disk	140	delete_virtualdisk
+556	Can view virtual disk	140	view_virtualdisk
+557	Can add IKE proposal	141	add_ikeproposal
+558	Can change IKE proposal	141	change_ikeproposal
+559	Can delete IKE proposal	141	delete_ikeproposal
+560	Can view IKE proposal	141	view_ikeproposal
+561	Can add IKE policy	142	add_ikepolicy
+562	Can change IKE policy	142	change_ikepolicy
+563	Can delete IKE policy	142	delete_ikepolicy
+564	Can view IKE policy	142	view_ikepolicy
+565	Can add IPSec proposal	143	add_ipsecproposal
+566	Can change IPSec proposal	143	change_ipsecproposal
+567	Can delete IPSec proposal	143	delete_ipsecproposal
+568	Can view IPSec proposal	143	view_ipsecproposal
+569	Can add IPSec policy	144	add_ipsecpolicy
+570	Can change IPSec policy	144	change_ipsecpolicy
+571	Can delete IPSec policy	144	delete_ipsecpolicy
+572	Can view IPSec policy	144	view_ipsecpolicy
+573	Can add IPSec profile	145	add_ipsecprofile
+574	Can change IPSec profile	145	change_ipsecprofile
+575	Can delete IPSec profile	145	delete_ipsecprofile
+576	Can view IPSec profile	145	view_ipsecprofile
+577	Can add tunnel group	148	add_tunnelgroup
+578	Can change tunnel group	148	change_tunnelgroup
+579	Can delete tunnel group	148	delete_tunnelgroup
+580	Can view tunnel group	148	view_tunnelgroup
+581	Can add tunnel	149	add_tunnel
+582	Can change tunnel	149	change_tunnel
+583	Can delete tunnel	149	delete_tunnel
+584	Can view tunnel	149	view_tunnel
+585	Can add tunnel termination	150	add_tunneltermination
+586	Can change tunnel termination	150	change_tunneltermination
+587	Can delete tunnel termination	150	delete_tunneltermination
+588	Can view tunnel termination	150	view_tunneltermination
+589	Can add L2VPN	146	add_l2vpn
+590	Can change L2VPN	146	change_l2vpn
+591	Can delete L2VPN	146	delete_l2vpn
+592	Can view L2VPN	146	view_l2vpn
+593	Can add L2VPN termination	147	add_l2vpntermination
+594	Can change L2VPN termination	147	change_l2vpntermination
+595	Can delete L2VPN termination	147	delete_l2vpntermination
+596	Can view L2VPN termination	147	view_l2vpntermination
+597	Can add Wireless LAN Group	151	add_wirelesslangroup
+598	Can change Wireless LAN Group	151	change_wirelesslangroup
+599	Can delete Wireless LAN Group	151	delete_wirelesslangroup
+600	Can view Wireless LAN Group	151	view_wirelesslangroup
+601	Can add Wireless LAN	152	add_wirelesslan
+602	Can change Wireless LAN	152	change_wirelesslan
+603	Can delete Wireless LAN	152	delete_wirelesslan
+604	Can view Wireless LAN	152	view_wirelesslan
+605	Can add wireless link	153	add_wirelesslink
+606	Can change wireless link	153	change_wirelesslink
+607	Can delete wireless link	153	delete_wirelesslink
+608	Can view wireless link	153	view_wirelesslink
+609	Access admin page	154	view
 \.
 
 
@@ -7128,7 +7470,7 @@ COPY public.auth_permission (id, name, content_type_id, codename) FROM stdin;
 -- Data for Name: circuits_circuit; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.circuits_circuit (created, last_updated, custom_field_data, id, cid, status, install_date, commit_rate, description, comments, provider_id, tenant_id, termination_a_id, termination_z_id, type_id, termination_date, provider_account_id, _abs_distance, distance, distance_unit) FROM stdin;
+COPY public.circuits_circuit (created, last_updated, custom_field_data, id, cid, status, install_date, commit_rate, description, comments, provider_id, tenant_id, termination_a_id, termination_z_id, type_id, termination_date, provider_account_id, _abs_distance, distance, distance_unit, owner_id) FROM stdin;
 \.
 
 
@@ -7136,7 +7478,7 @@ COPY public.circuits_circuit (created, last_updated, custom_field_data, id, cid,
 -- Data for Name: circuits_circuitgroup; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.circuits_circuitgroup (id, created, last_updated, custom_field_data, name, slug, description, tenant_id) FROM stdin;
+COPY public.circuits_circuitgroup (id, created, last_updated, custom_field_data, name, slug, description, tenant_id, owner_id, comments) FROM stdin;
 \.
 
 
@@ -7152,7 +7494,7 @@ COPY public.circuits_circuitgroupassignment (id, created, last_updated, custom_f
 -- Data for Name: circuits_circuittermination; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.circuits_circuittermination (created, last_updated, id, mark_connected, term_side, port_speed, upstream_speed, xconnect_id, pp_info, description, cable_id, circuit_id, _provider_network_id, custom_field_data, cable_end, termination_id, termination_type_id, _location_id, _region_id, _site_id, _site_group_id) FROM stdin;
+COPY public.circuits_circuittermination (created, last_updated, id, mark_connected, term_side, port_speed, upstream_speed, xconnect_id, pp_info, description, cable_id, circuit_id, _provider_network_id, custom_field_data, cable_end, termination_id, termination_type_id, _location_id, _region_id, _site_id, _site_group_id, cable_connector, cable_positions) FROM stdin;
 \.
 
 
@@ -7160,7 +7502,7 @@ COPY public.circuits_circuittermination (created, last_updated, id, mark_connect
 -- Data for Name: circuits_circuittype; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.circuits_circuittype (created, last_updated, custom_field_data, id, name, slug, description, color) FROM stdin;
+COPY public.circuits_circuittype (created, last_updated, custom_field_data, id, name, slug, description, color, owner_id, comments) FROM stdin;
 \.
 
 
@@ -7168,7 +7510,7 @@ COPY public.circuits_circuittype (created, last_updated, custom_field_data, id, 
 -- Data for Name: circuits_provider; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.circuits_provider (created, last_updated, custom_field_data, id, name, slug, comments, description) FROM stdin;
+COPY public.circuits_provider (created, last_updated, custom_field_data, id, name, slug, comments, description, owner_id) FROM stdin;
 \.
 
 
@@ -7184,7 +7526,7 @@ COPY public.circuits_provider_asns (id, provider_id, asn_id) FROM stdin;
 -- Data for Name: circuits_provideraccount; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.circuits_provideraccount (id, created, last_updated, custom_field_data, description, comments, account, name, provider_id) FROM stdin;
+COPY public.circuits_provideraccount (id, created, last_updated, custom_field_data, description, comments, account, name, provider_id, owner_id) FROM stdin;
 \.
 
 
@@ -7192,7 +7534,7 @@ COPY public.circuits_provideraccount (id, created, last_updated, custom_field_da
 -- Data for Name: circuits_providernetwork; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.circuits_providernetwork (created, last_updated, custom_field_data, id, name, description, comments, provider_id, service_id) FROM stdin;
+COPY public.circuits_providernetwork (created, last_updated, custom_field_data, id, name, description, comments, provider_id, service_id, owner_id) FROM stdin;
 \.
 
 
@@ -7200,7 +7542,7 @@ COPY public.circuits_providernetwork (created, last_updated, custom_field_data, 
 -- Data for Name: circuits_virtualcircuit; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.circuits_virtualcircuit (id, created, last_updated, custom_field_data, description, comments, cid, status, provider_account_id, provider_network_id, type_id, tenant_id) FROM stdin;
+COPY public.circuits_virtualcircuit (id, created, last_updated, custom_field_data, description, comments, cid, status, provider_account_id, provider_network_id, type_id, tenant_id, owner_id) FROM stdin;
 \.
 
 
@@ -7216,7 +7558,7 @@ COPY public.circuits_virtualcircuittermination (id, created, last_updated, custo
 -- Data for Name: circuits_virtualcircuittype; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.circuits_virtualcircuittype (id, created, last_updated, custom_field_data, name, slug, description, color) FROM stdin;
+COPY public.circuits_virtualcircuittype (id, created, last_updated, custom_field_data, name, slug, description, color, owner_id, comments) FROM stdin;
 \.
 
 
@@ -7232,7 +7574,7 @@ COPY public.core_autosyncrecord (id, object_id, datafile_id, object_type_id) FRO
 -- Data for Name: core_configrevision; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.core_configrevision (id, created, comment, data) FROM stdin;
+COPY public.core_configrevision (id, created, comment, data, active) FROM stdin;
 \.
 
 
@@ -7248,7 +7590,7 @@ COPY public.core_datafile (id, created, last_updated, path, size, hash, data, so
 -- Data for Name: core_datasource; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.core_datasource (id, created, last_updated, custom_field_data, description, comments, name, type, source_url, status, enabled, ignore_rules, parameters, last_synced, sync_interval) FROM stdin;
+COPY public.core_datasource (id, created, last_updated, custom_field_data, description, comments, name, type, source_url, status, enabled, ignore_rules, parameters, last_synced, sync_interval, owner_id) FROM stdin;
 \.
 
 
@@ -7256,9 +7598,7 @@ COPY public.core_datasource (id, created, last_updated, custom_field_data, descr
 -- Data for Name: core_job; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.core_job (id, object_id, name, created, scheduled, "interval", started, completed, status, data, job_id, object_type_id, user_id, error, log_entries) FROM stdin;
-1	\N	System Housekeeping	2026-02-06 11:30:53.360004+00	\N	1440	2026-02-06 11:30:53.380124+00	2026-02-06 11:30:54.376959+00	completed	\N	a82dfb66-9d21-4883-84e9-cc31de4b594a	\N	\N		{"{\\"level\\": \\"info\\", \\"message\\": \\"Reporting census data...\\", \\"timestamp\\": \\"2026-02-06T11:30:53.397Z\\"}","{\\"level\\": \\"info\\", \\"message\\": \\"Clearing expired sessions...\\", \\"timestamp\\": \\"2026-02-06T11:30:53.859Z\\"}","{\\"level\\": \\"info\\", \\"message\\": \\"Sessions cleared.\\", \\"timestamp\\": \\"2026-02-06T11:30:53.861Z\\"}","{\\"level\\": \\"info\\", \\"message\\": \\"Pruning old changelog entries...\\", \\"timestamp\\": \\"2026-02-06T11:30:53.861Z\\"}","{\\"level\\": \\"debug\\", \\"message\\": \\"Changelog retention period: 90 days (2025-11-08 11:30:53)\\", \\"timestamp\\": \\"2026-02-06T11:30:53.863Z\\"}","{\\"level\\": \\"info\\", \\"message\\": \\"Deleted 0 expired changelog records\\", \\"timestamp\\": \\"2026-02-06T11:30:53.864Z\\"}","{\\"level\\": \\"info\\", \\"message\\": \\"Deleting expired jobs...\\", \\"timestamp\\": \\"2026-02-06T11:30:53.864Z\\"}","{\\"level\\": \\"debug\\", \\"message\\": \\"Job retention period: 90 days (2025-11-08 11:30:53)\\", \\"timestamp\\": \\"2026-02-06T11:30:53.864Z\\"}","{\\"level\\": \\"info\\", \\"message\\": \\"Deleted 0 expired jobs\\", \\"timestamp\\": \\"2026-02-06T11:30:53.865Z\\"}","{\\"level\\": \\"info\\", \\"message\\": \\"Checking for new releases...\\", \\"timestamp\\": \\"2026-02-06T11:30:53.865Z\\"}","{\\"level\\": \\"debug\\", \\"message\\": \\"Release check URL: https://api.github.com/repos/netbox-community/netbox/releases\\", \\"timestamp\\": \\"2026-02-06T11:30:53.865Z\\"}","{\\"level\\": \\"debug\\", \\"message\\": \\"Found 30 releases; 26 usable\\", \\"timestamp\\": \\"2026-02-06T11:30:54.375Z\\"}","{\\"level\\": \\"info\\", \\"message\\": \\"Latest release: 4.5.2\\", \\"timestamp\\": \\"2026-02-06T11:30:54.375Z\\"}"}
-2	\N	System Housekeeping	2026-02-06 11:30:54.380824+00	2026-02-07 11:30:53.380124+00	1440	\N	\N	scheduled	\N	25a79776-02c6-44c5-97f5-1869fdc155a0	\N	\N		{}
+COPY public.core_job (id, object_id, name, created, scheduled, "interval", started, completed, status, data, job_id, object_type_id, user_id, error, log_entries, queue_name) FROM stdin;
 \.
 
 
@@ -7305,67 +7645,67 @@ COPY public.core_objecttype (contenttype_ptr_id, public, features) FROM stdin;
 32	t	{}
 33	f	{}
 34	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-8	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
+10	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
 35	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 36	t	{change_logging,custom_fields,custom_validation,event_rules,export_templates,tags}
 37	t	{change_logging,custom_fields,custom_links,custom_validation,event_rules,export_templates,tags}
 38	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 39	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-7	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+9	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 40	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-41	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+41	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 42	t	{change_logging,custom_fields,custom_links,custom_validation,event_rules,export_templates,tags}
 43	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 44	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 45	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 46	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-9	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-47	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+7	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+47	f	{}
 48	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 49	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 50	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 51	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 52	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 53	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-54	t	{change_logging,custom_validation,event_rules}
-55	f	{}
-56	t	{change_logging,custom_validation,event_rules}
+54	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+55	t	{change_logging,custom_validation,event_rules}
+56	f	{}
 57	t	{change_logging,custom_validation,event_rules}
 58	t	{change_logging,custom_validation,event_rules}
 59	t	{change_logging,custom_validation,event_rules}
 60	t	{change_logging,custom_validation,event_rules}
 61	t	{change_logging,custom_validation,event_rules}
-62	t	{change_logging,custom_validation,event_rules}
+62	f	{}
 63	t	{change_logging,custom_validation,event_rules}
 64	t	{change_logging,custom_validation,event_rules}
 65	t	{change_logging,custom_validation,event_rules}
-10	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-66	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
-67	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-68	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-69	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
-70	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-71	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-12	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
+66	t	{change_logging,custom_validation,event_rules}
+67	t	{change_logging,custom_validation,event_rules}
+8	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+68	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
+69	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+70	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+71	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
 72	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 73	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+12	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
 74	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-75	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
+75	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 76	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-77	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+77	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
 78	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-79	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
+79	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
 80	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-81	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-82	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+81	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
+82	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+83	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+84	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 6	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
-83	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
-84	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-85	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+85	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
 86	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-87	t	{change_logging,custom_validation,event_rules}
+87	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 88	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-89	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+89	t	{change_logging,custom_validation,event_rules}
 90	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 91	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 92	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
@@ -7378,60 +7718,64 @@ COPY public.core_objecttype (contenttype_ptr_id, public, features) FROM stdin;
 99	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 100	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 101	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-102	t	{change_logging,cloning,custom_validation,event_rules,export_templates}
-103	f	{}
-104	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,synced_data,tags}
-105	t	{change_logging,cloning,custom_links,custom_validation,event_rules,synced_data}
-106	t	{change_logging,custom_links,custom_validation,event_rules,export_templates,synced_data,tags}
-107	t	{change_logging,cloning,custom_validation,event_rules,export_templates}
-108	t	{change_logging,cloning,custom_validation,event_rules,export_templates}
-109	t	{}
-110	t	{change_logging,custom_fields,custom_validation,event_rules,export_templates,tags}
+102	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+103	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+104	t	{change_logging,cloning,custom_validation,event_rules,export_templates}
+105	f	{}
+106	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,synced_data,tags}
+107	t	{change_logging,cloning,custom_links,custom_validation,event_rules,synced_data}
+108	t	{change_logging,custom_links,custom_validation,event_rules,export_templates,synced_data,tags}
+109	t	{change_logging,cloning,custom_validation,event_rules,export_templates}
+110	t	{change_logging,cloning,custom_validation,event_rules,export_templates}
+111	t	{}
+112	t	{change_logging,custom_fields,custom_validation,event_rules,export_templates,tags}
 1	t	{change_logging,custom_fields,custom_validation,event_rules,export_templates,tags}
-111	t	{change_logging,cloning,custom_validation,event_rules,export_templates}
-112	t	{change_logging,cloning,custom_validation,event_rules,export_templates,synced_data}
 113	t	{change_logging,cloning,custom_validation,event_rules,export_templates}
-114	t	{change_logging,cloning,custom_validation,event_rules}
-115	t	{change_logging,custom_validation,event_rules}
-116	t	{change_logging,custom_fields,custom_links,custom_validation,event_rules,export_templates,tags}
-117	t	{}
-118	t	{}
-119	t	{change_logging,custom_validation,event_rules}
+114	t	{change_logging,cloning,custom_validation,event_rules,export_templates,synced_data}
+115	t	{change_logging,cloning,custom_validation,event_rules,export_templates}
+116	t	{change_logging,cloning,custom_validation,event_rules}
+117	t	{change_logging,custom_validation,event_rules}
+118	t	{change_logging,custom_fields,custom_links,custom_validation,event_rules,export_templates,tags}
+119	t	{}
 120	t	{}
+121	t	{change_logging,custom_validation,event_rules}
+122	t	{}
 2	t	{event_rules,jobs}
 3	f	{jobs,synced_data}
-121	f	{}
-122	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-123	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+123	f	{}
 124	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-125	t	{change_logging,custom_fields,custom_validation,event_rules,export_templates,tags}
+125	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 126	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-127	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-128	t	{}
-129	t	{}
-130	f	{}
-131	t	{}
+127	t	{change_logging,custom_fields,custom_validation,event_rules,export_templates,tags}
+128	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+129	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+130	t	{bookmarks,cloning,custom_links,custom_validation,event_rules,export_templates,notifications}
+131	t	{bookmarks,cloning,custom_links,custom_validation,event_rules,export_templates,notifications}
 132	t	{cloning}
-133	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-134	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-135	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+133	f	{}
+134	t	{}
+135	t	{}
+136	t	{}
+137	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+138	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+139	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 13	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,image_attachments,journaling,notifications,tags}
 11	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-136	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-137	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-138	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-139	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 140	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 141	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-142	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+142	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 143	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-144	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-145	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-146	t	{change_logging,custom_fields,custom_links,custom_validation,event_rules,tags}
+144	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+145	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+146	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
 147	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-148	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-149	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
-150	f	{}
+148	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+149	t	{bookmarks,change_logging,cloning,contacts,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+150	t	{change_logging,custom_fields,custom_links,custom_validation,event_rules,tags}
+151	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+152	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+153	t	{bookmarks,change_logging,cloning,custom_fields,custom_links,custom_validation,event_rules,export_templates,journaling,notifications,tags}
+154	f	{}
 \.
 
 
@@ -7439,7 +7783,7 @@ COPY public.core_objecttype (contenttype_ptr_id, public, features) FROM stdin;
 -- Data for Name: dcim_cable; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_cable (created, last_updated, custom_field_data, id, type, status, label, color, length, length_unit, _abs_length, tenant_id, comments, description) FROM stdin;
+COPY public.dcim_cable (created, last_updated, custom_field_data, id, type, status, label, color, length, length_unit, _abs_length, tenant_id, comments, description, owner_id, profile) FROM stdin;
 \.
 
 
@@ -7455,7 +7799,7 @@ COPY public.dcim_cablepath (id, _nodes, is_active, is_split, path, is_complete) 
 -- Data for Name: dcim_cabletermination; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_cabletermination (id, cable_end, termination_id, cable_id, termination_type_id, _device_id, _rack_id, _location_id, _site_id, created, last_updated) FROM stdin;
+COPY public.dcim_cabletermination (id, cable_end, termination_id, cable_id, termination_type_id, _device_id, _rack_id, _location_id, _site_id, created, last_updated, connector, positions) FROM stdin;
 \.
 
 
@@ -7463,7 +7807,7 @@ COPY public.dcim_cabletermination (id, cable_end, termination_id, cable_id, term
 -- Data for Name: dcim_consoleport; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_consoleport (created, last_updated, custom_field_data, id, name, label, description, mark_connected, type, speed, _path_id, cable_id, device_id, module_id, cable_end, _location_id, _rack_id, _site_id) FROM stdin;
+COPY public.dcim_consoleport (created, last_updated, custom_field_data, id, name, label, description, mark_connected, type, speed, _path_id, cable_id, device_id, module_id, cable_end, _location_id, _rack_id, _site_id, owner_id, cable_connector, cable_positions) FROM stdin;
 \.
 
 
@@ -7479,7 +7823,7 @@ COPY public.dcim_consoleporttemplate (created, last_updated, id, name, label, de
 -- Data for Name: dcim_consoleserverport; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_consoleserverport (created, last_updated, custom_field_data, id, name, label, description, mark_connected, type, speed, _path_id, cable_id, device_id, module_id, cable_end, _location_id, _rack_id, _site_id) FROM stdin;
+COPY public.dcim_consoleserverport (created, last_updated, custom_field_data, id, name, label, description, mark_connected, type, speed, _path_id, cable_id, device_id, module_id, cable_end, _location_id, _rack_id, _site_id, owner_id, cable_connector, cable_positions) FROM stdin;
 \.
 
 
@@ -7495,7 +7839,7 @@ COPY public.dcim_consoleserverporttemplate (created, last_updated, id, name, lab
 -- Data for Name: dcim_device; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_device (created, last_updated, custom_field_data, id, local_context_data, name, serial, asset_tag, "position", face, status, vc_position, vc_priority, comments, cluster_id, role_id, device_type_id, location_id, platform_id, primary_ip4_id, primary_ip6_id, rack_id, site_id, tenant_id, virtual_chassis_id, airflow, description, config_template_id, latitude, longitude, oob_ip_id, console_port_count, console_server_port_count, power_port_count, power_outlet_count, interface_count, front_port_count, rear_port_count, device_bay_count, module_bay_count, inventory_item_count) FROM stdin;
+COPY public.dcim_device (created, last_updated, custom_field_data, id, local_context_data, name, serial, asset_tag, "position", face, status, vc_position, vc_priority, comments, cluster_id, role_id, device_type_id, location_id, platform_id, primary_ip4_id, primary_ip6_id, rack_id, site_id, tenant_id, virtual_chassis_id, airflow, description, config_template_id, latitude, longitude, oob_ip_id, console_port_count, console_server_port_count, power_port_count, power_outlet_count, interface_count, front_port_count, rear_port_count, device_bay_count, module_bay_count, inventory_item_count, owner_id) FROM stdin;
 \.
 
 
@@ -7503,7 +7847,7 @@ COPY public.dcim_device (created, last_updated, custom_field_data, id, local_con
 -- Data for Name: dcim_devicebay; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_devicebay (created, last_updated, custom_field_data, id, name, label, description, device_id, installed_device_id, _location_id, _rack_id, _site_id) FROM stdin;
+COPY public.dcim_devicebay (created, last_updated, custom_field_data, id, name, label, description, device_id, installed_device_id, _location_id, _rack_id, _site_id, owner_id) FROM stdin;
 \.
 
 
@@ -7519,7 +7863,7 @@ COPY public.dcim_devicebaytemplate (created, last_updated, id, name, label, desc
 -- Data for Name: dcim_devicerole; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_devicerole (created, last_updated, custom_field_data, id, name, slug, color, vm_role, description, config_template_id, level, lft, rght, tree_id, parent_id, comments) FROM stdin;
+COPY public.dcim_devicerole (created, last_updated, custom_field_data, id, name, slug, color, vm_role, description, config_template_id, level, lft, rght, tree_id, parent_id, comments, owner_id) FROM stdin;
 \.
 
 
@@ -7527,7 +7871,7 @@ COPY public.dcim_devicerole (created, last_updated, custom_field_data, id, name,
 -- Data for Name: dcim_devicetype; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_devicetype (created, last_updated, custom_field_data, id, model, slug, part_number, u_height, is_full_depth, subdevice_role, front_image, rear_image, comments, manufacturer_id, airflow, weight, weight_unit, _abs_weight, description, default_platform_id, console_port_template_count, console_server_port_template_count, power_port_template_count, power_outlet_template_count, interface_template_count, front_port_template_count, rear_port_template_count, device_bay_template_count, module_bay_template_count, inventory_item_template_count, exclude_from_utilization) FROM stdin;
+COPY public.dcim_devicetype (created, last_updated, custom_field_data, id, model, slug, part_number, u_height, is_full_depth, subdevice_role, front_image, rear_image, comments, manufacturer_id, airflow, weight, weight_unit, _abs_weight, description, default_platform_id, console_port_template_count, console_server_port_template_count, power_port_template_count, power_outlet_template_count, interface_template_count, front_port_template_count, rear_port_template_count, device_bay_template_count, module_bay_template_count, inventory_item_template_count, exclude_from_utilization, owner_id, device_count) FROM stdin;
 \.
 
 
@@ -7535,7 +7879,7 @@ COPY public.dcim_devicetype (created, last_updated, custom_field_data, id, model
 -- Data for Name: dcim_frontport; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_frontport (created, last_updated, custom_field_data, id, name, label, description, mark_connected, type, rear_port_position, cable_id, device_id, rear_port_id, color, module_id, cable_end, _location_id, _rack_id, _site_id) FROM stdin;
+COPY public.dcim_frontport (created, last_updated, custom_field_data, id, name, label, description, mark_connected, type, cable_id, device_id, color, module_id, cable_end, _location_id, _rack_id, _site_id, owner_id, cable_connector, cable_positions, positions) FROM stdin;
 \.
 
 
@@ -7543,7 +7887,7 @@ COPY public.dcim_frontport (created, last_updated, custom_field_data, id, name, 
 -- Data for Name: dcim_frontporttemplate; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_frontporttemplate (created, last_updated, id, name, label, description, type, rear_port_position, device_type_id, rear_port_id, color, module_type_id) FROM stdin;
+COPY public.dcim_frontporttemplate (created, last_updated, id, name, label, description, type, device_type_id, color, module_type_id, positions) FROM stdin;
 \.
 
 
@@ -7551,7 +7895,7 @@ COPY public.dcim_frontporttemplate (created, last_updated, id, name, label, desc
 -- Data for Name: dcim_interface; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_interface (created, last_updated, custom_field_data, id, name, label, description, mark_connected, enabled, mtu, mode, _name, type, mgmt_only, _path_id, cable_id, device_id, lag_id, parent_id, untagged_vlan_id, wwn, bridge_id, rf_role, rf_channel, rf_channel_frequency, rf_channel_width, tx_power, wireless_link_id, module_id, vrf_id, duplex, speed, poe_mode, poe_type, cable_end, vlan_translation_policy_id, qinq_svlan_id, primary_mac_address_id, _location_id, _rack_id, _site_id) FROM stdin;
+COPY public.dcim_interface (created, last_updated, custom_field_data, id, name, label, description, mark_connected, enabled, mtu, mode, _name, type, mgmt_only, _path_id, cable_id, device_id, lag_id, parent_id, untagged_vlan_id, wwn, bridge_id, rf_role, rf_channel, rf_channel_frequency, rf_channel_width, tx_power, wireless_link_id, module_id, vrf_id, duplex, speed, poe_mode, poe_type, cable_end, vlan_translation_policy_id, qinq_svlan_id, primary_mac_address_id, _location_id, _rack_id, _site_id, owner_id, cable_connector, cable_positions) FROM stdin;
 \.
 
 
@@ -7591,7 +7935,7 @@ COPY public.dcim_interfacetemplate (created, last_updated, id, name, label, desc
 -- Data for Name: dcim_inventoryitem; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_inventoryitem (created, last_updated, custom_field_data, id, name, label, description, part_id, serial, asset_tag, discovered, lft, rght, tree_id, level, device_id, manufacturer_id, parent_id, role_id, component_id, component_type_id, status, _location_id, _rack_id, _site_id) FROM stdin;
+COPY public.dcim_inventoryitem (created, last_updated, custom_field_data, id, name, label, description, part_id, serial, asset_tag, discovered, lft, rght, tree_id, level, device_id, manufacturer_id, parent_id, role_id, component_id, component_type_id, status, _location_id, _rack_id, _site_id, owner_id) FROM stdin;
 \.
 
 
@@ -7599,7 +7943,7 @@ COPY public.dcim_inventoryitem (created, last_updated, custom_field_data, id, na
 -- Data for Name: dcim_inventoryitemrole; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_inventoryitemrole (id, created, last_updated, custom_field_data, name, slug, color, description) FROM stdin;
+COPY public.dcim_inventoryitemrole (id, created, last_updated, custom_field_data, name, slug, color, description, owner_id, comments) FROM stdin;
 \.
 
 
@@ -7615,7 +7959,7 @@ COPY public.dcim_inventoryitemtemplate (id, created, last_updated, name, label, 
 -- Data for Name: dcim_location; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_location (created, last_updated, custom_field_data, id, name, slug, description, lft, rght, tree_id, level, parent_id, site_id, tenant_id, status, facility, comments) FROM stdin;
+COPY public.dcim_location (created, last_updated, custom_field_data, id, name, slug, description, lft, rght, tree_id, level, parent_id, site_id, tenant_id, status, facility, comments, owner_id) FROM stdin;
 \.
 
 
@@ -7623,7 +7967,7 @@ COPY public.dcim_location (created, last_updated, custom_field_data, id, name, s
 -- Data for Name: dcim_macaddress; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_macaddress (id, created, last_updated, custom_field_data, description, comments, mac_address, assigned_object_id, assigned_object_type_id) FROM stdin;
+COPY public.dcim_macaddress (id, created, last_updated, custom_field_data, description, comments, mac_address, assigned_object_id, assigned_object_type_id, owner_id) FROM stdin;
 \.
 
 
@@ -7631,7 +7975,7 @@ COPY public.dcim_macaddress (id, created, last_updated, custom_field_data, descr
 -- Data for Name: dcim_manufacturer; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_manufacturer (created, last_updated, custom_field_data, id, name, slug, description) FROM stdin;
+COPY public.dcim_manufacturer (created, last_updated, custom_field_data, id, name, slug, description, owner_id, comments) FROM stdin;
 \.
 
 
@@ -7639,7 +7983,7 @@ COPY public.dcim_manufacturer (created, last_updated, custom_field_data, id, nam
 -- Data for Name: dcim_module; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_module (id, created, last_updated, custom_field_data, local_context_data, serial, asset_tag, comments, device_id, module_bay_id, module_type_id, description, status) FROM stdin;
+COPY public.dcim_module (id, created, last_updated, custom_field_data, local_context_data, serial, asset_tag, comments, device_id, module_bay_id, module_type_id, description, status, owner_id) FROM stdin;
 \.
 
 
@@ -7647,7 +7991,7 @@ COPY public.dcim_module (id, created, last_updated, custom_field_data, local_con
 -- Data for Name: dcim_modulebay; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_modulebay (id, created, last_updated, custom_field_data, name, label, "position", description, device_id, level, lft, module_id, parent_id, rght, tree_id, _location_id, _rack_id, _site_id) FROM stdin;
+COPY public.dcim_modulebay (id, created, last_updated, custom_field_data, name, label, "position", description, device_id, level, lft, module_id, parent_id, rght, tree_id, _location_id, _rack_id, _site_id, owner_id) FROM stdin;
 \.
 
 
@@ -7663,7 +8007,7 @@ COPY public.dcim_modulebaytemplate (id, created, last_updated, name, label, "pos
 -- Data for Name: dcim_moduletype; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_moduletype (id, created, last_updated, custom_field_data, model, part_number, comments, manufacturer_id, weight, weight_unit, _abs_weight, description, airflow, attribute_data, profile_id) FROM stdin;
+COPY public.dcim_moduletype (id, created, last_updated, custom_field_data, model, part_number, comments, manufacturer_id, weight, weight_unit, _abs_weight, description, airflow, attribute_data, profile_id, owner_id, module_count) FROM stdin;
 \.
 
 
@@ -7671,14 +8015,14 @@ COPY public.dcim_moduletype (id, created, last_updated, custom_field_data, model
 -- Data for Name: dcim_moduletypeprofile; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_moduletypeprofile (id, created, last_updated, custom_field_data, description, comments, name, schema) FROM stdin;
-1	2026-02-06 11:30:08.407298+00	2026-02-06 11:30:08.407307+00	{}			CPU	{"properties": {"cores": {"type": "integer", "description": "Number of cores present"}, "speed": {"type": "number", "title": "Speed", "description": "Clock speed in GHz"}, "architecture": {"type": "string", "title": "Architecture"}}}
-2	2026-02-06 11:30:08.411103+00	2026-02-06 11:30:08.411108+00	{}			Fan	{"properties": {"rpm": {"type": "integer", "title": "RPM", "description": "Fan speed (RPM)"}}}
-3	2026-02-06 11:30:08.412128+00	2026-02-06 11:30:08.412131+00	{}			GPU	{"required": ["memory"], "properties": {"gpu": {"type": "string", "title": "GPU"}, "memory": {"type": "integer", "title": "Memory (GB)", "description": "Total memory capacity (in GB)"}, "interface": {"enum": ["PCIe 4.0", "PCIe 4.0 x8", "PCIe 4.0 x16", "PCIe 5.0 x16"], "type": "string"}}}
-4	2026-02-06 11:30:08.413132+00	2026-02-06 11:30:08.413136+00	{}			Hard disk	{"required": ["size"], "properties": {"size": {"type": "integer", "title": "Size (GB)", "description": "Raw disk capacity"}, "type": {"enum": ["HD", "SSD", "NVME"], "type": "string", "title": "Disk type", "default": "SSD"}, "speed": {"type": "integer", "title": "Speed (RPM)"}}}
-5	2026-02-06 11:30:08.41402+00	2026-02-06 11:30:08.414024+00	{}			Memory	{"required": ["class", "size"], "properties": {"ecc": {"type": "boolean", "title": "ECC", "description": "Error-correcting code is enabled"}, "size": {"type": "integer", "title": "Size (GB)", "description": "Raw capacity of the module"}, "class": {"enum": ["DDR3", "DDR4", "DDR5"], "type": "string", "title": "Memory class", "default": "DDR5"}, "data_rate": {"type": "integer", "title": "Data rate", "description": "Speed in MT/s"}}}
-6	2026-02-06 11:30:08.414836+00	2026-02-06 11:30:08.414839+00	{}			Power supply	{"required": ["input_current", "input_voltage"], "properties": {"wattage": {"type": "integer", "description": "Available output power (watts)"}, "hot_swappable": {"type": "boolean", "title": "Hot-swappable", "default": false}, "input_current": {"enum": ["AC", "DC"], "type": "string", "title": "Current type", "default": "AC"}, "input_voltage": {"type": "integer", "title": "Voltage", "default": 120}}}
-7	2026-02-06 11:30:08.415624+00	2026-02-06 11:30:08.415627+00	{}			Expansion card	{"properties": {"bandwidth": {"type": "integer", "description": "Total Bandwidth for this module"}, "connector_type": {"type": "string", "description": "Connector type e.g. PCIe x4"}}}
+COPY public.dcim_moduletypeprofile (id, created, last_updated, custom_field_data, description, comments, name, schema, owner_id) FROM stdin;
+1	2026-05-01 15:47:08.254277+00	2026-05-01 15:47:08.254285+00	{}			CPU	{"properties": {"cores": {"type": "integer", "description": "Number of cores present"}, "speed": {"type": "number", "title": "Speed", "description": "Clock speed in GHz"}, "architecture": {"type": "string", "title": "Architecture"}}}	\N
+2	2026-05-01 15:47:08.259682+00	2026-05-01 15:47:08.259686+00	{}			Fan	{"properties": {"rpm": {"type": "integer", "title": "RPM", "description": "Fan speed (RPM)"}}}	\N
+3	2026-05-01 15:47:08.261131+00	2026-05-01 15:47:08.261134+00	{}			GPU	{"required": ["memory"], "properties": {"gpu": {"type": "string", "title": "GPU"}, "memory": {"type": "integer", "title": "Memory (GB)", "description": "Total memory capacity (in GB)"}, "interface": {"enum": ["PCIe 4.0", "PCIe 4.0 x8", "PCIe 4.0 x16", "PCIe 5.0 x16"], "type": "string"}}}	\N
+4	2026-05-01 15:47:08.262579+00	2026-05-01 15:47:08.262581+00	{}			Hard disk	{"required": ["size"], "properties": {"size": {"type": "integer", "title": "Size (GB)", "description": "Raw disk capacity"}, "type": {"enum": ["HD", "SSD", "NVME"], "type": "string", "title": "Disk type", "default": "SSD"}, "speed": {"type": "integer", "title": "Speed (RPM)"}}}	\N
+5	2026-05-01 15:47:08.264135+00	2026-05-01 15:47:08.264137+00	{}			Memory	{"required": ["class", "size"], "properties": {"ecc": {"type": "boolean", "title": "ECC", "description": "Error-correcting code is enabled"}, "size": {"type": "integer", "title": "Size (GB)", "description": "Raw capacity of the module"}, "class": {"enum": ["DDR3", "DDR4", "DDR5"], "type": "string", "title": "Memory class", "default": "DDR5"}, "data_rate": {"type": "integer", "title": "Data rate", "description": "Speed in MT/s"}}}	\N
+6	2026-05-01 15:47:08.265468+00	2026-05-01 15:47:08.265471+00	{}			Power supply	{"required": ["input_current", "input_voltage"], "properties": {"wattage": {"type": "integer", "description": "Available output power (watts)"}, "hot_swappable": {"type": "boolean", "title": "Hot-swappable", "default": false}, "input_current": {"enum": ["AC", "DC"], "type": "string", "title": "Current type", "default": "AC"}, "input_voltage": {"type": "integer", "title": "Voltage", "default": 120}}}	\N
+7	2026-05-01 15:47:08.266777+00	2026-05-01 15:47:08.26678+00	{}			Expansion card	{"properties": {"bandwidth": {"type": "integer", "description": "Total Bandwidth for this module"}, "connector_type": {"type": "string", "description": "Connector type e.g. PCIe x4"}}}	\N
 \.
 
 
@@ -7686,7 +8030,23 @@ COPY public.dcim_moduletypeprofile (id, created, last_updated, custom_field_data
 -- Data for Name: dcim_platform; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_platform (created, last_updated, custom_field_data, id, name, slug, description, manufacturer_id, config_template_id, parent_id, level, lft, rght, tree_id, comments) FROM stdin;
+COPY public.dcim_platform (created, last_updated, custom_field_data, id, name, slug, description, manufacturer_id, config_template_id, parent_id, level, lft, rght, tree_id, comments, owner_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: dcim_portmapping; Type: TABLE DATA; Schema: public; Owner: nwa
+--
+
+COPY public.dcim_portmapping (id, front_port_position, rear_port_position, device_id, front_port_id, rear_port_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: dcim_porttemplatemapping; Type: TABLE DATA; Schema: public; Owner: nwa
+--
+
+COPY public.dcim_porttemplatemapping (id, front_port_position, rear_port_position, device_type_id, module_type_id, front_port_id, rear_port_id) FROM stdin;
 \.
 
 
@@ -7694,7 +8054,7 @@ COPY public.dcim_platform (created, last_updated, custom_field_data, id, name, s
 -- Data for Name: dcim_powerfeed; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_powerfeed (created, last_updated, custom_field_data, id, mark_connected, name, status, type, supply, phase, voltage, amperage, max_utilization, available_power, comments, _path_id, cable_id, power_panel_id, rack_id, cable_end, description, tenant_id) FROM stdin;
+COPY public.dcim_powerfeed (created, last_updated, custom_field_data, id, mark_connected, name, status, type, supply, phase, voltage, amperage, max_utilization, available_power, comments, _path_id, cable_id, power_panel_id, rack_id, cable_end, description, tenant_id, owner_id, cable_connector, cable_positions) FROM stdin;
 \.
 
 
@@ -7702,7 +8062,7 @@ COPY public.dcim_powerfeed (created, last_updated, custom_field_data, id, mark_c
 -- Data for Name: dcim_poweroutlet; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_poweroutlet (created, last_updated, custom_field_data, id, name, label, description, mark_connected, type, feed_leg, _path_id, cable_id, device_id, power_port_id, module_id, cable_end, color, status, _location_id, _rack_id, _site_id) FROM stdin;
+COPY public.dcim_poweroutlet (created, last_updated, custom_field_data, id, name, label, description, mark_connected, type, feed_leg, _path_id, cable_id, device_id, power_port_id, module_id, cable_end, color, status, _location_id, _rack_id, _site_id, owner_id, cable_connector, cable_positions) FROM stdin;
 \.
 
 
@@ -7710,7 +8070,7 @@ COPY public.dcim_poweroutlet (created, last_updated, custom_field_data, id, name
 -- Data for Name: dcim_poweroutlettemplate; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_poweroutlettemplate (created, last_updated, id, name, label, description, type, feed_leg, device_type_id, power_port_id, module_type_id) FROM stdin;
+COPY public.dcim_poweroutlettemplate (created, last_updated, id, name, label, description, type, feed_leg, device_type_id, power_port_id, module_type_id, color) FROM stdin;
 \.
 
 
@@ -7718,7 +8078,7 @@ COPY public.dcim_poweroutlettemplate (created, last_updated, id, name, label, de
 -- Data for Name: dcim_powerpanel; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_powerpanel (created, last_updated, custom_field_data, id, name, location_id, site_id, comments, description) FROM stdin;
+COPY public.dcim_powerpanel (created, last_updated, custom_field_data, id, name, location_id, site_id, comments, description, owner_id) FROM stdin;
 \.
 
 
@@ -7726,7 +8086,7 @@ COPY public.dcim_powerpanel (created, last_updated, custom_field_data, id, name,
 -- Data for Name: dcim_powerport; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_powerport (created, last_updated, custom_field_data, id, name, label, description, mark_connected, type, maximum_draw, allocated_draw, _path_id, cable_id, device_id, module_id, cable_end, _location_id, _rack_id, _site_id) FROM stdin;
+COPY public.dcim_powerport (created, last_updated, custom_field_data, id, name, label, description, mark_connected, type, maximum_draw, allocated_draw, _path_id, cable_id, device_id, module_id, cable_end, _location_id, _rack_id, _site_id, owner_id, cable_connector, cable_positions) FROM stdin;
 \.
 
 
@@ -7742,7 +8102,7 @@ COPY public.dcim_powerporttemplate (created, last_updated, id, name, label, desc
 -- Data for Name: dcim_rack; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_rack (created, last_updated, custom_field_data, id, name, facility_id, status, serial, asset_tag, form_factor, width, u_height, desc_units, outer_width, outer_depth, outer_unit, comments, location_id, role_id, site_id, tenant_id, weight, max_weight, weight_unit, _abs_weight, _abs_max_weight, mounting_depth, description, starting_unit, rack_type_id, airflow, outer_height) FROM stdin;
+COPY public.dcim_rack (created, last_updated, custom_field_data, id, name, facility_id, status, serial, asset_tag, form_factor, width, u_height, desc_units, outer_width, outer_depth, outer_unit, comments, location_id, role_id, site_id, tenant_id, weight, max_weight, weight_unit, _abs_weight, _abs_max_weight, mounting_depth, description, starting_unit, rack_type_id, airflow, outer_height, owner_id) FROM stdin;
 \.
 
 
@@ -7750,7 +8110,7 @@ COPY public.dcim_rack (created, last_updated, custom_field_data, id, name, facil
 -- Data for Name: dcim_rackreservation; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_rackreservation (created, last_updated, custom_field_data, id, units, description, rack_id, tenant_id, user_id, comments, status) FROM stdin;
+COPY public.dcim_rackreservation (created, last_updated, custom_field_data, id, units, description, rack_id, tenant_id, user_id, comments, status, owner_id) FROM stdin;
 \.
 
 
@@ -7758,7 +8118,7 @@ COPY public.dcim_rackreservation (created, last_updated, custom_field_data, id, 
 -- Data for Name: dcim_rackrole; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_rackrole (created, last_updated, custom_field_data, id, name, slug, color, description) FROM stdin;
+COPY public.dcim_rackrole (created, last_updated, custom_field_data, id, name, slug, color, description, owner_id, comments) FROM stdin;
 \.
 
 
@@ -7766,7 +8126,7 @@ COPY public.dcim_rackrole (created, last_updated, custom_field_data, id, name, s
 -- Data for Name: dcim_racktype; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_racktype (id, created, last_updated, custom_field_data, description, comments, weight, weight_unit, _abs_weight, manufacturer_id, model, slug, form_factor, width, u_height, starting_unit, desc_units, outer_width, outer_depth, outer_unit, max_weight, _abs_max_weight, mounting_depth, outer_height) FROM stdin;
+COPY public.dcim_racktype (id, created, last_updated, custom_field_data, description, comments, weight, weight_unit, _abs_weight, manufacturer_id, model, slug, form_factor, width, u_height, starting_unit, desc_units, outer_width, outer_depth, outer_unit, max_weight, _abs_max_weight, mounting_depth, outer_height, owner_id, rack_count) FROM stdin;
 \.
 
 
@@ -7774,7 +8134,7 @@ COPY public.dcim_racktype (id, created, last_updated, custom_field_data, descrip
 -- Data for Name: dcim_rearport; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_rearport (created, last_updated, custom_field_data, id, name, label, description, mark_connected, type, positions, cable_id, device_id, color, module_id, cable_end, _location_id, _rack_id, _site_id) FROM stdin;
+COPY public.dcim_rearport (created, last_updated, custom_field_data, id, name, label, description, mark_connected, type, positions, cable_id, device_id, color, module_id, cable_end, _location_id, _rack_id, _site_id, owner_id, cable_connector, cable_positions) FROM stdin;
 \.
 
 
@@ -7790,7 +8150,7 @@ COPY public.dcim_rearporttemplate (created, last_updated, id, name, label, descr
 -- Data for Name: dcim_region; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_region (created, last_updated, custom_field_data, id, name, slug, description, lft, rght, tree_id, level, parent_id, comments) FROM stdin;
+COPY public.dcim_region (created, last_updated, custom_field_data, id, name, slug, description, lft, rght, tree_id, level, parent_id, comments, owner_id) FROM stdin;
 \.
 
 
@@ -7798,7 +8158,7 @@ COPY public.dcim_region (created, last_updated, custom_field_data, id, name, slu
 -- Data for Name: dcim_site; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_site (created, last_updated, custom_field_data, id, name, slug, status, facility, time_zone, description, physical_address, shipping_address, latitude, longitude, comments, group_id, region_id, tenant_id) FROM stdin;
+COPY public.dcim_site (created, last_updated, custom_field_data, id, name, slug, status, facility, time_zone, description, physical_address, shipping_address, latitude, longitude, comments, group_id, region_id, tenant_id, owner_id) FROM stdin;
 \.
 
 
@@ -7814,7 +8174,7 @@ COPY public.dcim_site_asns (id, site_id, asn_id) FROM stdin;
 -- Data for Name: dcim_sitegroup; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_sitegroup (created, last_updated, custom_field_data, id, name, slug, description, lft, rght, tree_id, level, parent_id, comments) FROM stdin;
+COPY public.dcim_sitegroup (created, last_updated, custom_field_data, id, name, slug, description, lft, rght, tree_id, level, parent_id, comments, owner_id) FROM stdin;
 \.
 
 
@@ -7822,7 +8182,7 @@ COPY public.dcim_sitegroup (created, last_updated, custom_field_data, id, name, 
 -- Data for Name: dcim_virtualchassis; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_virtualchassis (created, last_updated, custom_field_data, id, name, domain, master_id, comments, description, member_count) FROM stdin;
+COPY public.dcim_virtualchassis (created, last_updated, custom_field_data, id, name, domain, master_id, comments, description, member_count, owner_id) FROM stdin;
 \.
 
 
@@ -7830,7 +8190,7 @@ COPY public.dcim_virtualchassis (created, last_updated, custom_field_data, id, n
 -- Data for Name: dcim_virtualdevicecontext; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.dcim_virtualdevicecontext (id, created, last_updated, custom_field_data, description, name, status, identifier, comments, device_id, primary_ip4_id, primary_ip6_id, tenant_id) FROM stdin;
+COPY public.dcim_virtualdevicecontext (id, created, last_updated, custom_field_data, description, name, status, identifier, comments, device_id, primary_ip4_id, primary_ip6_id, tenant_id, owner_id) FROM stdin;
 \.
 
 
@@ -7861,13 +8221,13 @@ COPY public.django_content_type (id, app_label, model) FROM stdin;
 32	core	job
 33	account	usertoken
 34	circuits	circuittype
-8	circuits	circuit
+10	circuits	circuit
 35	circuits	circuitgroup
 36	circuits	circuitgroupassignment
 37	circuits	circuittermination
 38	circuits	provider
 39	circuits	provideraccount
-7	circuits	providernetwork
+9	circuits	providernetwork
 40	circuits	virtualcircuittype
 41	circuits	virtualcircuit
 42	circuits	virtualcircuittermination
@@ -7875,53 +8235,53 @@ COPY public.django_content_type (id, app_label, model) FROM stdin;
 44	dcim	consoleserverport
 45	dcim	powerport
 46	dcim	poweroutlet
-9	dcim	interface
-47	dcim	frontport
-48	dcim	rearport
-49	dcim	modulebay
-50	dcim	devicebay
-51	dcim	inventoryitemrole
-52	dcim	inventoryitem
-53	dcim	cable
-54	dcim	cabletermination
-55	dcim	cablepath
-56	dcim	consoleporttemplate
-57	dcim	consoleserverporttemplate
-58	dcim	powerporttemplate
-59	dcim	poweroutlettemplate
-60	dcim	interfacetemplate
-61	dcim	frontporttemplate
-62	dcim	rearporttemplate
-63	dcim	modulebaytemplate
-64	dcim	devicebaytemplate
-65	dcim	inventoryitemtemplate
-10	dcim	moduletypeprofile
-66	dcim	moduletype
-67	dcim	module
-68	dcim	manufacturer
-69	dcim	devicetype
-70	dcim	devicerole
-71	dcim	platform
+7	dcim	interface
+47	dcim	portmapping
+48	dcim	frontport
+49	dcim	rearport
+50	dcim	modulebay
+51	dcim	devicebay
+52	dcim	inventoryitemrole
+53	dcim	inventoryitem
+54	dcim	cable
+55	dcim	cabletermination
+56	dcim	cablepath
+57	dcim	consoleporttemplate
+58	dcim	consoleserverporttemplate
+59	dcim	powerporttemplate
+60	dcim	poweroutlettemplate
+61	dcim	interfacetemplate
+62	dcim	porttemplatemapping
+63	dcim	frontporttemplate
+64	dcim	rearporttemplate
+65	dcim	modulebaytemplate
+66	dcim	devicebaytemplate
+67	dcim	inventoryitemtemplate
+8	dcim	moduletypeprofile
+68	dcim	moduletype
+69	dcim	module
+70	dcim	manufacturer
+71	dcim	devicetype
+72	dcim	devicerole
+73	dcim	platform
 12	dcim	device
-72	dcim	virtualchassis
-73	dcim	virtualdevicecontext
-74	dcim	macaddress
-75	dcim	powerpanel
-76	dcim	powerfeed
-77	dcim	racktype
-78	dcim	rackrole
-79	dcim	rack
-80	dcim	rackreservation
-81	dcim	region
-82	dcim	sitegroup
+74	dcim	virtualchassis
+75	dcim	virtualdevicecontext
+76	dcim	macaddress
+77	dcim	powerpanel
+78	dcim	powerfeed
+79	dcim	racktype
+80	dcim	rackrole
+81	dcim	rack
+82	dcim	rackreservation
+83	dcim	region
+84	dcim	sitegroup
 6	dcim	site
-83	dcim	location
-84	ipam	asnrange
-85	ipam	asn
-86	ipam	fhrpgroup
-87	ipam	fhrpgroupassignment
-88	ipam	vrf
-89	ipam	routetarget
+85	dcim	location
+86	ipam	asnrange
+87	ipam	asn
+88	ipam	fhrpgroup
+89	ipam	fhrpgroupassignment
 90	ipam	rir
 91	ipam	aggregate
 92	ipam	role
@@ -7934,60 +8294,68 @@ COPY public.django_content_type (id, app_label, model) FROM stdin;
 99	ipam	vlan
 100	ipam	vlantranslationpolicy
 101	ipam	vlantranslationrule
-102	extras	tag
-103	extras	taggeditem
-104	extras	configcontextprofile
-105	extras	configcontext
-106	extras	configtemplate
-107	extras	customfield
-108	extras	customfieldchoiceset
-109	extras	dashboard
-110	extras	eventrule
+102	ipam	vrf
+103	ipam	routetarget
+104	extras	tag
+105	extras	taggeditem
+106	extras	configcontextprofile
+107	extras	configcontext
+108	extras	configtemplate
+109	extras	customfield
+110	extras	customfieldchoiceset
+111	extras	dashboard
+112	extras	eventrule
 1	extras	webhook
-111	extras	customlink
-112	extras	exporttemplate
-113	extras	savedfilter
-114	extras	tableconfig
-115	extras	imageattachment
-116	extras	journalentry
-117	extras	bookmark
-118	extras	notification
-119	extras	notificationgroup
-120	extras	subscription
+113	extras	customlink
+114	extras	exporttemplate
+115	extras	savedfilter
+116	extras	tableconfig
+117	extras	imageattachment
+118	extras	journalentry
+119	extras	bookmark
+120	extras	notification
+121	extras	notificationgroup
+122	extras	subscription
 2	extras	script
 3	extras	scriptmodule
-121	extras	cachedvalue
-122	tenancy	contactgroup
-123	tenancy	contactrole
-124	tenancy	contact
-125	tenancy	contactassignment
-126	tenancy	tenantgroup
-127	tenancy	tenant
-128	users	group
-129	users	user
-130	users	userconfig
-131	users	token
+123	extras	cachedvalue
+124	tenancy	contactgroup
+125	tenancy	contactrole
+126	tenancy	contact
+127	tenancy	contactassignment
+128	tenancy	tenantgroup
+129	tenancy	tenant
+130	users	ownergroup
+131	users	owner
 132	users	objectpermission
-133	virtualization	clustertype
-134	virtualization	clustergroup
-135	virtualization	cluster
+133	users	userconfig
+134	users	token
+135	users	group
+136	users	user
+137	virtualization	clustertype
+138	virtualization	clustergroup
+139	virtualization	cluster
 13	virtualization	virtualmachine
 11	virtualization	vminterface
-136	virtualization	virtualdisk
-137	vpn	ikeproposal
-138	vpn	ikepolicy
-139	vpn	ipsecproposal
-140	vpn	ipsecpolicy
-141	vpn	ipsecprofile
-142	vpn	l2vpn
-143	vpn	l2vpntermination
-144	vpn	tunnelgroup
-145	vpn	tunnel
-146	vpn	tunneltermination
-147	wireless	wirelesslangroup
-148	wireless	wirelesslan
-149	wireless	wirelesslink
-150	django_rq	queue
+140	virtualization	virtualdisk
+141	vpn	ikeproposal
+142	vpn	ikepolicy
+143	vpn	ipsecproposal
+144	vpn	ipsecpolicy
+145	vpn	ipsecprofile
+146	vpn	l2vpn
+147	vpn	l2vpntermination
+148	vpn	tunnelgroup
+149	vpn	tunnel
+150	vpn	tunneltermination
+151	wireless	wirelesslangroup
+152	wireless	wirelesslan
+153	wireless	wirelesslink
+154	django_rq	dashboard
+155	extras	objectchange
+156	extras	branch
+157	extras	stagedchange
+158	django_rq	queue
 \.
 
 
@@ -7996,710 +8364,742 @@ COPY public.django_content_type (id, app_label, model) FROM stdin;
 --
 
 COPY public.django_migrations (id, app, name, applied) FROM stdin;
-1	contenttypes	0001_initial	2026-02-06 11:29:17.366411+00
-2	contenttypes	0002_remove_content_type_name	2026-02-06 11:29:17.368988+00
-3	auth	0001_initial	2026-02-06 11:29:17.377078+00
-4	auth	0002_alter_permission_name_max_length	2026-02-06 11:29:17.378914+00
-5	auth	0003_alter_user_email_max_length	2026-02-06 11:29:17.38084+00
-6	auth	0004_alter_user_username_opts	2026-02-06 11:29:17.382493+00
-7	auth	0005_alter_user_last_login_null	2026-02-06 11:29:17.383975+00
-8	auth	0006_require_contenttypes_0002	2026-02-06 11:29:17.384376+00
-9	auth	0007_alter_validators_add_error_messages	2026-02-06 11:29:17.386705+00
-10	auth	0008_alter_user_username_max_length	2026-02-06 11:29:17.388188+00
-11	auth	0009_alter_user_last_name_max_length	2026-02-06 11:29:17.389668+00
-12	auth	0010_alter_group_name_max_length	2026-02-06 11:29:17.391514+00
-13	auth	0011_update_proxy_permissions	2026-02-06 11:29:17.393233+00
-14	auth	0012_alter_user_first_name_max_length	2026-02-06 11:29:17.394786+00
-15	users	0001_api_tokens	2026-02-06 11:29:17.415685+00
-16	users	0002_unicode_literals	2026-02-06 11:29:17.416253+00
-17	users	0003_token_permissions	2026-02-06 11:29:17.41665+00
-18	users	0004_standardize_description	2026-02-06 11:29:17.416946+00
-19	users	0005_userconfig	2026-02-06 11:29:17.417221+00
-20	users	0006_create_userconfigs	2026-02-06 11:29:17.417623+00
-21	users	0007_proxy_group_user	2026-02-06 11:29:17.417848+00
-22	users	0008_objectpermission	2026-02-06 11:29:17.418063+00
-23	users	0009_replicate_permissions	2026-02-06 11:29:17.418264+00
-24	users	0010_update_jsonfield	2026-02-06 11:29:17.418495+00
-25	users	0011_standardize_models	2026-02-06 11:29:17.418749+00
-26	users	0002_standardize_id_fields	2026-02-06 11:29:17.435226+00
-27	users	0003_token_allowed_ips_last_used	2026-02-06 11:29:17.435599+00
-28	users	0004_netboxgroup_netboxuser	2026-02-06 11:29:17.435838+00
-29	account	0001_initial	2026-02-06 11:29:17.437349+00
-30	extras	0001_initial	2026-02-06 11:29:17.515492+00
-31	tenancy	0001_initial	2026-02-06 11:29:17.528477+00
-32	tenancy	0002_tenant_group_optional	2026-02-06 11:29:17.528925+00
-33	tenancy	0003_unicode_literals	2026-02-06 11:29:17.5293+00
-34	tenancy	0004_tags	2026-02-06 11:29:17.529681+00
-35	tenancy	0005_change_logging	2026-02-06 11:29:17.530015+00
-36	tenancy	0006_custom_tag_models	2026-02-06 11:29:17.530552+00
-37	tenancy	0007_nested_tenantgroups	2026-02-06 11:29:17.530861+00
-38	tenancy	0008_nested_tenantgroups_rebuild	2026-02-06 11:29:17.531128+00
-39	tenancy	0009_standardize_description	2026-02-06 11:29:17.531535+00
-40	tenancy	0010_custom_field_data	2026-02-06 11:29:17.531776+00
-41	tenancy	0011_standardize_name_length	2026-02-06 11:29:17.532171+00
-42	tenancy	0012_standardize_models	2026-02-06 11:29:17.532497+00
-43	dcim	0001_initial	2026-02-06 11:29:17.580538+00
-44	dcim	0002_auto_20160622_1821	2026-02-06 11:29:18.540862+00
-45	ipam	0001_initial	2026-02-06 11:29:18.636756+00
-46	virtualization	0001_virtualization	2026-02-06 11:29:18.786325+00
-47	virtualization	0002_virtualmachine_add_status	2026-02-06 11:29:18.786809+00
-48	virtualization	0003_cluster_add_site	2026-02-06 11:29:18.787132+00
-49	virtualization	0004_virtualmachine_add_role	2026-02-06 11:29:18.787394+00
-50	virtualization	0005_django2	2026-02-06 11:29:18.787643+00
-51	virtualization	0006_tags	2026-02-06 11:29:18.787875+00
-52	virtualization	0007_change_logging	2026-02-06 11:29:18.788117+00
-53	virtualization	0008_virtualmachine_local_context_data	2026-02-06 11:29:18.78838+00
-54	virtualization	0009_custom_tag_models	2026-02-06 11:29:18.788661+00
-55	virtualization	0010_cluster_add_tenant	2026-02-06 11:29:18.788913+00
-56	virtualization	0011_3569_virtualmachine_fields	2026-02-06 11:29:18.78913+00
-57	virtualization	0012_vm_name_nonunique	2026-02-06 11:29:18.789386+00
-58	virtualization	0013_deterministic_ordering	2026-02-06 11:29:18.789664+00
-59	virtualization	0014_standardize_description	2026-02-06 11:29:18.789893+00
-60	virtualization	0015_vminterface	2026-02-06 11:29:18.79011+00
-61	virtualization	0016_replicate_interfaces	2026-02-06 11:29:18.790324+00
-62	virtualization	0017_update_jsonfield	2026-02-06 11:29:18.790549+00
-63	virtualization	0018_custom_field_data	2026-02-06 11:29:18.790768+00
-64	virtualization	0019_standardize_name_length	2026-02-06 11:29:18.791003+00
-65	virtualization	0020_standardize_models	2026-02-06 11:29:18.791225+00
-66	virtualization	0021_virtualmachine_vcpus_decimal	2026-02-06 11:29:18.791468+00
-67	virtualization	0022_vminterface_parent	2026-02-06 11:29:18.792146+00
-68	extras	0002_custom_fields	2026-02-06 11:29:19.213895+00
-69	extras	0003_exporttemplate_add_description	2026-02-06 11:29:19.214547+00
-70	extras	0004_topologymap_change_comma_to_semicolon	2026-02-06 11:29:19.215181+00
-71	extras	0005_useraction_add_bulk_create	2026-02-06 11:29:19.215552+00
-72	extras	0006_add_imageattachments	2026-02-06 11:29:19.215886+00
-73	extras	0007_unicode_literals	2026-02-06 11:29:19.216162+00
-74	extras	0008_reports	2026-02-06 11:29:19.21662+00
-75	extras	0009_topologymap_type	2026-02-06 11:29:19.216956+00
-76	extras	0010_customfield_filter_logic	2026-02-06 11:29:19.217336+00
-77	extras	0011_django2	2026-02-06 11:29:19.217546+00
-78	extras	0012_webhooks	2026-02-06 11:29:19.21776+00
-79	extras	0013_objectchange	2026-02-06 11:29:19.218281+00
-80	extras	0014_configcontexts	2026-02-06 11:29:19.218669+00
-81	extras	0015_remove_useraction	2026-02-06 11:29:19.218954+00
-82	extras	0016_exporttemplate_add_cable	2026-02-06 11:29:19.219335+00
-83	extras	0017_exporttemplate_mime_type_length	2026-02-06 11:29:19.219592+00
-84	extras	0018_exporttemplate_add_jinja2	2026-02-06 11:29:19.220089+00
-85	extras	0019_tag_taggeditem	2026-02-06 11:29:19.220332+00
-86	extras	0020_tag_data	2026-02-06 11:29:19.220612+00
-87	extras	0021_add_color_comments_changelog_to_tag	2026-02-06 11:29:19.220858+00
-88	extras	0022_custom_links	2026-02-06 11:29:19.221057+00
-89	extras	0023_fix_tag_sequences	2026-02-06 11:29:19.22124+00
-90	extras	0024_scripts	2026-02-06 11:29:19.221416+00
-91	extras	0025_objectchange_time_index	2026-02-06 11:29:19.2216+00
-92	extras	0026_webhook_ca_file_path	2026-02-06 11:29:19.221788+00
-93	extras	0027_webhook_additional_headers	2026-02-06 11:29:19.222065+00
-94	extras	0028_remove_topology_maps	2026-02-06 11:29:19.222272+00
-95	extras	0029_3569_customfield_fields	2026-02-06 11:29:19.22249+00
-96	extras	0030_3569_objectchange_fields	2026-02-06 11:29:19.222669+00
-97	extras	0031_3569_exporttemplate_fields	2026-02-06 11:29:19.222842+00
-98	extras	0032_3569_webhook_fields	2026-02-06 11:29:19.223049+00
-99	extras	0033_graph_type_template_language	2026-02-06 11:29:19.223263+00
-100	extras	0034_configcontext_tags	2026-02-06 11:29:19.223493+00
-101	extras	0035_deterministic_ordering	2026-02-06 11:29:19.223715+00
-102	extras	0036_contenttype_filters_to_q_objects	2026-02-06 11:29:19.223996+00
-103	extras	0037_configcontexts_clusters	2026-02-06 11:29:19.22422+00
-104	extras	0038_webhook_template_support	2026-02-06 11:29:19.224581+00
-105	extras	0039_update_features_content_types	2026-02-06 11:29:19.224826+00
-106	extras	0040_standardize_description	2026-02-06 11:29:19.225033+00
-107	extras	0041_tag_description	2026-02-06 11:29:19.225251+00
-108	extras	0042_customfield_manager	2026-02-06 11:29:19.225486+00
-109	extras	0043_report	2026-02-06 11:29:19.225745+00
-110	extras	0044_jobresult	2026-02-06 11:29:19.225968+00
-111	extras	0045_configcontext_changelog	2026-02-06 11:29:19.226186+00
-112	extras	0046_update_jsonfield	2026-02-06 11:29:19.226399+00
-113	extras	0047_tag_ordering	2026-02-06 11:29:19.226605+00
-114	extras	0048_exporttemplate_remove_template_language	2026-02-06 11:29:19.226819+00
-115	extras	0049_remove_graph	2026-02-06 11:29:19.227039+00
-116	extras	0050_customfield_changes	2026-02-06 11:29:19.227258+00
-117	extras	0051_migrate_customfields	2026-02-06 11:29:19.227487+00
-118	extras	0052_customfield_cleanup	2026-02-06 11:29:19.227716+00
-119	extras	0053_rename_webhook_obj_type	2026-02-06 11:29:19.227938+00
-120	extras	0054_standardize_models	2026-02-06 11:29:19.228158+00
-121	extras	0055_objectchange_data	2026-02-06 11:29:19.228362+00
-122	extras	0056_extend_configcontext	2026-02-06 11:29:19.228825+00
-123	extras	0057_customlink_rename_fields	2026-02-06 11:29:19.229057+00
-124	extras	0058_journalentry	2026-02-06 11:29:19.229321+00
-125	extras	0059_exporttemplate_as_attachment	2026-02-06 11:29:19.229644+00
-126	tenancy	0002_tenant_ordering	2026-02-06 11:29:19.846181+00
-127	tenancy	0003_contacts	2026-02-06 11:29:19.846955+00
-128	tenancy	0004_extend_tag_support	2026-02-06 11:29:19.847375+00
-129	tenancy	0005_standardize_id_fields	2026-02-06 11:29:19.847919+00
-130	tenancy	0006_created_datetimefield	2026-02-06 11:29:19.848326+00
-131	tenancy	0007_contact_link	2026-02-06 11:29:19.848703+00
-132	tenancy	0008_unique_constraints	2026-02-06 11:29:19.849072+00
-133	tenancy	0009_standardize_description_comments	2026-02-06 11:29:19.849335+00
-134	tenancy	0010_tenant_relax_uniqueness	2026-02-06 11:29:19.84956+00
-135	tenancy	0011_contactassignment_tags	2026-02-06 11:29:19.849761+00
-136	dcim	0003_auto_20160628_1721	2026-02-06 11:29:22.009991+00
-137	dcim	0004_auto_20160701_2049	2026-02-06 11:29:22.010671+00
-138	dcim	0005_auto_20160706_1722	2026-02-06 11:29:22.010995+00
-139	dcim	0006_add_device_primary_ip4_ip6	2026-02-06 11:29:22.011349+00
-140	dcim	0007_device_copy_primary_ip	2026-02-06 11:29:22.011904+00
-141	dcim	0008_device_remove_primary_ip	2026-02-06 11:29:22.012191+00
-142	dcim	0009_site_32bit_asn_support	2026-02-06 11:29:22.012486+00
-143	dcim	0010_devicebay_installed_device_set_null	2026-02-06 11:29:22.012859+00
-144	dcim	0011_devicetype_part_number	2026-02-06 11:29:22.01309+00
-145	dcim	0012_site_rack_device_add_tenant	2026-02-06 11:29:22.013325+00
-146	dcim	0013_add_interface_form_factors	2026-02-06 11:29:22.013564+00
-147	dcim	0014_rack_add_type_width	2026-02-06 11:29:22.014011+00
-148	dcim	0015_rack_add_u_height_validator	2026-02-06 11:29:22.014223+00
-149	dcim	0016_module_add_manufacturer	2026-02-06 11:29:22.014424+00
-150	dcim	0017_rack_add_role	2026-02-06 11:29:22.014638+00
-151	dcim	0018_device_add_asset_tag	2026-02-06 11:29:22.014827+00
-152	dcim	0019_new_iface_form_factors	2026-02-06 11:29:22.015047+00
-153	dcim	0020_rack_desc_units	2026-02-06 11:29:22.015277+00
-154	dcim	0021_add_ff_flexstack	2026-02-06 11:29:22.015485+00
-155	dcim	0022_color_names_to_rgb	2026-02-06 11:29:22.015688+00
-156	dcim	0023_devicetype_comments	2026-02-06 11:29:22.016104+00
-157	dcim	0024_site_add_contact_fields	2026-02-06 11:29:22.016412+00
-158	dcim	0025_devicetype_add_interface_ordering	2026-02-06 11:29:22.016683+00
-159	dcim	0026_add_rack_reservations	2026-02-06 11:29:22.0169+00
-160	dcim	0027_device_add_site	2026-02-06 11:29:22.017128+00
-161	dcim	0028_device_copy_rack_to_site	2026-02-06 11:29:22.017356+00
-162	dcim	0029_allow_rackless_devices	2026-02-06 11:29:22.017588+00
-163	dcim	0030_interface_add_lag	2026-02-06 11:29:22.018051+00
-164	dcim	0031_regions	2026-02-06 11:29:22.018437+00
-165	dcim	0032_device_increase_name_length	2026-02-06 11:29:22.0187+00
-166	dcim	0033_rackreservation_rack_editable	2026-02-06 11:29:22.019006+00
-167	dcim	0034_rename_module_to_inventoryitem	2026-02-06 11:29:22.019234+00
-168	dcim	0035_device_expand_status_choices	2026-02-06 11:29:22.019464+00
-169	dcim	0036_add_ff_juniper_vcp	2026-02-06 11:29:22.019691+00
-170	dcim	0037_unicode_literals	2026-02-06 11:29:22.019909+00
-171	dcim	0038_wireless_interfaces	2026-02-06 11:29:22.020357+00
-172	dcim	0039_interface_add_enabled_mtu	2026-02-06 11:29:22.02062+00
-173	dcim	0040_inventoryitem_add_asset_tag_description	2026-02-06 11:29:22.02083+00
-174	dcim	0041_napalm_integration	2026-02-06 11:29:22.021036+00
-175	dcim	0042_interface_ff_10ge_cx4	2026-02-06 11:29:22.021239+00
-176	dcim	0043_device_component_name_lengths	2026-02-06 11:29:22.021434+00
-177	dcim	0044_virtualization	2026-02-06 11:29:22.021662+00
-178	dcim	0045_devicerole_vm_role	2026-02-06 11:29:22.021855+00
-179	dcim	0046_rack_lengthen_facility_id	2026-02-06 11:29:22.022037+00
-180	dcim	0047_more_100ge_form_factors	2026-02-06 11:29:22.022226+00
-181	dcim	0048_rack_serial	2026-02-06 11:29:22.022596+00
-182	dcim	0049_rackreservation_change_user	2026-02-06 11:29:22.022824+00
-183	dcim	0050_interface_vlan_tagging	2026-02-06 11:29:22.023189+00
-184	dcim	0051_rackreservation_tenant	2026-02-06 11:29:22.023416+00
-185	dcim	0052_virtual_chassis	2026-02-06 11:29:22.023883+00
-186	dcim	0053_platform_manufacturer	2026-02-06 11:29:22.024153+00
-187	dcim	0054_site_status_timezone_description	2026-02-06 11:29:22.024373+00
-188	dcim	0055_virtualchassis_ordering	2026-02-06 11:29:22.024609+00
-189	dcim	0056_django2	2026-02-06 11:29:22.024825+00
-190	dcim	0057_tags	2026-02-06 11:29:22.025032+00
-191	dcim	0058_relax_rack_naming_constraints	2026-02-06 11:29:22.025257+00
-192	dcim	0059_site_latitude_longitude	2026-02-06 11:29:22.025619+00
-193	dcim	0060_change_logging	2026-02-06 11:29:22.025872+00
-194	dcim	0061_platform_napalm_args	2026-02-06 11:29:22.026101+00
-195	dcim	0062_interface_mtu	2026-02-06 11:29:22.026323+00
-196	dcim	0063_device_local_context_data	2026-02-06 11:29:22.026542+00
-197	dcim	0064_remove_platform_rpc_client	2026-02-06 11:29:22.026769+00
-198	dcim	0065_front_rear_ports	2026-02-06 11:29:22.026987+00
-199	dcim	0066_cables	2026-02-06 11:29:22.027236+00
-200	dcim	0067_device_type_remove_qualifiers	2026-02-06 11:29:22.027544+00
-201	dcim	0068_rack_new_fields	2026-02-06 11:29:22.027774+00
-202	dcim	0069_deprecate_nullablecharfield	2026-02-06 11:29:22.027985+00
-203	dcim	0070_custom_tag_models	2026-02-06 11:29:22.028206+00
-204	dcim	0071_device_components_add_description	2026-02-06 11:29:22.028417+00
-205	dcim	0072_powerfeeds	2026-02-06 11:29:22.028645+00
-206	dcim	0073_interface_form_factor_to_type	2026-02-06 11:29:22.028873+00
-207	dcim	0074_increase_field_length_platform_name_slug	2026-02-06 11:29:22.029339+00
-208	dcim	0075_cable_devices	2026-02-06 11:29:22.029634+00
-209	dcim	0076_console_port_types	2026-02-06 11:29:22.029915+00
-210	dcim	0077_power_types	2026-02-06 11:29:22.030182+00
-211	dcim	0078_3569_site_fields	2026-02-06 11:29:22.030445+00
-212	dcim	0079_3569_rack_fields	2026-02-06 11:29:22.03068+00
-213	dcim	0080_3569_devicetype_fields	2026-02-06 11:29:22.03089+00
-214	dcim	0081_3569_device_fields	2026-02-06 11:29:22.031085+00
-215	dcim	0082_3569_interface_fields	2026-02-06 11:29:22.03129+00
-216	dcim	0082_3569_port_fields	2026-02-06 11:29:22.031485+00
-217	dcim	0083_3569_cable_fields	2026-02-06 11:29:22.031667+00
-218	dcim	0084_3569_powerfeed_fields	2026-02-06 11:29:22.031855+00
-219	dcim	0085_3569_poweroutlet_fields	2026-02-06 11:29:22.032402+00
-220	dcim	0086_device_name_nonunique	2026-02-06 11:29:22.032639+00
-221	dcim	0087_role_descriptions	2026-02-06 11:29:22.032856+00
-222	dcim	0088_powerfeed_available_power	2026-02-06 11:29:22.03306+00
-223	dcim	0089_deterministic_ordering	2026-02-06 11:29:22.033278+00
-224	dcim	0090_cable_termination_models	2026-02-06 11:29:22.033513+00
-225	dcim	0091_interface_type_other	2026-02-06 11:29:22.033723+00
-226	dcim	0092_fix_rack_outer_unit	2026-02-06 11:29:22.034172+00
-227	dcim	0093_device_component_ordering	2026-02-06 11:29:22.034414+00
-228	dcim	0094_device_component_template_ordering	2026-02-06 11:29:22.034628+00
-229	dcim	0095_primary_model_ordering	2026-02-06 11:29:22.03484+00
-230	dcim	0096_interface_ordering	2026-02-06 11:29:22.035056+00
-231	dcim	0097_interfacetemplate_type_other	2026-02-06 11:29:22.035277+00
-232	dcim	0098_devicetype_images	2026-02-06 11:29:22.035495+00
-233	dcim	0099_powerfeed_negative_voltage	2026-02-06 11:29:22.035863+00
-234	dcim	0100_mptt_remove_indexes	2026-02-06 11:29:22.036098+00
-235	dcim	0101_nested_rackgroups	2026-02-06 11:29:22.036313+00
-236	dcim	0102_nested_rackgroups_rebuild	2026-02-06 11:29:22.036532+00
-237	dcim	0103_standardize_description	2026-02-06 11:29:22.036728+00
-238	dcim	0104_correct_infiniband_types	2026-02-06 11:29:22.036928+00
-239	dcim	0105_interface_name_collation	2026-02-06 11:29:22.037138+00
-240	dcim	0106_role_default_color	2026-02-06 11:29:22.037348+00
-241	dcim	0107_component_labels	2026-02-06 11:29:22.037562+00
-242	dcim	0108_add_tags	2026-02-06 11:29:22.037772+00
-243	dcim	0109_interface_remove_vm	2026-02-06 11:29:22.037981+00
-244	dcim	0110_virtualchassis_name	2026-02-06 11:29:22.0383+00
-245	dcim	0111_component_template_description	2026-02-06 11:29:22.038585+00
-246	dcim	0112_standardize_components	2026-02-06 11:29:22.038818+00
-247	dcim	0113_nullbooleanfield_to_booleanfield	2026-02-06 11:29:22.039204+00
-248	dcim	0114_update_jsonfield	2026-02-06 11:29:22.039437+00
-249	dcim	0115_rackreservation_order	2026-02-06 11:29:22.039658+00
-250	dcim	0116_rearport_max_positions	2026-02-06 11:29:22.039854+00
-251	dcim	0117_custom_field_data	2026-02-06 11:29:22.04004+00
-252	dcim	0118_inventoryitem_mptt	2026-02-06 11:29:22.04022+00
-253	dcim	0119_inventoryitem_mptt_rebuild	2026-02-06 11:29:22.040562+00
-254	dcim	0120_cache_cable_peer	2026-02-06 11:29:22.040771+00
-255	dcim	0121_cablepath	2026-02-06 11:29:22.040959+00
-256	dcim	0122_standardize_name_length	2026-02-06 11:29:22.041147+00
-257	dcim	0123_standardize_models	2026-02-06 11:29:22.04133+00
-258	dcim	0124_mark_connected	2026-02-06 11:29:22.041515+00
-259	dcim	0125_console_port_speed	2026-02-06 11:29:22.041691+00
-260	dcim	0126_rename_rackgroup_location	2026-02-06 11:29:22.041874+00
-261	dcim	0127_device_location	2026-02-06 11:29:22.042067+00
-262	dcim	0128_device_location_populate	2026-02-06 11:29:22.042261+00
-263	dcim	0129_interface_parent	2026-02-06 11:29:22.042451+00
-264	dcim	0130_sitegroup	2026-02-06 11:29:22.042637+00
-265	ipam	0002_vrf_add_enforce_unique	2026-02-06 11:29:22.860543+00
-266	ipam	0003_ipam_add_vlangroups	2026-02-06 11:29:22.861134+00
-267	ipam	0004_ipam_vlangroup_uniqueness	2026-02-06 11:29:22.861564+00
-268	ipam	0005_auto_20160725_1842	2026-02-06 11:29:22.861986+00
-269	ipam	0006_vrf_vlan_add_tenant	2026-02-06 11:29:22.862348+00
-270	ipam	0007_prefix_ipaddress_add_tenant	2026-02-06 11:29:22.862676+00
-271	ipam	0008_prefix_change_order	2026-02-06 11:29:22.863004+00
-272	ipam	0009_ipaddress_add_status	2026-02-06 11:29:22.863468+00
-273	ipam	0010_ipaddress_help_texts	2026-02-06 11:29:22.863856+00
-274	ipam	0011_rir_add_is_private	2026-02-06 11:29:22.864189+00
-275	ipam	0012_services	2026-02-06 11:29:22.864458+00
-276	ipam	0013_prefix_add_is_pool	2026-02-06 11:29:22.864677+00
-277	ipam	0014_ipaddress_status_add_deprecated	2026-02-06 11:29:22.864888+00
-278	ipam	0015_global_vlans	2026-02-06 11:29:22.865099+00
-279	ipam	0016_unicode_literals	2026-02-06 11:29:22.8653+00
-280	ipam	0017_ipaddress_roles	2026-02-06 11:29:22.865517+00
-281	ipam	0018_remove_service_uniqueness_constraint	2026-02-06 11:29:22.865762+00
-282	ipam	0019_virtualization	2026-02-06 11:29:22.866014+00
-283	ipam	0020_ipaddress_add_role_carp	2026-02-06 11:29:22.866332+00
-284	ipam	0021_vrf_ordering	2026-02-06 11:29:22.866646+00
-285	ipam	0022_tags	2026-02-06 11:29:22.866912+00
-286	ipam	0023_change_logging	2026-02-06 11:29:22.867168+00
-287	ipam	0024_vrf_allow_null_rd	2026-02-06 11:29:22.867421+00
-288	ipam	0025_custom_tag_models	2026-02-06 11:29:22.867713+00
-289	ipam	0026_prefix_ordering_vrf_nulls_first	2026-02-06 11:29:22.86796+00
-290	ipam	0027_ipaddress_add_dns_name	2026-02-06 11:29:22.86821+00
-291	ipam	0028_3569_prefix_fields	2026-02-06 11:29:22.868521+00
-292	ipam	0029_3569_ipaddress_fields	2026-02-06 11:29:22.868742+00
-293	ipam	0030_3569_vlan_fields	2026-02-06 11:29:22.868965+00
-294	ipam	0031_3569_service_fields	2026-02-06 11:29:22.869163+00
-295	ipam	0032_role_description	2026-02-06 11:29:22.869356+00
-296	ipam	0033_deterministic_ordering	2026-02-06 11:29:22.869574+00
-297	ipam	0034_fix_ipaddress_status_dhcp	2026-02-06 11:29:22.869805+00
-298	ipam	0035_drop_ip_family	2026-02-06 11:29:22.870057+00
-299	ipam	0036_standardize_description	2026-02-06 11:29:22.870292+00
-300	ipam	0037_ipaddress_assignment	2026-02-06 11:29:22.870509+00
-301	ipam	0038_custom_field_data	2026-02-06 11:29:22.8709+00
-302	ipam	0039_service_ports_array	2026-02-06 11:29:22.87117+00
-303	ipam	0040_service_drop_port	2026-02-06 11:29:22.871459+00
-304	ipam	0041_routetarget	2026-02-06 11:29:22.871708+00
-305	ipam	0042_standardize_name_length	2026-02-06 11:29:22.871959+00
-306	ipam	0043_add_tenancy_to_aggregates	2026-02-06 11:29:22.872246+00
-307	ipam	0044_standardize_models	2026-02-06 11:29:22.8727+00
-308	ipam	0045_vlangroup_scope	2026-02-06 11:29:22.87295+00
-309	ipam	0046_set_vlangroup_scope_types	2026-02-06 11:29:22.873191+00
-310	wireless	0001_wireless	2026-02-06 11:29:23.06942+00
-311	wireless	0002_standardize_id_fields	2026-02-06 11:29:23.069894+00
-312	wireless	0003_created_datetimefield	2026-02-06 11:29:23.070235+00
-313	wireless	0004_wireless_tenancy	2026-02-06 11:29:23.070647+00
-314	wireless	0005_wirelesslink_interface_types	2026-02-06 11:29:23.070977+00
-315	wireless	0006_unique_constraints	2026-02-06 11:29:23.07127+00
-316	wireless	0007_standardize_description_comments	2026-02-06 11:29:23.071591+00
-317	wireless	0008_wirelesslan_status	2026-02-06 11:29:23.07185+00
-318	ipam	0047_prefix_depth_children	2026-02-06 11:29:23.531692+00
-319	ipam	0048_prefix_populate_depth_children	2026-02-06 11:29:23.532218+00
-320	ipam	0049_prefix_mark_utilized	2026-02-06 11:29:23.532563+00
-321	ipam	0050_iprange	2026-02-06 11:29:23.532865+00
-322	ipam	0051_extend_tag_support	2026-02-06 11:29:23.53319+00
-323	ipam	0052_fhrpgroup	2026-02-06 11:29:23.533494+00
-324	ipam	0053_asn_model	2026-02-06 11:29:23.533759+00
-325	dcim	0131_consoleport_speed	2026-02-06 11:29:32.309618+00
-326	dcim	0132_cable_length	2026-02-06 11:29:32.310941+00
-327	dcim	0133_port_colors	2026-02-06 11:29:32.311582+00
-328	dcim	0134_interface_wwn_bridge	2026-02-06 11:29:32.312136+00
-329	dcim	0135_tenancy_extensions	2026-02-06 11:29:32.312725+00
-330	dcim	0136_device_airflow	2026-02-06 11:29:32.313189+00
-331	dcim	0137_relax_uniqueness_constraints	2026-02-06 11:29:32.313896+00
-332	dcim	0138_extend_tag_support	2026-02-06 11:29:32.314769+00
-333	dcim	0139_rename_cable_peer	2026-02-06 11:29:32.315599+00
-334	dcim	0140_wireless	2026-02-06 11:29:32.316445+00
-335	dcim	0141_asn_model	2026-02-06 11:29:32.317091+00
-336	dcim	0142_rename_128gfc_qsfp28	2026-02-06 11:29:32.317897+00
-337	dcim	0143_remove_primary_for_related_name	2026-02-06 11:29:32.318838+00
-338	dcim	0144_fix_cable_abs_length	2026-02-06 11:29:32.31947+00
-339	dcim	0145_site_remove_deprecated_fields	2026-02-06 11:29:32.320313+00
-340	dcim	0146_modules	2026-02-06 11:29:32.321125+00
-341	dcim	0147_inventoryitemrole	2026-02-06 11:29:32.322225+00
-342	dcim	0148_inventoryitem_component	2026-02-06 11:29:32.322843+00
-343	dcim	0149_inventoryitem_templates	2026-02-06 11:29:32.323996+00
-344	dcim	0150_interface_vrf	2026-02-06 11:29:32.324998+00
-345	dcim	0151_interface_speed_duplex	2026-02-06 11:29:32.325814+00
-346	dcim	0152_standardize_id_fields	2026-02-06 11:29:32.326908+00
-347	dcim	0153_created_datetimefield	2026-02-06 11:29:32.327671+00
-348	dcim	0154_half_height_rack_units	2026-02-06 11:29:32.328663+00
-349	dcim	0155_interface_poe_mode_type	2026-02-06 11:29:32.329554+00
-350	dcim	0156_location_status	2026-02-06 11:29:32.330267+00
-351	dcim	0157_new_cabling_models	2026-02-06 11:29:32.331007+00
-352	dcim	0158_populate_cable_terminations	2026-02-06 11:29:32.332415+00
-353	dcim	0159_populate_cable_paths	2026-02-06 11:29:32.33404+00
-354	circuits	0001_initial	2026-02-06 11:29:32.35655+00
-355	circuits	0002_auto_20160622_1821	2026-02-06 11:29:33.333342+00
-356	circuits	0003_provider_32bit_asn_support	2026-02-06 11:29:33.334119+00
-357	circuits	0004_circuit_add_tenant	2026-02-06 11:29:33.334749+00
-358	circuits	0005_circuit_add_upstream_speed	2026-02-06 11:29:33.335309+00
-359	circuits	0006_terminations	2026-02-06 11:29:33.335776+00
-360	circuits	0007_circuit_add_description	2026-02-06 11:29:33.336208+00
-361	circuits	0008_circuittermination_interface_protect_on_delete	2026-02-06 11:29:33.336582+00
-362	circuits	0009_unicode_literals	2026-02-06 11:29:33.337056+00
-363	circuits	0010_circuit_status	2026-02-06 11:29:33.337599+00
-364	circuits	0011_tags	2026-02-06 11:29:33.338173+00
-365	circuits	0012_change_logging	2026-02-06 11:29:33.338675+00
-366	circuits	0013_cables	2026-02-06 11:29:33.33909+00
-367	circuits	0014_circuittermination_description	2026-02-06 11:29:33.339677+00
-368	circuits	0015_custom_tag_models	2026-02-06 11:29:33.340206+00
-369	circuits	0016_3569_circuit_fields	2026-02-06 11:29:33.340643+00
-370	circuits	0017_circuittype_description	2026-02-06 11:29:33.341344+00
-371	circuits	0018_standardize_description	2026-02-06 11:29:33.341884+00
-372	circuits	0019_nullbooleanfield_to_booleanfield	2026-02-06 11:29:33.342318+00
-373	circuits	0020_custom_field_data	2026-02-06 11:29:33.34283+00
-374	circuits	0021_cache_cable_peer	2026-02-06 11:29:33.343352+00
-375	circuits	0022_cablepath	2026-02-06 11:29:33.343758+00
-376	circuits	0023_circuittermination_port_speed_optional	2026-02-06 11:29:33.344228+00
-377	circuits	0024_standardize_name_length	2026-02-06 11:29:33.344698+00
-378	circuits	0025_standardize_models	2026-02-06 11:29:33.345192+00
-379	circuits	0026_mark_connected	2026-02-06 11:29:33.345544+00
-380	circuits	0027_providernetwork	2026-02-06 11:29:33.345843+00
-381	circuits	0028_cache_circuit_terminations	2026-02-06 11:29:33.346125+00
-382	circuits	0029_circuit_tracing	2026-02-06 11:29:33.346908+00
-383	circuits	0003_extend_tag_support	2026-02-06 11:29:34.449202+00
-384	circuits	0004_rename_cable_peer	2026-02-06 11:29:34.44979+00
-385	circuits	0032_provider_service_id	2026-02-06 11:29:34.450164+00
-386	circuits	0033_standardize_id_fields	2026-02-06 11:29:34.450537+00
-387	circuits	0034_created_datetimefield	2026-02-06 11:29:34.450987+00
-388	circuits	0035_provider_asns	2026-02-06 11:29:34.451272+00
-389	circuits	0036_circuit_termination_date_tags_custom_fields	2026-02-06 11:29:34.451539+00
-390	circuits	0037_new_cabling_models	2026-02-06 11:29:34.451832+00
-391	dcim	0160_populate_cable_ends	2026-02-06 11:29:39.493094+00
-392	dcim	0161_cabling_cleanup	2026-02-06 11:29:39.493526+00
-393	dcim	0162_unique_constraints	2026-02-06 11:29:39.493812+00
-394	dcim	0163_weight_fields	2026-02-06 11:29:39.49409+00
-395	dcim	0164_rack_mounting_depth	2026-02-06 11:29:39.494371+00
-396	dcim	0165_standardize_description_comments	2026-02-06 11:29:39.49463+00
-397	dcim	0166_virtualdevicecontext	2026-02-06 11:29:39.494888+00
-398	core	0001_initial	2026-02-06 11:29:40.141633+00
-399	core	0002_managedfile	2026-02-06 11:29:40.142133+00
-400	core	0003_job	2026-02-06 11:29:40.142471+00
-401	core	0004_replicate_jobresults	2026-02-06 11:29:40.142833+00
-402	core	0005_job_created_auto_now	2026-02-06 11:29:40.143163+00
-403	circuits	0038_cabling_cleanup	2026-02-06 11:29:40.953434+00
-404	circuits	0039_unique_constraints	2026-02-06 11:29:40.954044+00
-405	circuits	0040_provider_remove_deprecated_fields	2026-02-06 11:29:40.954462+00
-406	circuits	0041_standardize_description_comments	2026-02-06 11:29:40.954845+00
-407	circuits	0042_provideraccount	2026-02-06 11:29:40.955275+00
-408	extras	0060_customlink_button_class	2026-02-06 11:29:43.340134+00
-409	extras	0061_extras_change_logging	2026-02-06 11:29:43.340963+00
-410	extras	0062_clear_secrets_changelog	2026-02-06 11:29:43.341418+00
-411	extras	0063_webhook_conditions	2026-02-06 11:29:43.341799+00
-412	extras	0064_configrevision	2026-02-06 11:29:43.342204+00
-413	extras	0065_imageattachment_change_logging	2026-02-06 11:29:43.342515+00
-414	extras	0066_customfield_name_validation	2026-02-06 11:29:43.342814+00
-415	extras	0067_customfield_min_max_values	2026-02-06 11:29:43.343193+00
-416	extras	0068_configcontext_cluster_types	2026-02-06 11:29:43.343495+00
-417	extras	0069_custom_object_field	2026-02-06 11:29:43.343758+00
-418	extras	0070_customlink_enabled	2026-02-06 11:29:43.344061+00
-419	extras	0071_standardize_id_fields	2026-02-06 11:29:43.344349+00
-420	extras	0072_created_datetimefield	2026-02-06 11:29:43.3448+00
-421	extras	0073_journalentry_tags_custom_fields	2026-02-06 11:29:43.345078+00
-422	extras	0074_customfield_extensions	2026-02-06 11:29:43.345375+00
-423	extras	0075_configcontext_locations	2026-02-06 11:29:43.345721+00
-424	extras	0076_tag_slug_unicode	2026-02-06 11:29:43.346001+00
-425	extras	0077_customlink_extend_text_and_url	2026-02-06 11:29:43.34625+00
-426	extras	0078_unique_constraints	2026-02-06 11:29:43.346534+00
-427	extras	0079_scheduled_jobs	2026-02-06 11:29:43.346822+00
-428	extras	0080_customlink_content_types	2026-02-06 11:29:43.347146+00
-429	extras	0081_exporttemplate_content_types	2026-02-06 11:29:43.34742+00
-430	extras	0082_savedfilter	2026-02-06 11:29:43.347771+00
-431	extras	0083_search	2026-02-06 11:29:43.348152+00
-432	extras	0084_staging	2026-02-06 11:29:43.3485+00
-433	extras	0085_synced_data	2026-02-06 11:29:43.348769+00
-434	extras	0086_configtemplate	2026-02-06 11:29:43.349134+00
-435	extras	0087_dashboard	2026-02-06 11:29:43.98112+00
-436	extras	0088_jobresult_webhooks	2026-02-06 11:29:43.982598+00
-437	extras	0089_customfield_is_cloneable	2026-02-06 11:29:43.983626+00
-438	extras	0090_objectchange_index_request_id	2026-02-06 11:29:43.984551+00
-439	extras	0091_create_managedfiles	2026-02-06 11:29:43.985364+00
-440	extras	0092_delete_jobresult	2026-02-06 11:29:43.986243+00
-441	extras	0093_configrevision_ordering	2026-02-06 11:29:43.987355+00
-442	extras	0094_tag_object_types	2026-02-06 11:29:43.988346+00
-443	extras	0095_bookmarks	2026-02-06 11:29:43.989168+00
-444	extras	0096_customfieldchoiceset	2026-02-06 11:29:43.989776+00
-445	extras	0097_customfield_remove_choices	2026-02-06 11:29:43.990369+00
-446	extras	0098_webhook_custom_field_data_webhook_tags	2026-02-06 11:29:43.990813+00
-447	extras	0099_cachedvalue_ordering	2026-02-06 11:29:44.002862+00
-448	extras	0100_customfield_ui_attrs	2026-02-06 11:29:44.082263+00
-449	extras	0101_eventrule	2026-02-06 11:29:45.203181+00
-450	extras	0102_move_configrevision	2026-02-06 11:29:45.27068+00
-451	extras	0103_gfk_indexes	2026-02-06 11:29:45.481126+00
-452	extras	0104_stagedchange_remove_change_logging	2026-02-06 11:29:45.53949+00
-453	extras	0105_customfield_min_max_values	2026-02-06 11:29:45.576318+00
-454	extras	0106_bookmark_user_cascade_deletion	2026-02-06 11:29:45.640313+00
-455	extras	0107_cachedvalue_extras_cachedvalue_object	2026-02-06 11:29:45.658489+00
-456	extras	0108_convert_reports_to_scripts	2026-02-06 11:29:45.713063+00
-457	extras	0109_script_model	2026-02-06 11:29:45.873229+00
-458	extras	0110_remove_eventrule_action_parameters	2026-02-06 11:29:46.136951+00
-459	core	0006_datasource_type_remove_choices	2026-02-06 11:29:46.178427+00
-460	core	0007_job_add_error_field	2026-02-06 11:29:46.193155+00
-461	core	0008_contenttype_proxy	2026-02-06 11:29:46.19479+00
-462	core	0009_configrevision	2026-02-06 11:29:46.196168+00
-463	core	0010_gfk_indexes	2026-02-06 11:29:46.211257+00
-464	extras	0111_rename_content_types	2026-02-06 11:29:46.778914+00
-465	extras	0112_tag_update_object_types	2026-02-06 11:29:46.830325+00
-466	extras	0113_customfield_rename_object_type	2026-02-06 11:29:46.847634+00
-467	users	0005_alter_user_table	2026-02-06 11:29:46.908725+00
-468	users	0006_custom_group_model	2026-02-06 11:29:47.098244+00
-469	users	0007_objectpermission_update_object_types	2026-02-06 11:29:47.143498+00
-470	users	0008_flip_objectpermission_assignments	2026-02-06 11:29:47.484467+00
-471	users	0009_update_group_perms	2026-02-06 11:29:47.573686+00
-472	extras	0114_customfield_add_comments	2026-02-06 11:29:47.585619+00
-473	extras	0115_convert_dashboard_widgets	2026-02-06 11:29:47.628344+00
-474	extras	0116_custom_link_button_color	2026-02-06 11:29:47.681053+00
-475	core	0011_move_objectchange	2026-02-06 11:29:47.72586+00
-476	extras	0117_move_objectchange	2026-02-06 11:29:47.832301+00
-477	extras	0118_customfield_uniqueness	2026-02-06 11:29:47.844019+00
-478	extras	0119_notifications	2026-02-06 11:29:48.188839+00
-479	extras	0120_eventrule_event_types	2026-02-06 11:29:48.656709+00
-480	extras	0121_customfield_related_object_filter	2026-02-06 11:29:48.669534+00
-481	extras	0122_charfield_null_choices	2026-02-06 11:29:48.719569+00
-482	tenancy	0012_contactassignment_custom_fields	2026-02-06 11:29:48.7589+00
-483	tenancy	0013_gfk_indexes	2026-02-06 11:29:48.801754+00
-484	tenancy	0014_contactassignment_ordering	2026-02-06 11:29:48.847016+00
-485	tenancy	0015_contactassignment_rename_content_type	2026-02-06 11:29:49.050358+00
-486	tenancy	0016_charfield_null_choices	2026-02-06 11:29:49.130164+00
-487	ipam	0054_vlangroup_min_max_vids	2026-02-06 11:29:52.244685+00
-488	ipam	0055_servicetemplate	2026-02-06 11:29:52.245365+00
-489	ipam	0056_standardize_id_fields	2026-02-06 11:29:52.245668+00
-490	ipam	0057_created_datetimefield	2026-02-06 11:29:52.245957+00
-491	ipam	0058_ipaddress_nat_inside_nonunique	2026-02-06 11:29:52.246242+00
-492	ipam	0059_l2vpn	2026-02-06 11:29:52.246487+00
-493	ipam	0060_alter_l2vpn_slug	2026-02-06 11:29:52.246703+00
-494	ipam	0061_fhrpgroup_name	2026-02-06 11:29:52.246961+00
-495	ipam	0062_unique_constraints	2026-02-06 11:29:52.247205+00
-496	ipam	0063_standardize_description_comments	2026-02-06 11:29:52.247447+00
-497	ipam	0064_clear_search_cache	2026-02-06 11:29:52.247667+00
-498	ipam	0065_asnrange	2026-02-06 11:29:52.247904+00
-499	ipam	0066_iprange_mark_utilized	2026-02-06 11:29:52.248154+00
-500	ipam	0067_ipaddress_index_host	2026-02-06 11:29:52.248396+00
-501	ipam	0068_move_l2vpn	2026-02-06 11:29:52.717395+00
-502	ipam	0069_gfk_indexes	2026-02-06 11:29:52.803384+00
-503	ipam	0070_vlangroup_vlan_id_ranges	2026-02-06 11:29:53.009403+00
-504	ipam	0071_prefix_scope	2026-02-06 11:29:53.328462+00
-505	dcim	0167_module_status	2026-02-06 11:29:55.371491+00
-506	dcim	0168_interface_template_enabled	2026-02-06 11:29:55.372011+00
-507	dcim	0169_devicetype_default_platform	2026-02-06 11:29:55.37233+00
-508	dcim	0170_configtemplate	2026-02-06 11:29:55.372605+00
-509	dcim	0171_cabletermination_change_logging	2026-02-06 11:29:55.372894+00
-510	dcim	0172_larger_power_draw_values	2026-02-06 11:29:55.373168+00
-511	dcim	0173_remove_napalm_fields	2026-02-06 11:29:55.373399+00
-512	dcim	0174_device_latitude_device_longitude	2026-02-06 11:29:55.37366+00
-513	dcim	0174_rack_starting_unit	2026-02-06 11:29:55.373912+00
-514	dcim	0175_device_oob_ip	2026-02-06 11:29:55.374142+00
-515	dcim	0176_device_component_counters	2026-02-06 11:29:55.374382+00
-516	dcim	0177_devicetype_component_counters	2026-02-06 11:29:55.374631+00
-517	dcim	0178_virtual_chassis_member_counter	2026-02-06 11:29:55.37486+00
-518	dcim	0179_interfacetemplate_rf_role	2026-02-06 11:29:55.375088+00
-519	dcim	0180_powerfeed_tenant	2026-02-06 11:29:55.375316+00
-520	dcim	0181_rename_device_role_device_role	2026-02-06 11:29:55.375562+00
-521	dcim	0182_zero_length_cable_fix	2026-02-06 11:29:55.375917+00
-522	dcim	0183_devicetype_exclude_from_utilization	2026-02-06 11:29:55.414347+00
-523	dcim	0184_protect_child_interfaces	2026-02-06 11:29:55.466857+00
-524	dcim	0185_gfk_indexes	2026-02-06 11:29:55.558006+00
-525	dcim	0186_location_facility	2026-02-06 11:29:55.763916+00
-526	dcim	0187_alter_device_vc_position	2026-02-06 11:29:55.805636+00
-527	dcim	0188_racktype	2026-02-06 11:29:56.008469+00
-528	dcim	0189_moduletype_rack_airflow	2026-02-06 11:29:56.088019+00
-529	dcim	0190_nested_modules	2026-02-06 11:29:56.734253+00
-530	dcim	0191_module_bay_rebuild	2026-02-06 11:29:56.780766+00
-531	dcim	0192_inventoryitem_status	2026-02-06 11:29:56.820508+00
-532	dcim	0193_poweroutlet_color	2026-02-06 11:29:56.853633+00
-533	ipam	0072_prefix_cached_relations	2026-02-06 11:29:57.361246+00
-534	ipam	0073_charfield_null_choices	2026-02-06 11:29:57.487461+00
-535	ipam	0074_vlantranslationpolicy_vlantranslationrule	2026-02-06 11:29:57.844654+00
-536	ipam	0075_vlan_qinq	2026-02-06 11:29:58.000335+00
-537	dcim	0194_charfield_null_choices	2026-02-06 11:30:00.044711+00
-538	dcim	0195_interface_vlan_translation_policy	2026-02-06 11:30:00.101816+00
-539	dcim	0196_qinq_svlan	2026-02-06 11:30:00.264264+00
-540	dcim	0197_natural_sort_collation	2026-02-06 11:30:00.269333+00
-541	circuits	0043_circuittype_color	2026-02-06 11:30:00.305593+00
-542	circuits	0044_circuit_groups	2026-02-06 11:30:00.655248+00
-543	circuits	0045_circuit_distance	2026-02-06 11:30:00.763402+00
-544	circuits	0046_charfield_null_choices	2026-02-06 11:30:00.925567+00
-545	circuits	0047_circuittermination__termination	2026-02-06 11:30:01.245478+00
-546	circuits	0048_circuitterminations_cached_relations	2026-02-06 11:30:01.630864+00
-547	circuits	0049_natural_ordering	2026-02-06 11:30:01.704519+00
-548	circuits	0050_virtual_circuits	2026-02-06 11:30:02.107517+00
-549	circuits	0051_virtualcircuit_group_assignment	2026-02-06 11:30:02.666905+00
-550	circuits	0052_extend_circuit_abs_distance_upper_limit	2026-02-06 11:30:02.703085+00
-551	core	0012_job_object_type_optional	2026-02-06 11:30:02.762475+00
-552	core	0013_job_data_encoder	2026-02-06 11:30:02.781913+00
-553	core	0014_datasource_sync_interval	2026-02-06 11:30:02.821762+00
-554	core	0015_remove_redundant_indexes	2026-02-06 11:30:02.854174+00
-555	core	0016_job_log_entries	2026-02-06 11:30:02.873591+00
-556	core	0017_objectchange_message	2026-02-06 11:30:02.897439+00
-557	core	0018_concrete_objecttype	2026-02-06 11:30:02.956194+00
-558	extras	0123_journalentry_kind_default	2026-02-06 11:30:03.006783+00
-559	extras	0124_remove_staging	2026-02-06 11:30:03.323658+00
-560	extras	0125_alter_tag_options_tag_weight	2026-02-06 11:30:03.422543+00
-561	extras	0126_exporttemplate_file_name	2026-02-06 11:30:03.444491+00
-562	extras	0127_configtemplate_as_attachment_and_more	2026-02-06 11:30:03.614874+00
-563	extras	0128_tableconfig	2026-02-06 11:30:03.67682+00
-564	extras	0129_fix_script_paths	2026-02-06 11:30:03.729089+00
-565	dcim	0198_natural_ordering	2026-02-06 11:30:06.466261+00
-566	dcim	0199_macaddress	2026-02-06 11:30:06.524472+00
-567	dcim	0200_populate_mac_addresses	2026-02-06 11:30:06.67793+00
-568	dcim	0201_add_power_outlet_status	2026-02-06 11:30:06.720769+00
-569	dcim	0202_location_comments_region_comments_sitegroup_comments	2026-02-06 11:30:06.833993+00
-570	dcim	0203_add_rack_outer_height	2026-02-06 11:30:06.91413+00
-571	dcim	0203_device_role_nested	2026-02-06 11:30:07.909826+00
-572	dcim	0204_device_role_rebuild	2026-02-06 11:30:07.968669+00
-573	dcim	0205_moduletypeprofile	2026-02-06 11:30:08.176074+00
-574	dcim	0206_load_module_type_profiles	2026-02-06 11:30:08.416401+00
-575	dcim	0207_remove_redundant_indexes	2026-02-06 11:30:08.451506+00
-576	dcim	0208_devicerole_uniqueness	2026-02-06 11:30:08.599723+00
-577	dcim	0209_device_component_denorm_site_location	2026-02-06 11:30:10.959216+00
-578	dcim	0210_macaddress_ordering	2026-02-06 11:30:11.003405+00
-579	dcim	0211_platform_manufacturer_uniqueness	2026-02-06 11:30:11.271249+00
-580	dcim	0212_interface_tx_power_negative	2026-02-06 11:30:11.313859+00
-581	dcim	0213_platform_parent	2026-02-06 11:30:11.733999+00
-582	dcim	0214_platform_rebuild	2026-02-06 11:30:11.785913+00
-583	dcim	0215_rackreservation_status	2026-02-06 11:30:11.832197+00
-584	django_rq	0001_initial	2026-02-06 11:30:11.834086+00
-585	extras	0130_imageattachment_description	2026-02-06 11:30:11.847027+00
-586	extras	0131_concrete_objecttype	2026-02-06 11:30:12.350861+00
-587	extras	0132_configcontextprofile	2026-02-06 11:30:12.466719+00
-588	extras	0133_make_cf_minmax_decimal	2026-02-06 11:30:12.497267+00
-589	tenancy	0017_natural_ordering	2026-02-06 11:30:12.645224+00
-590	tenancy	0018_contact_groups	2026-02-06 11:30:13.118909+00
-591	tenancy	0019_contactgroup_comments_tenantgroup_comments	2026-02-06 11:30:13.199288+00
-592	tenancy	0020_remove_contactgroupmembership	2026-02-06 11:30:13.320089+00
-593	virtualization	0023_virtualmachine_natural_ordering	2026-02-06 11:30:15.649529+00
-594	virtualization	0024_cluster_relax_uniqueness	2026-02-06 11:30:15.650179+00
-595	virtualization	0025_extend_tag_support	2026-02-06 11:30:15.6505+00
-596	virtualization	0026_vminterface_bridge	2026-02-06 11:30:15.650796+00
-597	virtualization	0027_standardize_id_fields	2026-02-06 11:30:15.651084+00
-598	virtualization	0028_vminterface_vrf	2026-02-06 11:30:15.651377+00
-599	virtualization	0029_created_datetimefield	2026-02-06 11:30:15.651667+00
-600	virtualization	0030_cluster_status	2026-02-06 11:30:15.651927+00
-601	virtualization	0031_virtualmachine_site_device	2026-02-06 11:30:15.652195+00
-602	virtualization	0032_virtualmachine_update_sites	2026-02-06 11:30:15.652447+00
-603	virtualization	0033_unique_constraints	2026-02-06 11:30:15.652713+00
-604	virtualization	0034_standardize_description_comments	2026-02-06 11:30:15.652973+00
-605	virtualization	0035_virtualmachine_interface_count	2026-02-06 11:30:15.653241+00
-606	virtualization	0036_virtualmachine_config_template	2026-02-06 11:30:15.653471+00
-607	virtualization	0037_protect_child_interfaces	2026-02-06 11:30:15.708936+00
-608	virtualization	0038_virtualdisk	2026-02-06 11:30:15.851181+00
-609	virtualization	0039_virtualmachine_serial_number	2026-02-06 11:30:15.891552+00
-610	virtualization	0040_convert_disk_size	2026-02-06 11:30:16.117429+00
-611	virtualization	0041_charfield_null_choices	2026-02-06 11:30:16.205232+00
-612	virtualization	0042_vminterface_vlan_translation_policy	2026-02-06 11:30:16.264288+00
-613	virtualization	0043_qinq_svlan	2026-02-06 11:30:16.424314+00
-614	virtualization	0044_cluster_scope	2026-02-06 11:30:16.772521+00
-615	virtualization	0045_clusters_cached_relations	2026-02-06 11:30:17.197012+00
-616	virtualization	0046_alter_cluster__location_alter_cluster__region_and_more	2026-02-06 11:30:17.574957+00
-617	virtualization	0047_natural_ordering	2026-02-06 11:30:18.040624+00
-618	virtualization	0048_populate_mac_addresses	2026-02-06 11:30:18.186705+00
-619	ipam	0076_natural_ordering	2026-02-06 11:30:18.363753+00
-620	ipam	0077_vlangroup_tenant	2026-02-06 11:30:18.417464+00
-621	ipam	0078_iprange_mark_utilized	2026-02-06 11:30:18.614841+00
-622	ipam	0079_add_service_fhrp_group_parent_gfk	2026-02-06 11:30:18.707589+00
-623	ipam	0080_populate_service_parent	2026-02-06 11:30:18.762081+00
-624	ipam	0081_remove_service_device_virtual_machine_add_parent_gfk_index	2026-02-06 11:30:19.026045+00
-625	ipam	0082_add_prefix_network_containment_indexes	2026-02-06 11:30:19.2365+00
-626	sessions	0001_initial	2026-02-06 11:30:19.240014+00
-627	default	0001_initial	2026-02-06 11:30:19.308867+00
-628	social_auth	0001_initial	2026-02-06 11:30:19.309342+00
-629	default	0002_add_related_name	2026-02-06 11:30:19.361807+00
-630	social_auth	0002_add_related_name	2026-02-06 11:30:19.362307+00
-631	default	0003_alter_email_max_length	2026-02-06 11:30:19.366035+00
-632	social_auth	0003_alter_email_max_length	2026-02-06 11:30:19.366224+00
-633	default	0004_auto_20160423_0400	2026-02-06 11:30:19.375026+00
-634	social_auth	0004_auto_20160423_0400	2026-02-06 11:30:19.375735+00
-635	social_auth	0005_auto_20160727_2333	2026-02-06 11:30:19.380455+00
-636	social_django	0006_partial	2026-02-06 11:30:19.383892+00
-637	social_django	0007_code_timestamp	2026-02-06 11:30:19.387747+00
-638	social_django	0008_partial_timestamp	2026-02-06 11:30:19.390973+00
-639	social_django	0009_auto_20191118_0520	2026-02-06 11:30:19.411557+00
-640	social_django	0010_uid_db_index	2026-02-06 11:30:19.422409+00
-641	social_django	0011_alter_id_fields	2026-02-06 11:30:19.454462+00
-642	social_django	0012_usersocialauth_extra_data_new	2026-02-06 11:30:19.467435+00
-643	social_django	0013_migrate_extra_data	2026-02-06 11:30:19.522722+00
-644	social_django	0014_remove_usersocialauth_extra_data	2026-02-06 11:30:19.536049+00
-645	social_django	0015_rename_extra_data_new_usersocialauth_extra_data	2026-02-06 11:30:19.5478+00
-646	social_django	0016_alter_usersocialauth_extra_data	2026-02-06 11:30:19.557312+00
-647	social_django	0017_usersocialauth_user_social_auth_uid_required	2026-02-06 11:30:19.568639+00
-648	taggit	0001_initial	2026-02-06 11:30:19.627695+00
-649	taggit	0002_auto_20150616_2121	2026-02-06 11:30:19.644909+00
-650	taggit	0003_taggeditem_add_unique_index	2026-02-06 11:30:19.663789+00
-651	taggit	0004_alter_taggeditem_content_type_alter_taggeditem_tag	2026-02-06 11:30:19.77613+00
-652	taggit	0005_auto_20220424_2025	2026-02-06 11:30:19.780538+00
-653	taggit	0006_rename_taggeditem_content_type_object_id_taggit_tagg_content_8fc721_idx	2026-02-06 11:30:19.811825+00
-654	thumbnail	0001_initial	2026-02-06 11:30:19.815511+00
-655	users	0010_add_token_meta_ordering	2026-02-06 11:30:19.824174+00
-656	users	0011_concrete_objecttype	2026-02-06 11:30:20.068953+00
-657	users	0012_drop_django_admin_log_table	2026-02-06 11:30:20.071474+00
-658	vpn	0001_initial	2026-02-06 11:30:21.014042+00
-659	vpn	0002_move_l2vpn	2026-02-06 11:30:21.382328+00
-660	vpn	0003_ipaddress_multiple_tunnel_terminations	2026-02-06 11:30:21.442652+00
-661	vpn	0004_alter_ikepolicy_mode	2026-02-06 11:30:21.486562+00
-662	vpn	0005_rename_indexes	2026-02-06 11:30:21.500692+00
-663	vpn	0006_charfield_null_choices	2026-02-06 11:30:21.970863+00
-664	vpn	0007_natural_ordering	2026-02-06 11:30:22.31118+00
-665	vpn	0008_add_l2vpn_status	2026-02-06 11:30:22.352056+00
-666	vpn	0009_remove_redundant_indexes	2026-02-06 11:30:22.609692+00
-667	wireless	0009_wirelesslink_distance	2026-02-06 11:30:22.747355+00
-668	wireless	0010_charfield_null_choices	2026-02-06 11:30:23.218037+00
-669	wireless	0011_wirelesslan__location_wirelesslan__region_and_more	2026-02-06 11:30:23.562154+00
-670	wireless	0012_alter_wirelesslan__location_and_more	2026-02-06 11:30:23.962199+00
-671	wireless	0013_natural_ordering	2026-02-06 11:30:24.006228+00
-672	wireless	0014_wirelesslangroup_comments	2026-02-06 11:30:24.04857+00
-673	wireless	0015_extend_wireless_link_abs_distance_upper_limit	2026-02-06 11:30:24.09315+00
-674	social_django	0002_add_related_name	2026-02-06 11:30:24.096862+00
-675	social_django	0001_initial	2026-02-06 11:30:24.09743+00
-676	social_django	0004_auto_20160423_0400	2026-02-06 11:30:24.0978+00
-677	social_django	0005_auto_20160727_2333	2026-02-06 11:30:24.098104+00
-678	social_django	0003_alter_email_max_length	2026-02-06 11:30:24.098401+00
-679	core	0001_squashed_0005	2026-02-06 11:30:24.098707+00
-680	circuits	0002_squashed_0029	2026-02-06 11:30:24.099011+00
-681	circuits	0038_squashed_0042	2026-02-06 11:30:24.099243+00
-682	circuits	0001_squashed	2026-02-06 11:30:24.099494+00
-683	circuits	0003_squashed_0037	2026-02-06 11:30:24.099752+00
-684	dcim	0002_squashed	2026-02-06 11:30:24.100002+00
-685	dcim	0001_squashed	2026-02-06 11:30:24.100215+00
-686	dcim	0131_squashed_0159	2026-02-06 11:30:24.100484+00
-687	dcim	0003_squashed_0130	2026-02-06 11:30:24.100743+00
-688	dcim	0160_squashed_0166	2026-02-06 11:30:24.100981+00
-689	dcim	0167_squashed_0182	2026-02-06 11:30:24.101231+00
-690	ipam	0054_squashed_0067	2026-02-06 11:30:24.101472+00
-691	ipam	0002_squashed_0046	2026-02-06 11:30:24.101698+00
-692	ipam	0001_squashed	2026-02-06 11:30:24.101935+00
-693	ipam	0047_squashed_0053	2026-02-06 11:30:24.102191+00
-694	extras	0002_squashed_0059	2026-02-06 11:30:24.102502+00
-695	extras	0087_squashed_0098	2026-02-06 11:30:24.102733+00
-696	extras	0001_squashed	2026-02-06 11:30:24.102962+00
-697	extras	0060_squashed_0086	2026-02-06 11:30:24.103194+00
-698	tenancy	0001_squashed_0012	2026-02-06 11:30:24.103436+00
-699	tenancy	0002_squashed_0011	2026-02-06 11:30:24.103667+00
-700	users	0002_squashed_0004	2026-02-06 11:30:24.103888+00
-701	users	0001_squashed_0011	2026-02-06 11:30:24.104118+00
-702	virtualization	0023_squashed_0036	2026-02-06 11:30:24.104343+00
-703	virtualization	0001_squashed_0022	2026-02-06 11:30:24.104572+00
-704	wireless	0001_squashed_0008	2026-02-06 11:30:24.104801+00
+1	contenttypes	0001_initial	2026-05-01 15:46:18.324719+00
+2	contenttypes	0002_remove_content_type_name	2026-05-01 15:46:18.328445+00
+3	auth	0001_initial	2026-05-01 15:46:18.337849+00
+4	auth	0002_alter_permission_name_max_length	2026-05-01 15:46:18.34032+00
+5	auth	0003_alter_user_email_max_length	2026-05-01 15:46:18.343013+00
+6	auth	0004_alter_user_username_opts	2026-05-01 15:46:18.345833+00
+7	auth	0005_alter_user_last_login_null	2026-05-01 15:46:18.350045+00
+8	auth	0006_require_contenttypes_0002	2026-05-01 15:46:18.351415+00
+9	auth	0007_alter_validators_add_error_messages	2026-05-01 15:46:18.354314+00
+10	auth	0008_alter_user_username_max_length	2026-05-01 15:46:18.356812+00
+11	auth	0009_alter_user_last_name_max_length	2026-05-01 15:46:18.359387+00
+12	auth	0010_alter_group_name_max_length	2026-05-01 15:46:18.362306+00
+13	auth	0011_update_proxy_permissions	2026-05-01 15:46:18.364998+00
+14	auth	0012_alter_user_first_name_max_length	2026-05-01 15:46:18.368732+00
+15	users	0001_api_tokens	2026-05-01 15:46:18.389459+00
+16	users	0002_unicode_literals	2026-05-01 15:46:18.391365+00
+17	users	0003_token_permissions	2026-05-01 15:46:18.393022+00
+18	users	0004_standardize_description	2026-05-01 15:46:18.39466+00
+19	users	0005_userconfig	2026-05-01 15:46:18.396245+00
+20	users	0006_create_userconfigs	2026-05-01 15:46:18.397353+00
+21	users	0007_proxy_group_user	2026-05-01 15:46:18.398397+00
+22	users	0008_objectpermission	2026-05-01 15:46:18.399476+00
+23	users	0009_replicate_permissions	2026-05-01 15:46:18.400602+00
+24	users	0010_update_jsonfield	2026-05-01 15:46:18.401871+00
+25	users	0011_standardize_models	2026-05-01 15:46:18.40313+00
+26	users	0002_standardize_id_fields	2026-05-01 15:46:18.42194+00
+27	users	0003_token_allowed_ips_last_used	2026-05-01 15:46:18.422156+00
+28	users	0004_netboxgroup_netboxuser	2026-05-01 15:46:18.422273+00
+29	account	0001_initial	2026-05-01 15:46:18.424399+00
+30	extras	0001_initial	2026-05-01 15:46:18.490967+00
+31	tenancy	0001_initial	2026-05-01 15:46:18.505213+00
+32	tenancy	0002_tenant_group_optional	2026-05-01 15:46:18.506326+00
+33	tenancy	0003_unicode_literals	2026-05-01 15:46:18.507386+00
+34	tenancy	0004_tags	2026-05-01 15:46:18.508313+00
+35	tenancy	0005_change_logging	2026-05-01 15:46:18.509311+00
+36	tenancy	0006_custom_tag_models	2026-05-01 15:46:18.510362+00
+37	tenancy	0007_nested_tenantgroups	2026-05-01 15:46:18.511341+00
+38	tenancy	0008_nested_tenantgroups_rebuild	2026-05-01 15:46:18.512271+00
+39	tenancy	0009_standardize_description	2026-05-01 15:46:18.513165+00
+40	tenancy	0010_custom_field_data	2026-05-01 15:46:18.514322+00
+41	tenancy	0011_standardize_name_length	2026-05-01 15:46:18.515394+00
+42	tenancy	0012_standardize_models	2026-05-01 15:46:18.516623+00
+43	dcim	0001_initial	2026-05-01 15:46:18.560089+00
+44	dcim	0002_auto_20160622_1821	2026-05-01 15:46:19.469579+00
+45	ipam	0001_initial	2026-05-01 15:46:19.554103+00
+46	virtualization	0001_virtualization	2026-05-01 15:46:19.699691+00
+47	virtualization	0002_virtualmachine_add_status	2026-05-01 15:46:19.701163+00
+48	virtualization	0003_cluster_add_site	2026-05-01 15:46:19.703232+00
+49	virtualization	0004_virtualmachine_add_role	2026-05-01 15:46:19.70529+00
+50	virtualization	0005_django2	2026-05-01 15:46:19.70733+00
+51	virtualization	0006_tags	2026-05-01 15:46:19.709311+00
+52	virtualization	0007_change_logging	2026-05-01 15:46:19.710421+00
+53	virtualization	0008_virtualmachine_local_context_data	2026-05-01 15:46:19.711427+00
+54	virtualization	0009_custom_tag_models	2026-05-01 15:46:19.712786+00
+55	virtualization	0010_cluster_add_tenant	2026-05-01 15:46:19.714025+00
+56	virtualization	0011_3569_virtualmachine_fields	2026-05-01 15:46:19.71522+00
+57	virtualization	0012_vm_name_nonunique	2026-05-01 15:46:19.716602+00
+58	virtualization	0013_deterministic_ordering	2026-05-01 15:46:19.718022+00
+59	virtualization	0014_standardize_description	2026-05-01 15:46:19.719401+00
+60	virtualization	0015_vminterface	2026-05-01 15:46:19.720756+00
+61	virtualization	0016_replicate_interfaces	2026-05-01 15:46:19.722486+00
+62	virtualization	0017_update_jsonfield	2026-05-01 15:46:19.723891+00
+63	virtualization	0018_custom_field_data	2026-05-01 15:46:19.725282+00
+64	virtualization	0019_standardize_name_length	2026-05-01 15:46:19.726598+00
+65	virtualization	0020_standardize_models	2026-05-01 15:46:19.7278+00
+66	virtualization	0021_virtualmachine_vcpus_decimal	2026-05-01 15:46:19.728896+00
+67	virtualization	0022_vminterface_parent	2026-05-01 15:46:19.729933+00
+68	extras	0002_custom_fields	2026-05-01 15:46:20.154922+00
+69	extras	0003_exporttemplate_add_description	2026-05-01 15:46:20.156161+00
+70	extras	0004_topologymap_change_comma_to_semicolon	2026-05-01 15:46:20.157103+00
+71	extras	0005_useraction_add_bulk_create	2026-05-01 15:46:20.158022+00
+72	extras	0006_add_imageattachments	2026-05-01 15:46:20.159147+00
+73	extras	0007_unicode_literals	2026-05-01 15:46:20.160148+00
+74	extras	0008_reports	2026-05-01 15:46:20.161106+00
+75	extras	0009_topologymap_type	2026-05-01 15:46:20.162212+00
+76	extras	0010_customfield_filter_logic	2026-05-01 15:46:20.163599+00
+77	extras	0011_django2	2026-05-01 15:46:20.16476+00
+78	extras	0012_webhooks	2026-05-01 15:46:20.166516+00
+79	extras	0013_objectchange	2026-05-01 15:46:20.168258+00
+80	extras	0014_configcontexts	2026-05-01 15:46:20.169611+00
+81	extras	0015_remove_useraction	2026-05-01 15:46:20.170669+00
+82	extras	0016_exporttemplate_add_cable	2026-05-01 15:46:20.171775+00
+83	extras	0017_exporttemplate_mime_type_length	2026-05-01 15:46:20.17267+00
+84	extras	0018_exporttemplate_add_jinja2	2026-05-01 15:46:20.174282+00
+85	extras	0019_tag_taggeditem	2026-05-01 15:46:20.175905+00
+86	extras	0020_tag_data	2026-05-01 15:46:20.17683+00
+87	extras	0021_add_color_comments_changelog_to_tag	2026-05-01 15:46:20.177863+00
+88	extras	0022_custom_links	2026-05-01 15:46:20.178802+00
+89	extras	0023_fix_tag_sequences	2026-05-01 15:46:20.179824+00
+90	extras	0024_scripts	2026-05-01 15:46:20.18096+00
+91	extras	0025_objectchange_time_index	2026-05-01 15:46:20.182364+00
+92	extras	0026_webhook_ca_file_path	2026-05-01 15:46:20.183578+00
+93	extras	0027_webhook_additional_headers	2026-05-01 15:46:20.184577+00
+94	extras	0028_remove_topology_maps	2026-05-01 15:46:20.185724+00
+95	extras	0029_3569_customfield_fields	2026-05-01 15:46:20.186889+00
+96	extras	0030_3569_objectchange_fields	2026-05-01 15:46:20.187991+00
+97	extras	0031_3569_exporttemplate_fields	2026-05-01 15:46:20.189123+00
+98	extras	0032_3569_webhook_fields	2026-05-01 15:46:20.190283+00
+99	extras	0033_graph_type_template_language	2026-05-01 15:46:20.19142+00
+100	extras	0034_configcontext_tags	2026-05-01 15:46:20.192634+00
+101	extras	0035_deterministic_ordering	2026-05-01 15:46:20.193774+00
+102	extras	0036_contenttype_filters_to_q_objects	2026-05-01 15:46:20.194963+00
+103	extras	0037_configcontexts_clusters	2026-05-01 15:46:20.196124+00
+104	extras	0038_webhook_template_support	2026-05-01 15:46:20.197307+00
+105	extras	0039_update_features_content_types	2026-05-01 15:46:20.198587+00
+106	extras	0040_standardize_description	2026-05-01 15:46:20.199946+00
+107	extras	0041_tag_description	2026-05-01 15:46:20.201104+00
+108	extras	0042_customfield_manager	2026-05-01 15:46:20.203171+00
+109	extras	0043_report	2026-05-01 15:46:20.204305+00
+110	extras	0044_jobresult	2026-05-01 15:46:20.205355+00
+111	extras	0045_configcontext_changelog	2026-05-01 15:46:20.206489+00
+112	extras	0046_update_jsonfield	2026-05-01 15:46:20.207644+00
+113	extras	0047_tag_ordering	2026-05-01 15:46:20.208726+00
+114	extras	0048_exporttemplate_remove_template_language	2026-05-01 15:46:20.209929+00
+115	extras	0049_remove_graph	2026-05-01 15:46:20.211096+00
+116	extras	0050_customfield_changes	2026-05-01 15:46:20.212191+00
+117	extras	0051_migrate_customfields	2026-05-01 15:46:20.213257+00
+118	extras	0052_customfield_cleanup	2026-05-01 15:46:20.214273+00
+119	extras	0053_rename_webhook_obj_type	2026-05-01 15:46:20.215289+00
+120	extras	0054_standardize_models	2026-05-01 15:46:20.216191+00
+121	extras	0055_objectchange_data	2026-05-01 15:46:20.216766+00
+122	extras	0056_extend_configcontext	2026-05-01 15:46:20.217394+00
+123	extras	0057_customlink_rename_fields	2026-05-01 15:46:20.217977+00
+124	extras	0058_journalentry	2026-05-01 15:46:20.218568+00
+125	extras	0059_exporttemplate_as_attachment	2026-05-01 15:46:20.219389+00
+126	tenancy	0002_tenant_ordering	2026-05-01 15:46:20.788872+00
+127	tenancy	0003_contacts	2026-05-01 15:46:20.790528+00
+128	tenancy	0004_extend_tag_support	2026-05-01 15:46:20.791963+00
+129	tenancy	0005_standardize_id_fields	2026-05-01 15:46:20.793605+00
+130	tenancy	0006_created_datetimefield	2026-05-01 15:46:20.795267+00
+131	tenancy	0007_contact_link	2026-05-01 15:46:20.796611+00
+132	tenancy	0008_unique_constraints	2026-05-01 15:46:20.79785+00
+133	tenancy	0009_standardize_description_comments	2026-05-01 15:46:20.799061+00
+134	tenancy	0010_tenant_relax_uniqueness	2026-05-01 15:46:20.800068+00
+135	tenancy	0011_contactassignment_tags	2026-05-01 15:46:20.801095+00
+136	dcim	0003_auto_20160628_1721	2026-05-01 15:46:22.942653+00
+137	dcim	0004_auto_20160701_2049	2026-05-01 15:46:22.944067+00
+138	dcim	0005_auto_20160706_1722	2026-05-01 15:46:22.945092+00
+139	dcim	0006_add_device_primary_ip4_ip6	2026-05-01 15:46:22.946154+00
+140	dcim	0007_device_copy_primary_ip	2026-05-01 15:46:22.947211+00
+141	dcim	0008_device_remove_primary_ip	2026-05-01 15:46:22.948377+00
+142	dcim	0009_site_32bit_asn_support	2026-05-01 15:46:22.94942+00
+143	dcim	0010_devicebay_installed_device_set_null	2026-05-01 15:46:22.950395+00
+144	dcim	0011_devicetype_part_number	2026-05-01 15:46:22.951257+00
+145	dcim	0012_site_rack_device_add_tenant	2026-05-01 15:46:22.952496+00
+146	dcim	0013_add_interface_form_factors	2026-05-01 15:46:22.953678+00
+147	dcim	0014_rack_add_type_width	2026-05-01 15:46:22.95484+00
+148	dcim	0015_rack_add_u_height_validator	2026-05-01 15:46:22.95586+00
+149	dcim	0016_module_add_manufacturer	2026-05-01 15:46:22.95698+00
+150	dcim	0017_rack_add_role	2026-05-01 15:46:22.958088+00
+151	dcim	0018_device_add_asset_tag	2026-05-01 15:46:22.959098+00
+152	dcim	0019_new_iface_form_factors	2026-05-01 15:46:22.960142+00
+153	dcim	0020_rack_desc_units	2026-05-01 15:46:22.961218+00
+154	dcim	0021_add_ff_flexstack	2026-05-01 15:46:22.96229+00
+155	dcim	0022_color_names_to_rgb	2026-05-01 15:46:22.963428+00
+156	dcim	0023_devicetype_comments	2026-05-01 15:46:22.964722+00
+157	dcim	0024_site_add_contact_fields	2026-05-01 15:46:22.966012+00
+158	dcim	0025_devicetype_add_interface_ordering	2026-05-01 15:46:22.96746+00
+159	dcim	0026_add_rack_reservations	2026-05-01 15:46:22.968788+00
+160	dcim	0027_device_add_site	2026-05-01 15:46:22.970094+00
+161	dcim	0028_device_copy_rack_to_site	2026-05-01 15:46:22.972632+00
+162	dcim	0029_allow_rackless_devices	2026-05-01 15:46:22.975332+00
+163	dcim	0030_interface_add_lag	2026-05-01 15:46:22.976591+00
+164	dcim	0031_regions	2026-05-01 15:46:22.977684+00
+165	dcim	0032_device_increase_name_length	2026-05-01 15:46:22.978832+00
+166	dcim	0033_rackreservation_rack_editable	2026-05-01 15:46:22.980111+00
+167	dcim	0034_rename_module_to_inventoryitem	2026-05-01 15:46:22.98136+00
+168	dcim	0035_device_expand_status_choices	2026-05-01 15:46:22.982598+00
+169	dcim	0036_add_ff_juniper_vcp	2026-05-01 15:46:22.983803+00
+170	dcim	0037_unicode_literals	2026-05-01 15:46:22.984916+00
+171	dcim	0038_wireless_interfaces	2026-05-01 15:46:22.986134+00
+172	dcim	0039_interface_add_enabled_mtu	2026-05-01 15:46:22.987449+00
+173	dcim	0040_inventoryitem_add_asset_tag_description	2026-05-01 15:46:22.988772+00
+174	dcim	0041_napalm_integration	2026-05-01 15:46:22.989959+00
+175	dcim	0042_interface_ff_10ge_cx4	2026-05-01 15:46:22.991059+00
+176	dcim	0043_device_component_name_lengths	2026-05-01 15:46:22.992117+00
+177	dcim	0044_virtualization	2026-05-01 15:46:22.993305+00
+178	dcim	0045_devicerole_vm_role	2026-05-01 15:46:22.994247+00
+179	dcim	0046_rack_lengthen_facility_id	2026-05-01 15:46:22.995245+00
+180	dcim	0047_more_100ge_form_factors	2026-05-01 15:46:22.996432+00
+181	dcim	0048_rack_serial	2026-05-01 15:46:22.997579+00
+182	dcim	0049_rackreservation_change_user	2026-05-01 15:46:22.99862+00
+183	dcim	0050_interface_vlan_tagging	2026-05-01 15:46:22.999614+00
+184	dcim	0051_rackreservation_tenant	2026-05-01 15:46:23.000618+00
+185	dcim	0052_virtual_chassis	2026-05-01 15:46:23.001754+00
+186	dcim	0053_platform_manufacturer	2026-05-01 15:46:23.002772+00
+187	dcim	0054_site_status_timezone_description	2026-05-01 15:46:23.004147+00
+188	dcim	0055_virtualchassis_ordering	2026-05-01 15:46:23.005407+00
+189	dcim	0056_django2	2026-05-01 15:46:23.006525+00
+190	dcim	0057_tags	2026-05-01 15:46:23.007657+00
+191	dcim	0058_relax_rack_naming_constraints	2026-05-01 15:46:23.008777+00
+192	dcim	0059_site_latitude_longitude	2026-05-01 15:46:23.009741+00
+193	dcim	0060_change_logging	2026-05-01 15:46:23.010817+00
+194	dcim	0061_platform_napalm_args	2026-05-01 15:46:23.013254+00
+195	dcim	0062_interface_mtu	2026-05-01 15:46:23.014413+00
+196	dcim	0063_device_local_context_data	2026-05-01 15:46:23.015581+00
+197	dcim	0064_remove_platform_rpc_client	2026-05-01 15:46:23.016696+00
+198	dcim	0065_front_rear_ports	2026-05-01 15:46:23.0177+00
+199	dcim	0066_cables	2026-05-01 15:46:23.018789+00
+200	dcim	0067_device_type_remove_qualifiers	2026-05-01 15:46:23.019854+00
+201	dcim	0068_rack_new_fields	2026-05-01 15:46:23.020888+00
+202	dcim	0069_deprecate_nullablecharfield	2026-05-01 15:46:23.021905+00
+203	dcim	0070_custom_tag_models	2026-05-01 15:46:23.02289+00
+204	dcim	0071_device_components_add_description	2026-05-01 15:46:23.023829+00
+205	dcim	0072_powerfeeds	2026-05-01 15:46:23.024854+00
+206	dcim	0073_interface_form_factor_to_type	2026-05-01 15:46:23.025785+00
+207	dcim	0074_increase_field_length_platform_name_slug	2026-05-01 15:46:23.026689+00
+208	dcim	0075_cable_devices	2026-05-01 15:46:23.027779+00
+209	dcim	0076_console_port_types	2026-05-01 15:46:23.028891+00
+210	dcim	0077_power_types	2026-05-01 15:46:23.030084+00
+211	dcim	0078_3569_site_fields	2026-05-01 15:46:23.0312+00
+212	dcim	0079_3569_rack_fields	2026-05-01 15:46:23.032234+00
+213	dcim	0080_3569_devicetype_fields	2026-05-01 15:46:23.033239+00
+214	dcim	0081_3569_device_fields	2026-05-01 15:46:23.034179+00
+215	dcim	0082_3569_interface_fields	2026-05-01 15:46:23.03522+00
+216	dcim	0082_3569_port_fields	2026-05-01 15:46:23.036279+00
+217	dcim	0083_3569_cable_fields	2026-05-01 15:46:23.037409+00
+218	dcim	0084_3569_powerfeed_fields	2026-05-01 15:46:23.038423+00
+219	dcim	0085_3569_poweroutlet_fields	2026-05-01 15:46:23.039437+00
+220	dcim	0086_device_name_nonunique	2026-05-01 15:46:23.040482+00
+221	dcim	0087_role_descriptions	2026-05-01 15:46:23.041492+00
+222	dcim	0088_powerfeed_available_power	2026-05-01 15:46:23.042464+00
+223	dcim	0089_deterministic_ordering	2026-05-01 15:46:23.043896+00
+224	dcim	0090_cable_termination_models	2026-05-01 15:46:23.044995+00
+225	dcim	0091_interface_type_other	2026-05-01 15:46:23.046072+00
+226	dcim	0092_fix_rack_outer_unit	2026-05-01 15:46:23.047243+00
+227	dcim	0093_device_component_ordering	2026-05-01 15:46:23.048363+00
+228	dcim	0094_device_component_template_ordering	2026-05-01 15:46:23.049448+00
+229	dcim	0095_primary_model_ordering	2026-05-01 15:46:23.050543+00
+230	dcim	0096_interface_ordering	2026-05-01 15:46:23.051587+00
+231	dcim	0097_interfacetemplate_type_other	2026-05-01 15:46:23.052655+00
+232	dcim	0098_devicetype_images	2026-05-01 15:46:23.054985+00
+233	dcim	0099_powerfeed_negative_voltage	2026-05-01 15:46:23.056024+00
+234	dcim	0100_mptt_remove_indexes	2026-05-01 15:46:23.057053+00
+235	dcim	0101_nested_rackgroups	2026-05-01 15:46:23.058061+00
+236	dcim	0102_nested_rackgroups_rebuild	2026-05-01 15:46:23.059072+00
+237	dcim	0103_standardize_description	2026-05-01 15:46:23.060116+00
+238	dcim	0104_correct_infiniband_types	2026-05-01 15:46:23.061164+00
+239	dcim	0105_interface_name_collation	2026-05-01 15:46:23.062227+00
+240	dcim	0106_role_default_color	2026-05-01 15:46:23.063431+00
+241	dcim	0107_component_labels	2026-05-01 15:46:23.064591+00
+242	dcim	0108_add_tags	2026-05-01 15:46:23.06569+00
+243	dcim	0109_interface_remove_vm	2026-05-01 15:46:23.066843+00
+244	dcim	0110_virtualchassis_name	2026-05-01 15:46:23.067919+00
+245	dcim	0111_component_template_description	2026-05-01 15:46:23.069033+00
+246	dcim	0112_standardize_components	2026-05-01 15:46:23.0701+00
+247	dcim	0113_nullbooleanfield_to_booleanfield	2026-05-01 15:46:23.071104+00
+248	dcim	0114_update_jsonfield	2026-05-01 15:46:23.072107+00
+249	dcim	0115_rackreservation_order	2026-05-01 15:46:23.073387+00
+250	dcim	0116_rearport_max_positions	2026-05-01 15:46:23.074464+00
+251	dcim	0117_custom_field_data	2026-05-01 15:46:23.075538+00
+252	dcim	0118_inventoryitem_mptt	2026-05-01 15:46:23.076552+00
+253	dcim	0119_inventoryitem_mptt_rebuild	2026-05-01 15:46:23.077474+00
+254	dcim	0120_cache_cable_peer	2026-05-01 15:46:23.07851+00
+255	dcim	0121_cablepath	2026-05-01 15:46:23.079616+00
+256	dcim	0122_standardize_name_length	2026-05-01 15:46:23.0808+00
+257	dcim	0123_standardize_models	2026-05-01 15:46:23.081871+00
+258	dcim	0124_mark_connected	2026-05-01 15:46:23.083061+00
+259	dcim	0125_console_port_speed	2026-05-01 15:46:23.084095+00
+260	dcim	0126_rename_rackgroup_location	2026-05-01 15:46:23.085203+00
+261	dcim	0127_device_location	2026-05-01 15:46:23.086177+00
+262	dcim	0128_device_location_populate	2026-05-01 15:46:23.087327+00
+263	dcim	0129_interface_parent	2026-05-01 15:46:23.088335+00
+264	dcim	0130_sitegroup	2026-05-01 15:46:23.089304+00
+265	ipam	0002_vrf_add_enforce_unique	2026-05-01 15:46:23.820807+00
+266	ipam	0003_ipam_add_vlangroups	2026-05-01 15:46:23.822704+00
+267	ipam	0004_ipam_vlangroup_uniqueness	2026-05-01 15:46:23.824112+00
+268	ipam	0005_auto_20160725_1842	2026-05-01 15:46:23.825424+00
+269	ipam	0006_vrf_vlan_add_tenant	2026-05-01 15:46:23.826952+00
+270	ipam	0007_prefix_ipaddress_add_tenant	2026-05-01 15:46:23.827838+00
+271	ipam	0008_prefix_change_order	2026-05-01 15:46:23.828709+00
+272	ipam	0009_ipaddress_add_status	2026-05-01 15:46:23.829712+00
+273	ipam	0010_ipaddress_help_texts	2026-05-01 15:46:23.83104+00
+274	ipam	0011_rir_add_is_private	2026-05-01 15:46:23.832745+00
+275	ipam	0012_services	2026-05-01 15:46:23.833878+00
+276	ipam	0013_prefix_add_is_pool	2026-05-01 15:46:23.834888+00
+277	ipam	0014_ipaddress_status_add_deprecated	2026-05-01 15:46:23.836183+00
+278	ipam	0015_global_vlans	2026-05-01 15:46:23.837601+00
+279	ipam	0016_unicode_literals	2026-05-01 15:46:23.839027+00
+280	ipam	0017_ipaddress_roles	2026-05-01 15:46:23.84043+00
+281	ipam	0018_remove_service_uniqueness_constraint	2026-05-01 15:46:23.841915+00
+282	ipam	0019_virtualization	2026-05-01 15:46:23.84307+00
+283	ipam	0020_ipaddress_add_role_carp	2026-05-01 15:46:23.844214+00
+284	ipam	0021_vrf_ordering	2026-05-01 15:46:23.845672+00
+285	ipam	0022_tags	2026-05-01 15:46:23.847416+00
+286	ipam	0023_change_logging	2026-05-01 15:46:23.849025+00
+287	ipam	0024_vrf_allow_null_rd	2026-05-01 15:46:23.850567+00
+288	ipam	0025_custom_tag_models	2026-05-01 15:46:23.852051+00
+289	ipam	0026_prefix_ordering_vrf_nulls_first	2026-05-01 15:46:23.853096+00
+290	ipam	0027_ipaddress_add_dns_name	2026-05-01 15:46:23.855943+00
+291	ipam	0028_3569_prefix_fields	2026-05-01 15:46:23.857565+00
+292	ipam	0029_3569_ipaddress_fields	2026-05-01 15:46:23.858663+00
+293	ipam	0030_3569_vlan_fields	2026-05-01 15:46:23.859932+00
+294	ipam	0031_3569_service_fields	2026-05-01 15:46:23.861+00
+295	ipam	0032_role_description	2026-05-01 15:46:23.86213+00
+296	ipam	0033_deterministic_ordering	2026-05-01 15:46:23.863109+00
+297	ipam	0034_fix_ipaddress_status_dhcp	2026-05-01 15:46:23.864098+00
+298	ipam	0035_drop_ip_family	2026-05-01 15:46:23.86502+00
+299	ipam	0036_standardize_description	2026-05-01 15:46:23.86594+00
+300	ipam	0037_ipaddress_assignment	2026-05-01 15:46:23.866829+00
+301	ipam	0038_custom_field_data	2026-05-01 15:46:23.867702+00
+302	ipam	0039_service_ports_array	2026-05-01 15:46:23.868588+00
+303	ipam	0040_service_drop_port	2026-05-01 15:46:23.869815+00
+304	ipam	0041_routetarget	2026-05-01 15:46:23.871098+00
+305	ipam	0042_standardize_name_length	2026-05-01 15:46:23.872024+00
+306	ipam	0043_add_tenancy_to_aggregates	2026-05-01 15:46:23.873063+00
+307	ipam	0044_standardize_models	2026-05-01 15:46:23.874499+00
+308	ipam	0045_vlangroup_scope	2026-05-01 15:46:23.875563+00
+309	ipam	0046_set_vlangroup_scope_types	2026-05-01 15:46:23.876604+00
+310	wireless	0001_wireless	2026-05-01 15:46:24.295656+00
+311	wireless	0002_standardize_id_fields	2026-05-01 15:46:24.297459+00
+312	wireless	0003_created_datetimefield	2026-05-01 15:46:24.298549+00
+313	wireless	0004_wireless_tenancy	2026-05-01 15:46:24.299682+00
+314	wireless	0005_wirelesslink_interface_types	2026-05-01 15:46:24.301788+00
+315	wireless	0006_unique_constraints	2026-05-01 15:46:24.303888+00
+316	wireless	0007_standardize_description_comments	2026-05-01 15:46:24.305639+00
+317	wireless	0008_wirelesslan_status	2026-05-01 15:46:24.307494+00
+318	ipam	0047_prefix_depth_children	2026-05-01 15:46:24.807812+00
+319	ipam	0048_prefix_populate_depth_children	2026-05-01 15:46:24.809467+00
+320	ipam	0049_prefix_mark_utilized	2026-05-01 15:46:24.81094+00
+321	ipam	0050_iprange	2026-05-01 15:46:24.812149+00
+322	ipam	0051_extend_tag_support	2026-05-01 15:46:24.813611+00
+323	ipam	0052_fhrpgroup	2026-05-01 15:46:24.814806+00
+324	ipam	0053_asn_model	2026-05-01 15:46:24.816203+00
+325	dcim	0131_consoleport_speed	2026-05-01 15:46:32.683524+00
+326	dcim	0132_cable_length	2026-05-01 15:46:32.685585+00
+327	dcim	0133_port_colors	2026-05-01 15:46:32.687128+00
+328	dcim	0134_interface_wwn_bridge	2026-05-01 15:46:32.688706+00
+329	dcim	0135_tenancy_extensions	2026-05-01 15:46:32.690118+00
+330	dcim	0136_device_airflow	2026-05-01 15:46:32.691679+00
+331	dcim	0137_relax_uniqueness_constraints	2026-05-01 15:46:32.693175+00
+332	dcim	0138_extend_tag_support	2026-05-01 15:46:32.69465+00
+333	dcim	0139_rename_cable_peer	2026-05-01 15:46:32.696272+00
+334	dcim	0140_wireless	2026-05-01 15:46:32.697636+00
+335	dcim	0141_asn_model	2026-05-01 15:46:32.699213+00
+336	dcim	0142_rename_128gfc_qsfp28	2026-05-01 15:46:32.700606+00
+337	dcim	0143_remove_primary_for_related_name	2026-05-01 15:46:32.701879+00
+338	dcim	0144_fix_cable_abs_length	2026-05-01 15:46:32.703206+00
+339	dcim	0145_site_remove_deprecated_fields	2026-05-01 15:46:32.704466+00
+340	dcim	0146_modules	2026-05-01 15:46:32.705723+00
+341	dcim	0147_inventoryitemrole	2026-05-01 15:46:32.707046+00
+342	dcim	0148_inventoryitem_component	2026-05-01 15:46:32.708739+00
+343	dcim	0149_inventoryitem_templates	2026-05-01 15:46:32.710076+00
+344	dcim	0150_interface_vrf	2026-05-01 15:46:32.711328+00
+345	dcim	0151_interface_speed_duplex	2026-05-01 15:46:32.712806+00
+346	dcim	0152_standardize_id_fields	2026-05-01 15:46:32.714559+00
+347	dcim	0153_created_datetimefield	2026-05-01 15:46:32.71614+00
+348	dcim	0154_half_height_rack_units	2026-05-01 15:46:32.719005+00
+349	dcim	0155_interface_poe_mode_type	2026-05-01 15:46:32.720652+00
+350	dcim	0156_location_status	2026-05-01 15:46:32.721903+00
+351	dcim	0157_new_cabling_models	2026-05-01 15:46:32.723414+00
+352	dcim	0158_populate_cable_terminations	2026-05-01 15:46:32.724968+00
+353	dcim	0159_populate_cable_paths	2026-05-01 15:46:32.72637+00
+354	circuits	0001_initial	2026-05-01 15:46:32.740218+00
+355	circuits	0002_auto_20160622_1821	2026-05-01 15:46:33.694858+00
+356	circuits	0003_provider_32bit_asn_support	2026-05-01 15:46:33.696616+00
+357	circuits	0004_circuit_add_tenant	2026-05-01 15:46:33.697858+00
+358	circuits	0005_circuit_add_upstream_speed	2026-05-01 15:46:33.698938+00
+359	circuits	0006_terminations	2026-05-01 15:46:33.700658+00
+360	circuits	0007_circuit_add_description	2026-05-01 15:46:33.701672+00
+361	circuits	0008_circuittermination_interface_protect_on_delete	2026-05-01 15:46:33.702871+00
+362	circuits	0009_unicode_literals	2026-05-01 15:46:33.704064+00
+363	circuits	0010_circuit_status	2026-05-01 15:46:33.705489+00
+364	circuits	0011_tags	2026-05-01 15:46:33.706625+00
+365	circuits	0012_change_logging	2026-05-01 15:46:33.707882+00
+366	circuits	0013_cables	2026-05-01 15:46:33.709235+00
+367	circuits	0014_circuittermination_description	2026-05-01 15:46:33.710507+00
+368	circuits	0015_custom_tag_models	2026-05-01 15:46:33.71172+00
+369	circuits	0016_3569_circuit_fields	2026-05-01 15:46:33.71295+00
+370	circuits	0017_circuittype_description	2026-05-01 15:46:33.714296+00
+371	circuits	0018_standardize_description	2026-05-01 15:46:33.715508+00
+372	circuits	0019_nullbooleanfield_to_booleanfield	2026-05-01 15:46:33.716707+00
+373	circuits	0020_custom_field_data	2026-05-01 15:46:33.717848+00
+374	circuits	0021_cache_cable_peer	2026-05-01 15:46:33.719776+00
+375	circuits	0022_cablepath	2026-05-01 15:46:33.722261+00
+376	circuits	0023_circuittermination_port_speed_optional	2026-05-01 15:46:33.724508+00
+377	circuits	0024_standardize_name_length	2026-05-01 15:46:33.726635+00
+378	circuits	0025_standardize_models	2026-05-01 15:46:33.727993+00
+379	circuits	0026_mark_connected	2026-05-01 15:46:33.730884+00
+380	circuits	0027_providernetwork	2026-05-01 15:46:33.732289+00
+381	circuits	0028_cache_circuit_terminations	2026-05-01 15:46:33.733566+00
+382	circuits	0029_circuit_tracing	2026-05-01 15:46:33.735017+00
+383	circuits	0003_extend_tag_support	2026-05-01 15:46:34.548198+00
+384	circuits	0004_rename_cable_peer	2026-05-01 15:46:34.55023+00
+385	circuits	0032_provider_service_id	2026-05-01 15:46:34.551987+00
+386	circuits	0033_standardize_id_fields	2026-05-01 15:46:34.553769+00
+387	circuits	0034_created_datetimefield	2026-05-01 15:46:34.555498+00
+388	circuits	0035_provider_asns	2026-05-01 15:46:34.557156+00
+389	circuits	0036_circuit_termination_date_tags_custom_fields	2026-05-01 15:46:34.558826+00
+390	circuits	0037_new_cabling_models	2026-05-01 15:46:34.560501+00
+391	dcim	0160_populate_cable_ends	2026-05-01 15:46:40.210422+00
+392	dcim	0161_cabling_cleanup	2026-05-01 15:46:40.212093+00
+393	dcim	0162_unique_constraints	2026-05-01 15:46:40.213463+00
+394	dcim	0163_weight_fields	2026-05-01 15:46:40.214543+00
+395	dcim	0164_rack_mounting_depth	2026-05-01 15:46:40.215718+00
+396	dcim	0165_standardize_description_comments	2026-05-01 15:46:40.216773+00
+397	dcim	0166_virtualdevicecontext	2026-05-01 15:46:40.217937+00
+398	core	0001_initial	2026-05-01 15:46:40.482719+00
+399	core	0002_managedfile	2026-05-01 15:46:40.484781+00
+400	core	0003_job	2026-05-01 15:46:40.485864+00
+401	core	0004_replicate_jobresults	2026-05-01 15:46:40.487119+00
+402	core	0005_job_created_auto_now	2026-05-01 15:46:40.488161+00
+403	circuits	0038_cabling_cleanup	2026-05-01 15:46:41.59979+00
+404	circuits	0039_unique_constraints	2026-05-01 15:46:41.60157+00
+405	circuits	0040_provider_remove_deprecated_fields	2026-05-01 15:46:41.603111+00
+406	circuits	0041_standardize_description_comments	2026-05-01 15:46:41.604345+00
+407	circuits	0042_provideraccount	2026-05-01 15:46:41.605797+00
+408	extras	0060_customlink_button_class	2026-05-01 15:46:43.942717+00
+409	extras	0061_extras_change_logging	2026-05-01 15:46:43.945235+00
+410	extras	0062_clear_secrets_changelog	2026-05-01 15:46:43.946975+00
+411	extras	0063_webhook_conditions	2026-05-01 15:46:43.948863+00
+412	extras	0064_configrevision	2026-05-01 15:46:43.950093+00
+413	extras	0065_imageattachment_change_logging	2026-05-01 15:46:43.951319+00
+414	extras	0066_customfield_name_validation	2026-05-01 15:46:43.952771+00
+415	extras	0067_customfield_min_max_values	2026-05-01 15:46:43.953824+00
+416	extras	0068_configcontext_cluster_types	2026-05-01 15:46:43.955002+00
+417	extras	0069_custom_object_field	2026-05-01 15:46:43.956512+00
+418	extras	0070_customlink_enabled	2026-05-01 15:46:43.958898+00
+419	extras	0071_standardize_id_fields	2026-05-01 15:46:43.960638+00
+420	extras	0072_created_datetimefield	2026-05-01 15:46:43.962293+00
+421	extras	0073_journalentry_tags_custom_fields	2026-05-01 15:46:43.963751+00
+422	extras	0074_customfield_extensions	2026-05-01 15:46:43.965502+00
+423	extras	0075_configcontext_locations	2026-05-01 15:46:43.966952+00
+424	extras	0076_tag_slug_unicode	2026-05-01 15:46:43.968429+00
+425	extras	0077_customlink_extend_text_and_url	2026-05-01 15:46:43.969882+00
+426	extras	0078_unique_constraints	2026-05-01 15:46:43.971337+00
+427	extras	0079_scheduled_jobs	2026-05-01 15:46:43.973108+00
+428	extras	0080_customlink_content_types	2026-05-01 15:46:43.974971+00
+429	extras	0081_exporttemplate_content_types	2026-05-01 15:46:43.976832+00
+430	extras	0082_savedfilter	2026-05-01 15:46:43.978336+00
+431	extras	0083_search	2026-05-01 15:46:43.979973+00
+432	extras	0084_staging	2026-05-01 15:46:43.982375+00
+433	extras	0085_synced_data	2026-05-01 15:46:43.983703+00
+434	extras	0086_configtemplate	2026-05-01 15:46:43.98481+00
+435	extras	0087_dashboard	2026-05-01 15:46:44.613266+00
+436	extras	0088_jobresult_webhooks	2026-05-01 15:46:44.614751+00
+437	extras	0089_customfield_is_cloneable	2026-05-01 15:46:44.616213+00
+438	extras	0090_objectchange_index_request_id	2026-05-01 15:46:44.617453+00
+439	extras	0091_create_managedfiles	2026-05-01 15:46:44.618736+00
+440	extras	0092_delete_jobresult	2026-05-01 15:46:44.620229+00
+441	extras	0093_configrevision_ordering	2026-05-01 15:46:44.621553+00
+442	extras	0094_tag_object_types	2026-05-01 15:46:44.622742+00
+443	extras	0095_bookmarks	2026-05-01 15:46:44.623977+00
+444	extras	0096_customfieldchoiceset	2026-05-01 15:46:44.625144+00
+445	extras	0097_customfield_remove_choices	2026-05-01 15:46:44.626494+00
+446	extras	0098_webhook_custom_field_data_webhook_tags	2026-05-01 15:46:44.627753+00
+447	extras	0099_cachedvalue_ordering	2026-05-01 15:46:44.642083+00
+448	extras	0100_customfield_ui_attrs	2026-05-01 15:46:44.73597+00
+449	extras	0101_eventrule	2026-05-01 15:46:45.560833+00
+450	extras	0102_move_configrevision	2026-05-01 15:46:45.616776+00
+451	extras	0103_gfk_indexes	2026-05-01 15:46:45.737022+00
+452	extras	0104_stagedchange_remove_change_logging	2026-05-01 15:46:45.764367+00
+453	extras	0105_customfield_min_max_values	2026-05-01 15:46:45.793805+00
+454	extras	0106_bookmark_user_cascade_deletion	2026-05-01 15:46:45.849857+00
+455	extras	0107_cachedvalue_extras_cachedvalue_object	2026-05-01 15:46:45.866673+00
+456	extras	0108_convert_reports_to_scripts	2026-05-01 15:46:46.119973+00
+457	extras	0109_script_model	2026-05-01 15:46:46.301047+00
+458	extras	0110_remove_eventrule_action_parameters	2026-05-01 15:46:46.354279+00
+459	core	0006_datasource_type_remove_choices	2026-05-01 15:46:46.394109+00
+460	core	0007_job_add_error_field	2026-05-01 15:46:46.411008+00
+461	core	0008_contenttype_proxy	2026-05-01 15:46:46.413919+00
+462	core	0009_configrevision	2026-05-01 15:46:46.416345+00
+463	core	0010_gfk_indexes	2026-05-01 15:46:46.434295+00
+464	extras	0111_rename_content_types	2026-05-01 15:46:47.100001+00
+465	extras	0112_tag_update_object_types	2026-05-01 15:46:47.158245+00
+466	extras	0113_customfield_rename_object_type	2026-05-01 15:46:47.180768+00
+467	users	0005_alter_user_table	2026-05-01 15:46:47.247418+00
+468	users	0006_custom_group_model	2026-05-01 15:46:47.656594+00
+469	users	0007_objectpermission_update_object_types	2026-05-01 15:46:47.713653+00
+470	users	0008_flip_objectpermission_assignments	2026-05-01 15:46:47.932418+00
+471	users	0009_update_group_perms	2026-05-01 15:46:48.036665+00
+472	users	0010_add_token_meta_ordering	2026-05-01 15:46:48.046504+00
+473	users	0011_concrete_objecttype	2026-05-01 15:46:48.100387+00
+474	users	0012_drop_django_admin_log_table	2026-05-01 15:46:48.103583+00
+475	users	0013_user_remove_is_staff	2026-05-01 15:46:48.111965+00
+476	users	0014_users_token_v2	2026-05-01 15:46:48.183727+00
+477	users	0015_owner	2026-05-01 15:46:48.442379+00
+478	extras	0114_customfield_add_comments	2026-05-01 15:46:48.455625+00
+479	extras	0115_convert_dashboard_widgets	2026-05-01 15:46:48.506078+00
+480	extras	0116_custom_link_button_color	2026-05-01 15:46:48.567981+00
+481	core	0011_move_objectchange	2026-05-01 15:46:48.618366+00
+482	extras	0117_move_objectchange	2026-05-01 15:46:48.737527+00
+483	extras	0118_customfield_uniqueness	2026-05-01 15:46:48.755222+00
+484	extras	0119_notifications	2026-05-01 15:46:49.135637+00
+485	extras	0120_eventrule_event_types	2026-05-01 15:46:49.461667+00
+486	extras	0121_customfield_related_object_filter	2026-05-01 15:46:49.480169+00
+487	extras	0122_charfield_null_choices	2026-05-01 15:46:49.538289+00
+488	extras	0123_journalentry_kind_default	2026-05-01 15:46:49.763089+00
+489	extras	0124_remove_staging	2026-05-01 15:46:49.865827+00
+490	extras	0125_alter_tag_options_tag_weight	2026-05-01 15:46:49.950488+00
+491	extras	0126_exporttemplate_file_name	2026-05-01 15:46:49.970338+00
+492	extras	0127_configtemplate_as_attachment_and_more	2026-05-01 15:46:50.137933+00
+493	core	0012_job_object_type_optional	2026-05-01 15:46:50.191075+00
+494	core	0013_job_data_encoder	2026-05-01 15:46:50.209423+00
+495	core	0014_datasource_sync_interval	2026-05-01 15:46:50.249617+00
+496	core	0015_remove_redundant_indexes	2026-05-01 15:46:50.280844+00
+497	extras	0128_tableconfig	2026-05-01 15:46:50.509973+00
+498	extras	0129_fix_script_paths	2026-05-01 15:46:50.559279+00
+499	extras	0130_imageattachment_description	2026-05-01 15:46:50.573321+00
+500	extras	0131_concrete_objecttype	2026-05-01 15:46:50.87382+00
+501	core	0016_job_log_entries	2026-05-01 15:46:50.891214+00
+502	core	0017_objectchange_message	2026-05-01 15:46:50.908693+00
+503	core	0018_concrete_objecttype	2026-05-01 15:46:50.965972+00
+504	extras	0132_configcontextprofile	2026-05-01 15:46:51.251132+00
+505	extras	0133_make_cf_minmax_decimal	2026-05-01 15:46:51.281587+00
+506	extras	0134_owner	2026-05-01 15:46:52.040254+00
+507	ipam	0054_vlangroup_min_max_vids	2026-05-01 15:46:55.376104+00
+508	ipam	0055_servicetemplate	2026-05-01 15:46:55.377663+00
+509	ipam	0056_standardize_id_fields	2026-05-01 15:46:55.378694+00
+510	ipam	0057_created_datetimefield	2026-05-01 15:46:55.379672+00
+511	ipam	0058_ipaddress_nat_inside_nonunique	2026-05-01 15:46:55.380628+00
+512	ipam	0059_l2vpn	2026-05-01 15:46:55.381523+00
+513	ipam	0060_alter_l2vpn_slug	2026-05-01 15:46:55.382373+00
+514	ipam	0061_fhrpgroup_name	2026-05-01 15:46:55.383224+00
+515	ipam	0062_unique_constraints	2026-05-01 15:46:55.384059+00
+516	ipam	0063_standardize_description_comments	2026-05-01 15:46:55.385068+00
+517	ipam	0064_clear_search_cache	2026-05-01 15:46:55.386351+00
+518	ipam	0065_asnrange	2026-05-01 15:46:55.387646+00
+519	ipam	0066_iprange_mark_utilized	2026-05-01 15:46:55.388802+00
+520	ipam	0067_ipaddress_index_host	2026-05-01 15:46:55.389726+00
+521	ipam	0068_move_l2vpn	2026-05-01 15:46:55.884879+00
+522	ipam	0069_gfk_indexes	2026-05-01 15:46:55.986379+00
+523	ipam	0070_vlangroup_vlan_id_ranges	2026-05-01 15:46:56.210993+00
+524	ipam	0071_prefix_scope	2026-05-01 15:46:56.530933+00
+525	dcim	0167_module_status	2026-05-01 15:46:58.698849+00
+526	dcim	0168_interface_template_enabled	2026-05-01 15:46:58.700141+00
+527	dcim	0169_devicetype_default_platform	2026-05-01 15:46:58.701177+00
+528	dcim	0170_configtemplate	2026-05-01 15:46:58.7022+00
+529	dcim	0171_cabletermination_change_logging	2026-05-01 15:46:58.703185+00
+530	dcim	0172_larger_power_draw_values	2026-05-01 15:46:58.704156+00
+531	dcim	0173_remove_napalm_fields	2026-05-01 15:46:58.705146+00
+532	dcim	0174_device_latitude_device_longitude	2026-05-01 15:46:58.706042+00
+533	dcim	0174_rack_starting_unit	2026-05-01 15:46:58.707008+00
+534	dcim	0175_device_oob_ip	2026-05-01 15:46:58.707912+00
+535	dcim	0176_device_component_counters	2026-05-01 15:46:58.708806+00
+536	dcim	0177_devicetype_component_counters	2026-05-01 15:46:58.709733+00
+537	dcim	0178_virtual_chassis_member_counter	2026-05-01 15:46:58.710726+00
+538	dcim	0179_interfacetemplate_rf_role	2026-05-01 15:46:58.711717+00
+539	dcim	0180_powerfeed_tenant	2026-05-01 15:46:58.712822+00
+540	dcim	0181_rename_device_role_device_role	2026-05-01 15:46:58.713825+00
+541	dcim	0182_zero_length_cable_fix	2026-05-01 15:46:58.714749+00
+542	dcim	0183_devicetype_exclude_from_utilization	2026-05-01 15:46:58.755101+00
+543	dcim	0184_protect_child_interfaces	2026-05-01 15:46:58.813798+00
+544	dcim	0185_gfk_indexes	2026-05-01 15:46:58.914846+00
+545	dcim	0186_location_facility	2026-05-01 15:46:58.953812+00
+546	dcim	0187_alter_device_vc_position	2026-05-01 15:46:59.177207+00
+547	dcim	0188_racktype	2026-05-01 15:46:59.402726+00
+548	dcim	0189_moduletype_rack_airflow	2026-05-01 15:46:59.480764+00
+549	dcim	0190_nested_modules	2026-05-01 15:47:00.130229+00
+550	dcim	0191_module_bay_rebuild	2026-05-01 15:47:00.187423+00
+551	dcim	0192_inventoryitem_status	2026-05-01 15:47:00.235476+00
+552	dcim	0193_poweroutlet_color	2026-05-01 15:47:00.276635+00
+553	ipam	0072_prefix_cached_relations	2026-05-01 15:47:00.799763+00
+554	ipam	0073_charfield_null_choices	2026-05-01 15:47:00.946481+00
+555	ipam	0074_vlantranslationpolicy_vlantranslationrule	2026-05-01 15:47:01.294305+00
+556	ipam	0075_vlan_qinq	2026-05-01 15:47:01.466487+00
+557	dcim	0194_charfield_null_choices	2026-05-01 15:47:03.497868+00
+558	dcim	0195_interface_vlan_translation_policy	2026-05-01 15:47:03.560145+00
+559	dcim	0196_qinq_svlan	2026-05-01 15:47:03.931826+00
+560	dcim	0197_natural_sort_collation	2026-05-01 15:47:03.938397+00
+561	dcim	0198_natural_ordering	2026-05-01 15:47:06.531353+00
+562	dcim	0199_macaddress	2026-05-01 15:47:06.595706+00
+563	dcim	0200_populate_mac_addresses	2026-05-01 15:47:06.752583+00
+564	dcim	0201_add_power_outlet_status	2026-05-01 15:47:06.792393+00
+565	dcim	0202_location_comments_region_comments_sitegroup_comments	2026-05-01 15:47:07.339304+00
+566	dcim	0203_add_rack_outer_height	2026-05-01 15:47:07.419541+00
+567	dcim	0203_device_role_nested	2026-05-01 15:47:07.777327+00
+568	dcim	0204_device_role_rebuild	2026-05-01 15:47:07.832163+00
+569	dcim	0205_moduletypeprofile	2026-05-01 15:47:08.200081+00
+570	dcim	0206_load_module_type_profiles	2026-05-01 15:47:08.268027+00
+571	dcim	0207_remove_redundant_indexes	2026-05-01 15:47:08.305264+00
+572	dcim	0208_devicerole_uniqueness	2026-05-01 15:47:08.461337+00
+573	dcim	0209_device_component_denorm_site_location	2026-05-01 15:47:10.941579+00
+574	dcim	0210_macaddress_ordering	2026-05-01 15:47:10.988893+00
+575	dcim	0211_platform_manufacturer_uniqueness	2026-05-01 15:47:11.426344+00
+576	dcim	0212_interface_tx_power_negative	2026-05-01 15:47:11.469371+00
+577	dcim	0213_platform_parent	2026-05-01 15:47:11.733105+00
+578	dcim	0214_platform_rebuild	2026-05-01 15:47:11.79118+00
+579	dcim	0215_rackreservation_status	2026-05-01 15:47:11.839319+00
+580	dcim	0216_latitude_longitude_validators	2026-05-01 15:47:12.200508+00
+581	dcim	0217_poweroutlettemplate_color	2026-05-01 15:47:12.219933+00
+582	dcim	0218_owner	2026-05-01 15:47:14.807478+00
+583	dcim	0219_devicetype_device_count	2026-05-01 15:47:15.122435+00
+584	dcim	0220_cable_profile	2026-05-01 15:47:15.474856+00
+585	dcim	0221_cable_connector_positions	2026-05-01 15:47:16.410149+00
+586	dcim	0222_port_mappings	2026-05-01 15:47:16.948911+00
+587	dcim	0223_frontport_positions	2026-05-01 15:47:17.251349+00
+588	dcim	0224_add_comments_to_organizationalmodel	2026-05-01 15:47:17.548989+00
+589	tenancy	0012_contactassignment_custom_fields	2026-05-01 15:47:17.601576+00
+590	tenancy	0013_gfk_indexes	2026-05-01 15:47:17.653877+00
+591	tenancy	0014_contactassignment_ordering	2026-05-01 15:47:17.706333+00
+592	tenancy	0015_contactassignment_rename_content_type	2026-05-01 15:47:17.958423+00
+593	tenancy	0016_charfield_null_choices	2026-05-01 15:47:18.243725+00
+594	circuits	0043_circuittype_color	2026-05-01 15:47:18.288292+00
+595	circuits	0044_circuit_groups	2026-05-01 15:47:18.452677+00
+596	circuits	0045_circuit_distance	2026-05-01 15:47:18.580321+00
+597	circuits	0046_charfield_null_choices	2026-05-01 15:47:18.962125+00
+598	circuits	0047_circuittermination__termination	2026-05-01 15:47:19.133807+00
+599	circuits	0048_circuitterminations_cached_relations	2026-05-01 15:47:19.720622+00
+600	circuits	0049_natural_ordering	2026-05-01 15:47:19.811073+00
+601	circuits	0050_virtual_circuits	2026-05-01 15:47:20.088838+00
+602	circuits	0051_virtualcircuit_group_assignment	2026-05-01 15:47:20.671389+00
+603	circuits	0052_extend_circuit_abs_distance_upper_limit	2026-05-01 15:47:20.719058+00
+604	circuits	0053_owner	2026-05-01 15:47:21.392213+00
+605	circuits	0054_cable_connector_positions	2026-05-01 15:47:21.673146+00
+606	circuits	0055_add_comments_to_organizationalmodel	2026-05-01 15:47:21.825214+00
+607	circuits	0056_gfk_indexes	2026-05-01 15:47:21.877874+00
+608	core	0019_configrevision_active	2026-05-01 15:47:21.942916+00
+609	core	0020_owner	2026-05-01 15:47:22.008543+00
+610	core	0021_job_queue_name	2026-05-01 15:47:22.030475+00
+611	tenancy	0017_natural_ordering	2026-05-01 15:47:22.373176+00
+612	tenancy	0018_contact_groups	2026-05-01 15:47:22.734233+00
+613	tenancy	0019_contactgroup_comments_tenantgroup_comments	2026-05-01 15:47:22.827888+00
+614	tenancy	0020_remove_contactgroupmembership	2026-05-01 15:47:23.118067+00
+615	tenancy	0021_owner	2026-05-01 15:47:23.4341+00
+616	tenancy	0022_add_comments_to_organizationalmodel	2026-05-01 15:47:23.484499+00
+617	dcim	0225_gfk_indexes	2026-05-01 15:47:23.71023+00
+618	dcim	0226_add_mptt_tree_indexes	2026-05-01 15:47:24.096216+00
+619	dcim	0226_modulebay_rebuild_tree	2026-05-01 15:47:24.157736+00
+620	dcim	0227_alter_interface_speed_bigint	2026-05-01 15:47:24.381783+00
+621	django_rq	0001_initial	2026-05-01 15:47:24.388951+00
+622	django_rq	0002_delete_queue_create_dashboard	2026-05-01 15:47:24.452547+00
+623	virtualization	0023_virtualmachine_natural_ordering	2026-05-01 15:47:26.904081+00
+624	virtualization	0024_cluster_relax_uniqueness	2026-05-01 15:47:26.905349+00
+625	virtualization	0025_extend_tag_support	2026-05-01 15:47:26.906403+00
+626	virtualization	0026_vminterface_bridge	2026-05-01 15:47:26.907336+00
+627	virtualization	0027_standardize_id_fields	2026-05-01 15:47:26.908271+00
+628	virtualization	0028_vminterface_vrf	2026-05-01 15:47:26.909068+00
+629	virtualization	0029_created_datetimefield	2026-05-01 15:47:26.909932+00
+630	virtualization	0030_cluster_status	2026-05-01 15:47:26.910868+00
+631	virtualization	0031_virtualmachine_site_device	2026-05-01 15:47:26.912276+00
+632	virtualization	0032_virtualmachine_update_sites	2026-05-01 15:47:26.913982+00
+633	virtualization	0033_unique_constraints	2026-05-01 15:47:26.91556+00
+634	virtualization	0034_standardize_description_comments	2026-05-01 15:47:26.916841+00
+635	virtualization	0035_virtualmachine_interface_count	2026-05-01 15:47:26.918073+00
+636	virtualization	0036_virtualmachine_config_template	2026-05-01 15:47:26.918944+00
+637	virtualization	0037_protect_child_interfaces	2026-05-01 15:47:26.982991+00
+638	virtualization	0038_virtualdisk	2026-05-01 15:47:27.309572+00
+639	virtualization	0039_virtualmachine_serial_number	2026-05-01 15:47:27.358742+00
+640	virtualization	0040_convert_disk_size	2026-05-01 15:47:27.422371+00
+641	virtualization	0041_charfield_null_choices	2026-05-01 15:47:27.530966+00
+642	virtualization	0042_vminterface_vlan_translation_policy	2026-05-01 15:47:27.59887+00
+643	virtualization	0043_qinq_svlan	2026-05-01 15:47:27.964857+00
+644	virtualization	0044_cluster_scope	2026-05-01 15:47:28.14233+00
+645	virtualization	0045_clusters_cached_relations	2026-05-01 15:47:28.82436+00
+646	virtualization	0046_alter_cluster__location_alter_cluster__region_and_more	2026-05-01 15:47:29.096851+00
+647	virtualization	0047_natural_ordering	2026-05-01 15:47:29.618074+00
+648	virtualization	0048_populate_mac_addresses	2026-05-01 15:47:29.800017+00
+649	ipam	0076_natural_ordering	2026-05-01 15:47:30.192107+00
+650	ipam	0077_vlangroup_tenant	2026-05-01 15:47:30.260421+00
+651	ipam	0078_iprange_mark_utilized	2026-05-01 15:47:30.309404+00
+652	ipam	0079_add_service_fhrp_group_parent_gfk	2026-05-01 15:47:30.42999+00
+653	ipam	0080_populate_service_parent	2026-05-01 15:47:30.501646+00
+654	ipam	0081_remove_service_device_virtual_machine_add_parent_gfk_index	2026-05-01 15:47:30.982777+00
+655	ipam	0082_add_prefix_network_containment_indexes	2026-05-01 15:47:31.04905+00
+656	ipam	0083_vlangroup_populate_total_vlan_ids	2026-05-01 15:47:31.11341+00
+657	ipam	0084_owner	2026-05-01 15:47:32.487499+00
+658	ipam	0085_add_comments_to_organizationalmodel	2026-05-01 15:47:32.861635+00
+659	ipam	0086_gfk_indexes	2026-05-01 15:47:32.921242+00
+660	sessions	0001_initial	2026-05-01 15:47:32.926421+00
+661	social_django	0001_initial	2026-05-01 15:47:33.018561+00
+662	social_django	0002_add_related_name	2026-05-01 15:47:33.085198+00
+663	social_django	0003_alter_email_max_length	2026-05-01 15:47:33.090865+00
+664	social_django	0004_auto_20160423_0400	2026-05-01 15:47:33.102097+00
+665	social_django	0005_auto_20160727_2333	2026-05-01 15:47:33.10656+00
+666	social_django	0006_partial	2026-05-01 15:47:33.111198+00
+667	social_django	0007_code_timestamp	2026-05-01 15:47:33.116905+00
+668	social_django	0008_partial_timestamp	2026-05-01 15:47:33.121367+00
+669	social_django	0009_auto_20191118_0520	2026-05-01 15:47:33.14129+00
+670	social_django	0010_uid_db_index	2026-05-01 15:47:33.153084+00
+671	social_django	0011_alter_id_fields	2026-05-01 15:47:33.181132+00
+672	social_django	0012_usersocialauth_extra_data_new	2026-05-01 15:47:33.195135+00
+673	social_django	0013_migrate_extra_data	2026-05-01 15:47:33.261293+00
+674	social_django	0014_remove_usersocialauth_extra_data	2026-05-01 15:47:33.276423+00
+675	social_django	0015_rename_extra_data_new_usersocialauth_extra_data	2026-05-01 15:47:33.291062+00
+676	social_django	0016_alter_usersocialauth_extra_data	2026-05-01 15:47:33.301975+00
+677	social_django	0017_usersocialauth_user_social_auth_uid_required	2026-05-01 15:47:33.31464+00
+678	taggit	0001_initial	2026-05-01 15:47:33.556084+00
+679	taggit	0002_auto_20150616_2121	2026-05-01 15:47:33.57542+00
+680	taggit	0003_taggeditem_add_unique_index	2026-05-01 15:47:33.594518+00
+681	taggit	0004_alter_taggeditem_content_type_alter_taggeditem_tag	2026-05-01 15:47:33.730208+00
+682	taggit	0005_auto_20220424_2025	2026-05-01 15:47:33.735691+00
+683	taggit	0006_rename_taggeditem_content_type_object_id_taggit_tagg_content_8fc721_idx	2026-05-01 15:47:33.773275+00
+684	tenancy	0023_add_mptt_tree_indexes	2026-05-01 15:47:33.882816+00
+685	thumbnail	0001_initial	2026-05-01 15:47:33.888343+00
+686	virtualization	0049_owner	2026-05-01 15:47:34.475402+00
+687	virtualization	0050_virtualmachine_start_on_boot	2026-05-01 15:47:34.531675+00
+688	virtualization	0051_add_comments_to_organizationalmodel	2026-05-01 15:47:34.642842+00
+689	virtualization	0052_gfk_indexes	2026-05-01 15:47:34.703161+00
+690	vpn	0001_initial	2026-05-01 15:47:35.938451+00
+691	vpn	0002_move_l2vpn	2026-05-01 15:47:36.36176+00
+692	vpn	0003_ipaddress_multiple_tunnel_terminations	2026-05-01 15:47:36.44036+00
+693	vpn	0004_alter_ikepolicy_mode	2026-05-01 15:47:36.497589+00
+694	vpn	0005_rename_indexes	2026-05-01 15:47:36.51185+00
+695	vpn	0006_charfield_null_choices	2026-05-01 15:47:37.02255+00
+696	vpn	0007_natural_ordering	2026-05-01 15:47:37.436383+00
+697	vpn	0008_add_l2vpn_status	2026-05-01 15:47:37.49413+00
+698	vpn	0009_remove_redundant_indexes	2026-05-01 15:47:37.779146+00
+699	vpn	0010_owner	2026-05-01 15:47:38.554271+00
+700	vpn	0011_add_comments_to_organizationalmodel	2026-05-01 15:47:38.612906+00
+701	wireless	0009_wirelesslink_distance	2026-05-01 15:47:38.774205+00
+702	wireless	0010_charfield_null_choices	2026-05-01 15:47:39.315837+00
+703	wireless	0011_wirelesslan__location_wirelesslan__region_and_more	2026-05-01 15:47:39.898909+00
+704	wireless	0012_alter_wirelesslan__location_and_more	2026-05-01 15:47:40.194452+00
+705	wireless	0013_natural_ordering	2026-05-01 15:47:40.250293+00
+706	wireless	0014_wirelesslangroup_comments	2026-05-01 15:47:40.47229+00
+707	wireless	0015_extend_wireless_link_abs_distance_upper_limit	2026-05-01 15:47:40.5274+00
+708	wireless	0016_owner	2026-05-01 15:47:40.751829+00
+709	wireless	0017_gfk_indexes	2026-05-01 15:47:40.815128+00
+710	wireless	0018_add_mptt_tree_indexes	2026-05-01 15:47:40.873388+00
+711	core	0001_squashed_0005	2026-05-01 15:47:40.87814+00
+712	circuits	0003_squashed_0037	2026-05-01 15:47:40.87932+00
+713	circuits	0038_squashed_0042	2026-05-01 15:47:40.880373+00
+714	circuits	0001_squashed	2026-05-01 15:47:40.8813+00
+715	circuits	0002_squashed_0029	2026-05-01 15:47:40.882339+00
+716	dcim	0160_squashed_0166	2026-05-01 15:47:40.883791+00
+717	dcim	0167_squashed_0182	2026-05-01 15:47:40.884879+00
+718	dcim	0002_squashed	2026-05-01 15:47:40.886081+00
+719	dcim	0001_squashed	2026-05-01 15:47:40.886956+00
+720	dcim	0131_squashed_0159	2026-05-01 15:47:40.887909+00
+721	dcim	0003_squashed_0130	2026-05-01 15:47:40.888828+00
+722	ipam	0054_squashed_0067	2026-05-01 15:47:40.889846+00
+723	ipam	0047_squashed_0053	2026-05-01 15:47:40.890832+00
+724	ipam	0001_squashed	2026-05-01 15:47:40.891828+00
+725	ipam	0002_squashed_0046	2026-05-01 15:47:40.892964+00
+726	extras	0002_squashed_0059	2026-05-01 15:47:40.894094+00
+727	extras	0001_squashed	2026-05-01 15:47:40.895167+00
+728	extras	0060_squashed_0086	2026-05-01 15:47:40.896248+00
+729	extras	0087_squashed_0098	2026-05-01 15:47:40.897269+00
+730	tenancy	0002_squashed_0011	2026-05-01 15:47:40.898245+00
+731	tenancy	0001_squashed_0012	2026-05-01 15:47:40.89914+00
+732	users	0001_squashed_0011	2026-05-01 15:47:40.900092+00
+733	users	0002_squashed_0004	2026-05-01 15:47:40.900967+00
+734	virtualization	0001_squashed_0022	2026-05-01 15:47:40.903484+00
+735	virtualization	0023_squashed_0036	2026-05-01 15:47:40.904513+00
+736	wireless	0001_squashed_0008	2026-05-01 15:47:40.905629+00
 \.
 
 
@@ -8724,13 +9124,13 @@ COPY public.extras_bookmark (id, created, object_id, object_type_id, user_id) FR
 --
 
 COPY public.extras_cachedvalue (id, "timestamp", object_id, field, type, value, weight, object_type_id) FROM stdin;
-d6c5b86c-2df0-45aa-ae58-d259adbbaee1	2026-02-06 11:30:08.410637+00	1	name	str	CPU	100	10
-0f231ee4-0880-4b93-aec0-af69bbdadbde	2026-02-06 11:30:08.411844+00	2	name	str	Fan	100	10
-5639e08f-788e-4ed2-9b37-74bc7417a3e0	2026-02-06 11:30:08.412802+00	3	name	str	GPU	100	10
-1bc43b0c-46fc-4c4c-9ab8-ea4d1c092d75	2026-02-06 11:30:08.413771+00	4	name	str	Hard disk	100	10
-20f7b669-28d6-4e56-8c84-baeda5e8b38a	2026-02-06 11:30:08.41461+00	5	name	str	Memory	100	10
-d6e98088-079d-401d-a21f-90f947ff4955	2026-02-06 11:30:08.415388+00	6	name	str	Power supply	100	10
-da27cea8-352a-475b-afc3-c8ee8538eb96	2026-02-06 11:30:08.416178+00	7	name	str	Expansion card	100	10
+5eb20400-df2a-43c0-87ca-98f1c1e1c711	2026-05-01 15:47:08.259315+00	1	name	str	CPU	100	8
+58b4a170-4e99-4630-a5c0-2df8acaa9677	2026-05-01 15:47:08.260875+00	2	name	str	Fan	100	8
+a6797e53-59df-4642-8fa2-50e85dab99eb	2026-05-01 15:47:08.262348+00	3	name	str	GPU	100	8
+64e1c8d1-fb34-4e2b-b397-e2335a66bb87	2026-05-01 15:47:08.263915+00	4	name	str	Hard disk	100	8
+de19ea4a-7bfb-4fd0-9497-26267ffca55e	2026-05-01 15:47:08.26528+00	5	name	str	Memory	100	8
+4d40dc7c-602b-4d5b-8c52-75ae579d4534	2026-05-01 15:47:08.266589+00	6	name	str	Power supply	100	8
+6b29d45f-6206-4b5d-8924-8ea1f039997b	2026-05-01 15:47:08.267873+00	7	name	str	Expansion card	100	8
 \.
 
 
@@ -8738,7 +9138,7 @@ da27cea8-352a-475b-afc3-c8ee8538eb96	2026-02-06 11:30:08.416178+00	7	name	str	Ex
 -- Data for Name: extras_configcontext; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.extras_configcontext (created, last_updated, id, name, weight, description, is_active, data, data_file_id, data_path, data_source_id, auto_sync_enabled, data_synced, profile_id) FROM stdin;
+COPY public.extras_configcontext (created, last_updated, id, name, weight, description, is_active, data, data_file_id, data_path, data_source_id, auto_sync_enabled, data_synced, profile_id, owner_id) FROM stdin;
 \.
 
 
@@ -8850,7 +9250,7 @@ COPY public.extras_configcontext_tenants (id, configcontext_id, tenant_id) FROM 
 -- Data for Name: extras_configcontextprofile; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.extras_configcontextprofile (id, created, last_updated, custom_field_data, data_path, auto_sync_enabled, data_synced, comments, name, description, schema, data_file_id, data_source_id) FROM stdin;
+COPY public.extras_configcontextprofile (id, created, last_updated, custom_field_data, data_path, auto_sync_enabled, data_synced, comments, name, description, schema, data_file_id, data_source_id, owner_id) FROM stdin;
 \.
 
 
@@ -8858,7 +9258,7 @@ COPY public.extras_configcontextprofile (id, created, last_updated, custom_field
 -- Data for Name: extras_configtemplate; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.extras_configtemplate (id, created, last_updated, data_path, data_synced, name, description, template_code, environment_params, data_file_id, data_source_id, auto_sync_enabled, as_attachment, file_extension, file_name, mime_type) FROM stdin;
+COPY public.extras_configtemplate (id, created, last_updated, data_path, data_synced, name, description, template_code, environment_params, data_file_id, data_source_id, auto_sync_enabled, as_attachment, file_extension, file_name, mime_type, owner_id) FROM stdin;
 \.
 
 
@@ -8866,7 +9266,7 @@ COPY public.extras_configtemplate (id, created, last_updated, data_path, data_sy
 -- Data for Name: extras_customfield; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.extras_customfield (id, type, name, label, description, required, filter_logic, "default", weight, validation_minimum, validation_maximum, validation_regex, created, last_updated, related_object_type_id, group_name, search_weight, is_cloneable, choice_set_id, ui_editable, ui_visible, comments, "unique", related_object_filter) FROM stdin;
+COPY public.extras_customfield (id, type, name, label, description, required, filter_logic, "default", weight, validation_minimum, validation_maximum, validation_regex, created, last_updated, related_object_type_id, group_name, search_weight, is_cloneable, choice_set_id, ui_editable, ui_visible, comments, "unique", related_object_filter, owner_id) FROM stdin;
 \.
 
 
@@ -8882,7 +9282,7 @@ COPY public.extras_customfield_object_types (id, customfield_id, contenttype_id)
 -- Data for Name: extras_customfieldchoiceset; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.extras_customfieldchoiceset (id, created, last_updated, name, description, base_choices, extra_choices, order_alphabetically) FROM stdin;
+COPY public.extras_customfieldchoiceset (id, created, last_updated, name, description, base_choices, extra_choices, order_alphabetically, owner_id) FROM stdin;
 \.
 
 
@@ -8890,7 +9290,7 @@ COPY public.extras_customfieldchoiceset (id, created, last_updated, name, descri
 -- Data for Name: extras_customlink; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.extras_customlink (id, name, link_text, link_url, weight, group_name, button_class, new_window, created, last_updated, enabled) FROM stdin;
+COPY public.extras_customlink (id, name, link_text, link_url, weight, group_name, button_class, new_window, created, last_updated, enabled, owner_id) FROM stdin;
 \.
 
 
@@ -8914,7 +9314,7 @@ COPY public.extras_dashboard (id, layout, config, user_id) FROM stdin;
 -- Data for Name: extras_eventrule; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.extras_eventrule (id, created, last_updated, custom_field_data, name, description, enabled, conditions, action_type, action_object_id, action_data, comments, action_object_type_id, event_types) FROM stdin;
+COPY public.extras_eventrule (id, created, last_updated, custom_field_data, name, description, enabled, conditions, action_type, action_object_id, action_data, comments, action_object_type_id, event_types, owner_id) FROM stdin;
 \.
 
 
@@ -8930,7 +9330,7 @@ COPY public.extras_eventrule_object_types (id, eventrule_id, contenttype_id) FRO
 -- Data for Name: extras_exporttemplate; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.extras_exporttemplate (id, name, description, template_code, mime_type, file_extension, as_attachment, created, last_updated, data_file_id, data_path, data_source_id, auto_sync_enabled, data_synced, file_name, environment_params) FROM stdin;
+COPY public.extras_exporttemplate (id, name, description, template_code, mime_type, file_extension, as_attachment, created, last_updated, data_file_id, data_path, data_source_id, auto_sync_enabled, data_synced, file_name, environment_params, owner_id) FROM stdin;
 \.
 
 
@@ -8994,7 +9394,7 @@ COPY public.extras_notificationgroup_users (id, notificationgroup_id, user_id) F
 -- Data for Name: extras_savedfilter; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.extras_savedfilter (id, created, last_updated, name, slug, description, weight, enabled, shared, parameters, user_id) FROM stdin;
+COPY public.extras_savedfilter (id, created, last_updated, name, slug, description, weight, enabled, shared, parameters, user_id, owner_id) FROM stdin;
 \.
 
 
@@ -9034,7 +9434,7 @@ COPY public.extras_tableconfig (id, created, last_updated, "table", name, descri
 -- Data for Name: extras_tag; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.extras_tag (name, slug, created, last_updated, id, color, description, weight) FROM stdin;
+COPY public.extras_tag (name, slug, created, last_updated, id, color, description, weight, owner_id) FROM stdin;
 \.
 
 
@@ -9058,7 +9458,7 @@ COPY public.extras_taggeditem (object_id, id, content_type_id, tag_id) FROM stdi
 -- Data for Name: extras_webhook; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.extras_webhook (id, name, payload_url, http_method, http_content_type, additional_headers, body_template, secret, ssl_verification, ca_file_path, created, last_updated, custom_field_data, description) FROM stdin;
+COPY public.extras_webhook (id, name, payload_url, http_method, http_content_type, additional_headers, body_template, secret, ssl_verification, ca_file_path, created, last_updated, custom_field_data, description, owner_id) FROM stdin;
 \.
 
 
@@ -9066,7 +9466,7 @@ COPY public.extras_webhook (id, name, payload_url, http_method, http_content_typ
 -- Data for Name: ipam_aggregate; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.ipam_aggregate (created, last_updated, custom_field_data, id, prefix, date_added, description, rir_id, tenant_id, comments) FROM stdin;
+COPY public.ipam_aggregate (created, last_updated, custom_field_data, id, prefix, date_added, description, rir_id, tenant_id, comments, owner_id) FROM stdin;
 \.
 
 
@@ -9074,7 +9474,7 @@ COPY public.ipam_aggregate (created, last_updated, custom_field_data, id, prefix
 -- Data for Name: ipam_asn; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.ipam_asn (created, last_updated, custom_field_data, id, asn, description, rir_id, tenant_id, comments) FROM stdin;
+COPY public.ipam_asn (created, last_updated, custom_field_data, id, asn, description, rir_id, tenant_id, comments, owner_id) FROM stdin;
 \.
 
 
@@ -9082,7 +9482,7 @@ COPY public.ipam_asn (created, last_updated, custom_field_data, id, asn, descrip
 -- Data for Name: ipam_asnrange; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.ipam_asnrange (id, created, last_updated, custom_field_data, description, name, slug, start, "end", rir_id, tenant_id) FROM stdin;
+COPY public.ipam_asnrange (id, created, last_updated, custom_field_data, description, name, slug, start, "end", rir_id, tenant_id, owner_id, comments) FROM stdin;
 \.
 
 
@@ -9090,7 +9490,7 @@ COPY public.ipam_asnrange (id, created, last_updated, custom_field_data, descrip
 -- Data for Name: ipam_fhrpgroup; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.ipam_fhrpgroup (created, last_updated, custom_field_data, id, group_id, protocol, auth_type, auth_key, description, name, comments) FROM stdin;
+COPY public.ipam_fhrpgroup (created, last_updated, custom_field_data, id, group_id, protocol, auth_type, auth_key, description, name, comments, owner_id) FROM stdin;
 \.
 
 
@@ -9106,7 +9506,7 @@ COPY public.ipam_fhrpgroupassignment (created, last_updated, id, interface_id, p
 -- Data for Name: ipam_ipaddress; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.ipam_ipaddress (created, last_updated, custom_field_data, id, address, status, role, assigned_object_id, dns_name, description, assigned_object_type_id, nat_inside_id, tenant_id, vrf_id, comments) FROM stdin;
+COPY public.ipam_ipaddress (created, last_updated, custom_field_data, id, address, status, role, assigned_object_id, dns_name, description, assigned_object_type_id, nat_inside_id, tenant_id, vrf_id, comments, owner_id) FROM stdin;
 \.
 
 
@@ -9114,7 +9514,7 @@ COPY public.ipam_ipaddress (created, last_updated, custom_field_data, id, addres
 -- Data for Name: ipam_iprange; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.ipam_iprange (created, last_updated, custom_field_data, id, start_address, end_address, size, status, description, role_id, tenant_id, vrf_id, comments, mark_utilized, mark_populated) FROM stdin;
+COPY public.ipam_iprange (created, last_updated, custom_field_data, id, start_address, end_address, size, status, description, role_id, tenant_id, vrf_id, comments, mark_utilized, mark_populated, owner_id) FROM stdin;
 \.
 
 
@@ -9122,7 +9522,7 @@ COPY public.ipam_iprange (created, last_updated, custom_field_data, id, start_ad
 -- Data for Name: ipam_prefix; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.ipam_prefix (created, last_updated, custom_field_data, id, prefix, status, is_pool, description, role_id, tenant_id, vlan_id, vrf_id, _children, _depth, mark_utilized, comments, scope_id, scope_type_id, _location_id, _region_id, _site_id, _site_group_id) FROM stdin;
+COPY public.ipam_prefix (created, last_updated, custom_field_data, id, prefix, status, is_pool, description, role_id, tenant_id, vlan_id, vrf_id, _children, _depth, mark_utilized, comments, scope_id, scope_type_id, _location_id, _region_id, _site_id, _site_group_id, owner_id) FROM stdin;
 \.
 
 
@@ -9130,7 +9530,7 @@ COPY public.ipam_prefix (created, last_updated, custom_field_data, id, prefix, s
 -- Data for Name: ipam_rir; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.ipam_rir (created, last_updated, custom_field_data, id, name, slug, is_private, description) FROM stdin;
+COPY public.ipam_rir (created, last_updated, custom_field_data, id, name, slug, is_private, description, owner_id, comments) FROM stdin;
 \.
 
 
@@ -9138,7 +9538,7 @@ COPY public.ipam_rir (created, last_updated, custom_field_data, id, name, slug, 
 -- Data for Name: ipam_role; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.ipam_role (created, last_updated, custom_field_data, id, name, slug, weight, description) FROM stdin;
+COPY public.ipam_role (created, last_updated, custom_field_data, id, name, slug, weight, description, owner_id, comments) FROM stdin;
 \.
 
 
@@ -9146,7 +9546,7 @@ COPY public.ipam_role (created, last_updated, custom_field_data, id, name, slug,
 -- Data for Name: ipam_routetarget; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.ipam_routetarget (created, last_updated, custom_field_data, id, name, description, tenant_id, comments) FROM stdin;
+COPY public.ipam_routetarget (created, last_updated, custom_field_data, id, name, description, tenant_id, comments, owner_id) FROM stdin;
 \.
 
 
@@ -9154,7 +9554,7 @@ COPY public.ipam_routetarget (created, last_updated, custom_field_data, id, name
 -- Data for Name: ipam_service; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.ipam_service (created, last_updated, custom_field_data, id, name, protocol, ports, description, comments, parent_object_id, parent_object_type_id) FROM stdin;
+COPY public.ipam_service (created, last_updated, custom_field_data, id, name, protocol, ports, description, comments, parent_object_id, parent_object_type_id, owner_id) FROM stdin;
 \.
 
 
@@ -9170,7 +9570,7 @@ COPY public.ipam_service_ipaddresses (id, service_id, ipaddress_id) FROM stdin;
 -- Data for Name: ipam_servicetemplate; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.ipam_servicetemplate (id, created, last_updated, custom_field_data, protocol, ports, description, name, comments) FROM stdin;
+COPY public.ipam_servicetemplate (id, created, last_updated, custom_field_data, protocol, ports, description, name, comments, owner_id) FROM stdin;
 \.
 
 
@@ -9178,7 +9578,7 @@ COPY public.ipam_servicetemplate (id, created, last_updated, custom_field_data, 
 -- Data for Name: ipam_vlan; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.ipam_vlan (created, last_updated, custom_field_data, id, vid, name, status, description, group_id, role_id, site_id, tenant_id, comments, qinq_role, qinq_svlan_id) FROM stdin;
+COPY public.ipam_vlan (created, last_updated, custom_field_data, id, vid, name, status, description, group_id, role_id, site_id, tenant_id, comments, qinq_role, qinq_svlan_id, owner_id) FROM stdin;
 \.
 
 
@@ -9186,7 +9586,7 @@ COPY public.ipam_vlan (created, last_updated, custom_field_data, id, vid, name, 
 -- Data for Name: ipam_vlangroup; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.ipam_vlangroup (created, last_updated, custom_field_data, id, name, slug, scope_id, description, scope_type_id, vid_ranges, _total_vlan_ids, tenant_id) FROM stdin;
+COPY public.ipam_vlangroup (created, last_updated, custom_field_data, id, name, slug, scope_id, description, scope_type_id, vid_ranges, _total_vlan_ids, tenant_id, owner_id, comments) FROM stdin;
 \.
 
 
@@ -9194,7 +9594,7 @@ COPY public.ipam_vlangroup (created, last_updated, custom_field_data, id, name, 
 -- Data for Name: ipam_vlantranslationpolicy; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.ipam_vlantranslationpolicy (id, created, last_updated, custom_field_data, comments, name, description) FROM stdin;
+COPY public.ipam_vlantranslationpolicy (id, created, last_updated, custom_field_data, comments, name, description, owner_id) FROM stdin;
 \.
 
 
@@ -9210,7 +9610,7 @@ COPY public.ipam_vlantranslationrule (id, created, last_updated, custom_field_da
 -- Data for Name: ipam_vrf; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.ipam_vrf (created, last_updated, custom_field_data, id, name, rd, enforce_unique, description, tenant_id, comments) FROM stdin;
+COPY public.ipam_vrf (created, last_updated, custom_field_data, id, name, rd, enforce_unique, description, tenant_id, comments, owner_id) FROM stdin;
 \.
 
 
@@ -9290,7 +9690,7 @@ COPY public.taggit_taggeditem (id, object_id, content_type_id, tag_id) FROM stdi
 -- Data for Name: tenancy_contact; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.tenancy_contact (id, created, last_updated, custom_field_data, name, title, phone, email, address, comments, link, description) FROM stdin;
+COPY public.tenancy_contact (id, created, last_updated, custom_field_data, name, title, phone, email, address, comments, link, description, owner_id) FROM stdin;
 \.
 
 
@@ -9314,7 +9714,7 @@ COPY public.tenancy_contactassignment (id, created, last_updated, object_id, pri
 -- Data for Name: tenancy_contactgroup; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.tenancy_contactgroup (id, created, last_updated, custom_field_data, name, slug, description, lft, rght, tree_id, level, parent_id, comments) FROM stdin;
+COPY public.tenancy_contactgroup (id, created, last_updated, custom_field_data, name, slug, description, lft, rght, tree_id, level, parent_id, comments, owner_id) FROM stdin;
 \.
 
 
@@ -9322,7 +9722,7 @@ COPY public.tenancy_contactgroup (id, created, last_updated, custom_field_data, 
 -- Data for Name: tenancy_contactrole; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.tenancy_contactrole (id, created, last_updated, custom_field_data, name, slug, description) FROM stdin;
+COPY public.tenancy_contactrole (id, created, last_updated, custom_field_data, name, slug, description, owner_id, comments) FROM stdin;
 \.
 
 
@@ -9330,7 +9730,7 @@ COPY public.tenancy_contactrole (id, created, last_updated, custom_field_data, n
 -- Data for Name: tenancy_tenant; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.tenancy_tenant (created, last_updated, custom_field_data, id, name, slug, description, comments, group_id) FROM stdin;
+COPY public.tenancy_tenant (created, last_updated, custom_field_data, id, name, slug, description, comments, group_id, owner_id) FROM stdin;
 \.
 
 
@@ -9338,7 +9738,7 @@ COPY public.tenancy_tenant (created, last_updated, custom_field_data, id, name, 
 -- Data for Name: tenancy_tenantgroup; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.tenancy_tenantgroup (created, last_updated, custom_field_data, id, name, slug, description, lft, rght, tree_id, level, parent_id, comments) FROM stdin;
+COPY public.tenancy_tenantgroup (created, last_updated, custom_field_data, id, name, slug, description, lft, rght, tree_id, level, parent_id, comments, owner_id) FROM stdin;
 \.
 
 
@@ -9391,11 +9791,42 @@ COPY public.users_objectpermission_object_types (id, objectpermission_id, conten
 
 
 --
+-- Data for Name: users_owner; Type: TABLE DATA; Schema: public; Owner: nwa
+--
+
+COPY public.users_owner (id, name, description, group_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: users_owner_user_groups; Type: TABLE DATA; Schema: public; Owner: nwa
+--
+
+COPY public.users_owner_user_groups (id, owner_id, group_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: users_owner_users; Type: TABLE DATA; Schema: public; Owner: nwa
+--
+
+COPY public.users_owner_users (id, owner_id, user_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: users_ownergroup; Type: TABLE DATA; Schema: public; Owner: nwa
+--
+
+COPY public.users_ownergroup (id, description, name) FROM stdin;
+\.
+
+
+--
 -- Data for Name: users_token; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.users_token (id, created, expires, key, write_enabled, description, user_id, allowed_ips, last_used) FROM stdin;
-1	2023-04-04 20:50:21.369+00	\N	e744057d755255a31818bf74df2350c26eeabe54	t		1	{}	2023-04-04 20:51:55.276+00
+COPY public.users_token (id, created, expires, plaintext, write_enabled, description, user_id, allowed_ips, last_used, enabled, version, key, pepper_id, hmac_digest) FROM stdin;
 \.
 
 
@@ -9403,8 +9834,8 @@ COPY public.users_token (id, created, expires, key, write_enabled, description, 
 -- Data for Name: users_user; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.users_user (id, password, last_login, is_superuser, username, first_name, last_name, email, is_staff, is_active, date_joined) FROM stdin;
-1	pbkdf2_sha256$390000$xrIkMpQTt4W3w9sBdGlHOw$83S/T0Zs4iLu+yo2NAx0HQEc+B57+XtFG6DnyV/8fsY=	2023-05-30 13:30:17.683+00	t	admin			admin@admin.admin	t	t	2023-04-03 20:31:46.411+00
+COPY public.users_user (id, password, last_login, is_superuser, username, first_name, last_name, email, is_active, date_joined) FROM stdin;
+1	pbkdf2_sha256$1000000$yxTYceeFkYqiLyoHRPHkmb$MqaInRIjjsv4MNcvR5+q9ZDsFYTbxTQSmZENAGyoLKo=	\N	t	admin			admin@example.com	t	2026-05-01 15:47:55.810024+00
 \.
 
 
@@ -9437,7 +9868,7 @@ COPY public.users_user_user_permissions (id, user_id, permission_id) FROM stdin;
 --
 
 COPY public.users_userconfig (id, data, user_id) FROM stdin;
-1	{"tables": {"CableTable": {"columns": ["id", "label", "a_terminations", "b_terminations", "status", "type", "device_a", "device_b"]}}}	1
+1	{}	1
 \.
 
 
@@ -9445,7 +9876,7 @@ COPY public.users_userconfig (id, data, user_id) FROM stdin;
 -- Data for Name: virtualization_cluster; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.virtualization_cluster (created, last_updated, custom_field_data, id, name, comments, group_id, tenant_id, type_id, status, description, scope_id, scope_type_id, _location_id, _region_id, _site_id, _site_group_id) FROM stdin;
+COPY public.virtualization_cluster (created, last_updated, custom_field_data, id, name, comments, group_id, tenant_id, type_id, status, description, scope_id, scope_type_id, _location_id, _region_id, _site_id, _site_group_id, owner_id) FROM stdin;
 \.
 
 
@@ -9453,7 +9884,7 @@ COPY public.virtualization_cluster (created, last_updated, custom_field_data, id
 -- Data for Name: virtualization_clustergroup; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.virtualization_clustergroup (created, last_updated, custom_field_data, id, name, slug, description) FROM stdin;
+COPY public.virtualization_clustergroup (created, last_updated, custom_field_data, id, name, slug, description, owner_id, comments) FROM stdin;
 \.
 
 
@@ -9461,7 +9892,7 @@ COPY public.virtualization_clustergroup (created, last_updated, custom_field_dat
 -- Data for Name: virtualization_clustertype; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.virtualization_clustertype (created, last_updated, custom_field_data, id, name, slug, description) FROM stdin;
+COPY public.virtualization_clustertype (created, last_updated, custom_field_data, id, name, slug, description, owner_id, comments) FROM stdin;
 \.
 
 
@@ -9469,7 +9900,7 @@ COPY public.virtualization_clustertype (created, last_updated, custom_field_data
 -- Data for Name: virtualization_virtualdisk; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.virtualization_virtualdisk (id, created, last_updated, custom_field_data, name, description, size, virtual_machine_id) FROM stdin;
+COPY public.virtualization_virtualdisk (id, created, last_updated, custom_field_data, name, description, size, virtual_machine_id, owner_id) FROM stdin;
 \.
 
 
@@ -9477,7 +9908,7 @@ COPY public.virtualization_virtualdisk (id, created, last_updated, custom_field_
 -- Data for Name: virtualization_virtualmachine; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.virtualization_virtualmachine (created, last_updated, custom_field_data, id, local_context_data, name, status, vcpus, memory, disk, comments, cluster_id, platform_id, primary_ip4_id, primary_ip6_id, role_id, tenant_id, site_id, device_id, description, interface_count, config_template_id, virtual_disk_count, serial) FROM stdin;
+COPY public.virtualization_virtualmachine (created, last_updated, custom_field_data, id, local_context_data, name, status, vcpus, memory, disk, comments, cluster_id, platform_id, primary_ip4_id, primary_ip6_id, role_id, tenant_id, site_id, device_id, description, interface_count, config_template_id, virtual_disk_count, serial, owner_id, start_on_boot) FROM stdin;
 \.
 
 
@@ -9485,7 +9916,7 @@ COPY public.virtualization_virtualmachine (created, last_updated, custom_field_d
 -- Data for Name: virtualization_vminterface; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.virtualization_vminterface (created, last_updated, custom_field_data, id, enabled, mtu, mode, name, _name, description, parent_id, untagged_vlan_id, virtual_machine_id, bridge_id, vrf_id, vlan_translation_policy_id, qinq_svlan_id, primary_mac_address_id) FROM stdin;
+COPY public.virtualization_vminterface (created, last_updated, custom_field_data, id, enabled, mtu, mode, name, _name, description, parent_id, untagged_vlan_id, virtual_machine_id, bridge_id, vrf_id, vlan_translation_policy_id, qinq_svlan_id, primary_mac_address_id, owner_id) FROM stdin;
 \.
 
 
@@ -9501,7 +9932,7 @@ COPY public.virtualization_vminterface_tagged_vlans (id, vminterface_id, vlan_id
 -- Data for Name: vpn_ikepolicy; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.vpn_ikepolicy (id, created, last_updated, custom_field_data, description, comments, name, version, mode, preshared_key) FROM stdin;
+COPY public.vpn_ikepolicy (id, created, last_updated, custom_field_data, description, comments, name, version, mode, preshared_key, owner_id) FROM stdin;
 \.
 
 
@@ -9517,7 +9948,7 @@ COPY public.vpn_ikepolicy_proposals (id, ikepolicy_id, ikeproposal_id) FROM stdi
 -- Data for Name: vpn_ikeproposal; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.vpn_ikeproposal (id, created, last_updated, custom_field_data, description, comments, name, authentication_method, encryption_algorithm, authentication_algorithm, "group", sa_lifetime) FROM stdin;
+COPY public.vpn_ikeproposal (id, created, last_updated, custom_field_data, description, comments, name, authentication_method, encryption_algorithm, authentication_algorithm, "group", sa_lifetime, owner_id) FROM stdin;
 \.
 
 
@@ -9525,7 +9956,7 @@ COPY public.vpn_ikeproposal (id, created, last_updated, custom_field_data, descr
 -- Data for Name: vpn_ipsecpolicy; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.vpn_ipsecpolicy (id, created, last_updated, custom_field_data, description, comments, name, pfs_group) FROM stdin;
+COPY public.vpn_ipsecpolicy (id, created, last_updated, custom_field_data, description, comments, name, pfs_group, owner_id) FROM stdin;
 \.
 
 
@@ -9541,7 +9972,7 @@ COPY public.vpn_ipsecpolicy_proposals (id, ipsecpolicy_id, ipsecproposal_id) FRO
 -- Data for Name: vpn_ipsecprofile; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.vpn_ipsecprofile (id, created, last_updated, custom_field_data, description, comments, name, mode, ike_policy_id, ipsec_policy_id) FROM stdin;
+COPY public.vpn_ipsecprofile (id, created, last_updated, custom_field_data, description, comments, name, mode, ike_policy_id, ipsec_policy_id, owner_id) FROM stdin;
 \.
 
 
@@ -9549,7 +9980,7 @@ COPY public.vpn_ipsecprofile (id, created, last_updated, custom_field_data, desc
 -- Data for Name: vpn_ipsecproposal; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.vpn_ipsecproposal (id, created, last_updated, custom_field_data, description, comments, name, encryption_algorithm, authentication_algorithm, sa_lifetime_seconds, sa_lifetime_data) FROM stdin;
+COPY public.vpn_ipsecproposal (id, created, last_updated, custom_field_data, description, comments, name, encryption_algorithm, authentication_algorithm, sa_lifetime_seconds, sa_lifetime_data, owner_id) FROM stdin;
 \.
 
 
@@ -9557,7 +9988,7 @@ COPY public.vpn_ipsecproposal (id, created, last_updated, custom_field_data, des
 -- Data for Name: vpn_l2vpn; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.vpn_l2vpn (id, created, last_updated, custom_field_data, name, slug, type, identifier, description, tenant_id, comments, status) FROM stdin;
+COPY public.vpn_l2vpn (id, created, last_updated, custom_field_data, name, slug, type, identifier, description, tenant_id, comments, status, owner_id) FROM stdin;
 \.
 
 
@@ -9589,7 +10020,7 @@ COPY public.vpn_l2vpntermination (id, created, last_updated, custom_field_data, 
 -- Data for Name: vpn_tunnel; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.vpn_tunnel (id, created, last_updated, custom_field_data, description, comments, name, status, group_id, encapsulation, tunnel_id, ipsec_profile_id, tenant_id) FROM stdin;
+COPY public.vpn_tunnel (id, created, last_updated, custom_field_data, description, comments, name, status, group_id, encapsulation, tunnel_id, ipsec_profile_id, tenant_id, owner_id) FROM stdin;
 \.
 
 
@@ -9597,7 +10028,7 @@ COPY public.vpn_tunnel (id, created, last_updated, custom_field_data, descriptio
 -- Data for Name: vpn_tunnelgroup; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.vpn_tunnelgroup (id, created, last_updated, custom_field_data, name, slug, description) FROM stdin;
+COPY public.vpn_tunnelgroup (id, created, last_updated, custom_field_data, name, slug, description, owner_id, comments) FROM stdin;
 \.
 
 
@@ -9613,7 +10044,7 @@ COPY public.vpn_tunneltermination (id, created, last_updated, custom_field_data,
 -- Data for Name: wireless_wirelesslan; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.wireless_wirelesslan (id, created, last_updated, custom_field_data, ssid, group_id, description, auth_cipher, auth_psk, auth_type, vlan_id, tenant_id, comments, status, _location_id, _region_id, _site_id, _site_group_id, scope_id, scope_type_id) FROM stdin;
+COPY public.wireless_wirelesslan (id, created, last_updated, custom_field_data, ssid, group_id, description, auth_cipher, auth_psk, auth_type, vlan_id, tenant_id, comments, status, _location_id, _region_id, _site_id, _site_group_id, scope_id, scope_type_id, owner_id) FROM stdin;
 \.
 
 
@@ -9621,7 +10052,7 @@ COPY public.wireless_wirelesslan (id, created, last_updated, custom_field_data, 
 -- Data for Name: wireless_wirelesslangroup; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.wireless_wirelesslangroup (id, created, last_updated, custom_field_data, name, slug, description, lft, rght, tree_id, level, parent_id, comments) FROM stdin;
+COPY public.wireless_wirelesslangroup (id, created, last_updated, custom_field_data, name, slug, description, lft, rght, tree_id, level, parent_id, comments, owner_id) FROM stdin;
 \.
 
 
@@ -9629,7 +10060,7 @@ COPY public.wireless_wirelesslangroup (id, created, last_updated, custom_field_d
 -- Data for Name: wireless_wirelesslink; Type: TABLE DATA; Schema: public; Owner: nwa
 --
 
-COPY public.wireless_wirelesslink (id, created, last_updated, custom_field_data, ssid, status, description, auth_cipher, auth_psk, auth_type, _interface_a_device_id, _interface_b_device_id, interface_a_id, interface_b_id, tenant_id, comments, _abs_distance, distance, distance_unit) FROM stdin;
+COPY public.wireless_wirelesslink (id, created, last_updated, custom_field_data, ssid, status, description, auth_cipher, auth_psk, auth_type, _interface_a_device_id, _interface_b_device_id, interface_a_id, interface_b_id, tenant_id, comments, _abs_distance, distance, distance_unit, owner_id) FROM stdin;
 \.
 
 
@@ -9651,7 +10082,7 @@ SELECT pg_catalog.setval('public.auth_group_permissions_id_seq', 1, false);
 -- Name: auth_permission_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nwa
 --
 
-SELECT pg_catalog.setval('public.auth_permission_id_seq', 593, true);
+SELECT pg_catalog.setval('public.auth_permission_id_seq', 609, true);
 
 
 --
@@ -9763,7 +10194,7 @@ SELECT pg_catalog.setval('public.core_datasource_id_seq', 1, false);
 -- Name: core_job_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nwa
 --
 
-SELECT pg_catalog.setval('public.core_job_id_seq', 2, true);
+SELECT pg_catalog.setval('public.core_job_id_seq', 1, false);
 
 
 --
@@ -9998,6 +10429,20 @@ SELECT pg_catalog.setval('public.dcim_platform_id_seq', 1, false);
 
 
 --
+-- Name: dcim_portmapping_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nwa
+--
+
+SELECT pg_catalog.setval('public.dcim_portmapping_id_seq', 1, false);
+
+
+--
+-- Name: dcim_porttemplatemapping_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nwa
+--
+
+SELECT pg_catalog.setval('public.dcim_porttemplatemapping_id_seq', 1, false);
+
+
+--
 -- Name: dcim_powerfeed_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nwa
 --
 
@@ -10127,14 +10572,14 @@ SELECT pg_catalog.setval('public.dcim_virtualdevicecontext_id_seq', 1, false);
 -- Name: django_content_type_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nwa
 --
 
-SELECT pg_catalog.setval('public.django_content_type_id_seq', 150, true);
+SELECT pg_catalog.setval('public.django_content_type_id_seq', 158, true);
 
 
 --
 -- Name: django_migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nwa
 --
 
-SELECT pg_catalog.setval('public.django_migrations_id_seq', 704, true);
+SELECT pg_catalog.setval('public.django_migrations_id_seq', 736, true);
 
 
 --
@@ -10719,10 +11164,38 @@ SELECT pg_catalog.setval('public.users_objectpermission_object_types_id_seq', 1,
 
 
 --
+-- Name: users_owner_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nwa
+--
+
+SELECT pg_catalog.setval('public.users_owner_id_seq', 1, false);
+
+
+--
+-- Name: users_owner_user_groups_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nwa
+--
+
+SELECT pg_catalog.setval('public.users_owner_user_groups_id_seq', 1, false);
+
+
+--
+-- Name: users_owner_users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nwa
+--
+
+SELECT pg_catalog.setval('public.users_owner_users_id_seq', 1, false);
+
+
+--
+-- Name: users_ownergroup_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nwa
+--
+
+SELECT pg_catalog.setval('public.users_ownergroup_id_seq', 1, false);
+
+
+--
 -- Name: users_token_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nwa
 --
 
-SELECT pg_catalog.setval('public.users_token_id_seq', 1, true);
+SELECT pg_catalog.setval('public.users_token_id_seq', 1, false);
 
 
 --
@@ -11369,6 +11842,14 @@ ALTER TABLE ONLY public.dcim_cabletermination
 
 
 --
+-- Name: dcim_cabletermination dcim_cabletermination_unique_connector; Type: CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_cabletermination
+    ADD CONSTRAINT dcim_cabletermination_unique_connector UNIQUE (cable_id, cable_end, connector);
+
+
+--
 -- Name: dcim_cabletermination dcim_cabletermination_unique_termination; Type: CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -11617,14 +12098,6 @@ ALTER TABLE ONLY public.dcim_frontport
 
 
 --
--- Name: dcim_frontport dcim_frontport_unique_rear_port_position; Type: CONSTRAINT; Schema: public; Owner: nwa
---
-
-ALTER TABLE ONLY public.dcim_frontport
-    ADD CONSTRAINT dcim_frontport_unique_rear_port_position UNIQUE (rear_port_id, rear_port_position);
-
-
---
 -- Name: dcim_frontporttemplate dcim_frontporttemplate_pkey; Type: CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -11646,14 +12119,6 @@ ALTER TABLE ONLY public.dcim_frontporttemplate
 
 ALTER TABLE ONLY public.dcim_frontporttemplate
     ADD CONSTRAINT dcim_frontporttemplate_unique_module_type_name UNIQUE (module_type_id, name);
-
-
---
--- Name: dcim_frontporttemplate dcim_frontporttemplate_unique_rear_port_position; Type: CONSTRAINT; Schema: public; Owner: nwa
---
-
-ALTER TABLE ONLY public.dcim_frontporttemplate
-    ADD CONSTRAINT dcim_frontporttemplate_unique_rear_port_position UNIQUE (rear_port_id, rear_port_position);
 
 
 --
@@ -11990,6 +12455,54 @@ ALTER TABLE ONLY public.dcim_platform
 
 ALTER TABLE ONLY public.dcim_platform
     ADD CONSTRAINT dcim_platform_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: dcim_portmapping dcim_portmapping_pkey; Type: CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_portmapping
+    ADD CONSTRAINT dcim_portmapping_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: dcim_portmapping dcim_portmapping_unique_front_port_position; Type: CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_portmapping
+    ADD CONSTRAINT dcim_portmapping_unique_front_port_position UNIQUE (front_port_id, front_port_position);
+
+
+--
+-- Name: dcim_portmapping dcim_portmapping_unique_rear_port_position; Type: CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_portmapping
+    ADD CONSTRAINT dcim_portmapping_unique_rear_port_position UNIQUE (rear_port_id, rear_port_position);
+
+
+--
+-- Name: dcim_porttemplatemapping dcim_porttemplatemapping_pkey; Type: CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_porttemplatemapping
+    ADD CONSTRAINT dcim_porttemplatemapping_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: dcim_porttemplatemapping dcim_porttemplatemapping_unique_front_port_position; Type: CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_porttemplatemapping
+    ADD CONSTRAINT dcim_porttemplatemapping_unique_front_port_position UNIQUE (front_port_id, front_port_position);
+
+
+--
+-- Name: dcim_porttemplatemapping dcim_porttemplatemapping_unique_rear_port_position; Type: CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_porttemplatemapping
+    ADD CONSTRAINT dcim_porttemplatemapping_unique_rear_port_position UNIQUE (rear_port_id, rear_port_position);
 
 
 --
@@ -13777,6 +14290,70 @@ ALTER TABLE ONLY public.users_objectpermission
 
 
 --
+-- Name: users_owner users_owner_name_key; Type: CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.users_owner
+    ADD CONSTRAINT users_owner_name_key UNIQUE (name);
+
+
+--
+-- Name: users_owner users_owner_pkey; Type: CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.users_owner
+    ADD CONSTRAINT users_owner_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users_owner_user_groups users_owner_user_groups_owner_id_group_id_2def19f4_uniq; Type: CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.users_owner_user_groups
+    ADD CONSTRAINT users_owner_user_groups_owner_id_group_id_2def19f4_uniq UNIQUE (owner_id, group_id);
+
+
+--
+-- Name: users_owner_user_groups users_owner_user_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.users_owner_user_groups
+    ADD CONSTRAINT users_owner_user_groups_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users_owner_users users_owner_users_owner_id_user_id_07c6d81d_uniq; Type: CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.users_owner_users
+    ADD CONSTRAINT users_owner_users_owner_id_user_id_07c6d81d_uniq UNIQUE (owner_id, user_id);
+
+
+--
+-- Name: users_owner_users users_owner_users_pkey; Type: CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.users_owner_users
+    ADD CONSTRAINT users_owner_users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users_ownergroup users_ownergroup_name_key; Type: CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.users_ownergroup
+    ADD CONSTRAINT users_ownergroup_name_key UNIQUE (name);
+
+
+--
+-- Name: users_ownergroup users_ownergroup_pkey; Type: CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.users_ownergroup
+    ADD CONSTRAINT users_ownergroup_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: users_token users_token_key_key; Type: CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -13790,6 +14367,14 @@ ALTER TABLE ONLY public.users_token
 
 ALTER TABLE ONLY public.users_token
     ADD CONSTRAINT users_token_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users_token users_token_plaintext_key; Type: CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.users_token
+    ADD CONSTRAINT users_token_plaintext_key UNIQUE (plaintext);
 
 
 --
@@ -14321,6 +14906,20 @@ CREATE INDEX auth_user_user_permissions_user_id_a95ead1b ON public.users_user_us
 
 
 --
+-- Name: circuits_ci_termina_505dda_idx; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX circuits_ci_termina_505dda_idx ON public.circuits_circuittermination USING btree (termination_type_id, termination_id);
+
+
+--
+-- Name: circuits_circuit_owner_id_c330c2d0; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX circuits_circuit_owner_id_c330c2d0 ON public.circuits_circuit USING btree (owner_id);
+
+
+--
 -- Name: circuits_circuit_provider_account_id_a7c8f61b; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -14367,6 +14966,13 @@ CREATE INDEX circuits_circuit_type_id_1b9f485a ON public.circuits_circuit USING 
 --
 
 CREATE INDEX circuits_circuitgroup_name_ec8ac1e5_like ON public.circuits_circuitgroup USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: circuits_circuitgroup_owner_id_1edf4d64; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX circuits_circuitgroup_owner_id_1edf4d64 ON public.circuits_circuitgroup USING btree (owner_id);
 
 
 --
@@ -14461,6 +15067,13 @@ CREATE INDEX circuits_circuittype_name_8256ea9a_like ON public.circuits_circuitt
 
 
 --
+-- Name: circuits_circuittype_owner_id_9c3200c2; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX circuits_circuittype_owner_id_9c3200c2 ON public.circuits_circuittype USING btree (owner_id);
+
+
+--
 -- Name: circuits_circuittype_slug_9b4b3cf9_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -14489,10 +15102,24 @@ CREATE INDEX circuits_provider_name_8f2514f5_like ON public.circuits_provider US
 
 
 --
+-- Name: circuits_provider_owner_id_9f9749b4; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX circuits_provider_owner_id_9f9749b4 ON public.circuits_provider USING btree (owner_id);
+
+
+--
 -- Name: circuits_provider_slug_c3c0aa10_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
 CREATE INDEX circuits_provider_slug_c3c0aa10_like ON public.circuits_provider USING btree (slug varchar_pattern_ops);
+
+
+--
+-- Name: circuits_provideraccount_owner_id_6dcd4819; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX circuits_provideraccount_owner_id_6dcd4819 ON public.circuits_provideraccount USING btree (owner_id);
 
 
 --
@@ -14510,10 +15137,24 @@ CREATE UNIQUE INDEX circuits_provideraccount_unique_provider_name ON public.circ
 
 
 --
+-- Name: circuits_providernetwork_owner_id_caa8afde; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX circuits_providernetwork_owner_id_caa8afde ON public.circuits_providernetwork USING btree (owner_id);
+
+
+--
 -- Name: circuits_providernetwork_provider_id_7992236c; Type: INDEX; Schema: public; Owner: nwa
 --
 
 CREATE INDEX circuits_providernetwork_provider_id_7992236c ON public.circuits_providernetwork USING btree (provider_id);
+
+
+--
+-- Name: circuits_virtualcircuit_owner_id_89564a1e; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX circuits_virtualcircuit_owner_id_89564a1e ON public.circuits_virtualcircuit USING btree (owner_id);
 
 
 --
@@ -14559,6 +15200,13 @@ CREATE INDEX circuits_virtualcircuittype_name_5184db16_like ON public.circuits_v
 
 
 --
+-- Name: circuits_virtualcircuittype_owner_id_12a50b80; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX circuits_virtualcircuittype_owner_id_12a50b80 ON public.circuits_virtualcircuittype USING btree (owner_id);
+
+
+--
 -- Name: circuits_virtualcircuittype_slug_75d5c661_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -14591,6 +15239,13 @@ CREATE INDEX core_datafile_source_id_8d675be2 ON public.core_datafile USING btre
 --
 
 CREATE INDEX core_datasource_name_17788499_like ON public.core_datasource USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: core_datasource_owner_id_3f4e6ba5; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX core_datasource_owner_id_3f4e6ba5 ON public.core_datasource USING btree (owner_id);
 
 
 --
@@ -14682,6 +15337,13 @@ CREATE INDEX core_objectchange_time_800f60a5 ON public.core_objectchange USING b
 --
 
 CREATE INDEX core_objectchange_user_id_2b2142be ON public.core_objectchange USING btree (user_id);
+
+
+--
+-- Name: dcim_cable_owner_id_9cea1430; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_cable_owner_id_9cea1430 ON public.dcim_cable USING btree (owner_id);
 
 
 --
@@ -14783,6 +15445,13 @@ CREATE INDEX dcim_consoleport_module_id_d17b2519 ON public.dcim_consoleport USIN
 
 
 --
+-- Name: dcim_consoleport_owner_id_0648eae1; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_consoleport_owner_id_0648eae1 ON public.dcim_consoleport USING btree (owner_id);
+
+
+--
 -- Name: dcim_consoleporttemplate_device_type_id_075d4015; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -14846,6 +15515,13 @@ CREATE INDEX dcim_consoleserverport_module_id_d060cfc8 ON public.dcim_consoleser
 
 
 --
+-- Name: dcim_consoleserverport_owner_id_12b1a827; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_consoleserverport_owner_id_12b1a827 ON public.dcim_consoleserverport USING btree (owner_id);
+
+
+--
 -- Name: dcim_consoleserverporttemplate_device_type_id_579bdc86; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -14899,6 +15575,13 @@ CREATE INDEX dcim_device_device_type_id_d61b4086 ON public.dcim_device USING btr
 --
 
 CREATE INDEX dcim_device_location_id_11a7bedb ON public.dcim_device USING btree (location_id);
+
+
+--
+-- Name: dcim_device_owner_id_87378f76; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_device_owner_id_87378f76 ON public.dcim_device USING btree (owner_id);
 
 
 --
@@ -14979,6 +15662,13 @@ CREATE INDEX dcim_devicebay_device_id_0c8a1218 ON public.dcim_devicebay USING bt
 
 
 --
+-- Name: dcim_devicebay_owner_id_d7bcb3e6; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_devicebay_owner_id_d7bcb3e6 ON public.dcim_devicebay USING btree (owner_id);
+
+
+--
 -- Name: dcim_devicebaytemplate_device_type_id_f4b24a29; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -14997,6 +15687,13 @@ CREATE INDEX dcim_devicerole_config_template_id_5874002c ON public.dcim_devicero
 --
 
 CREATE UNIQUE INDEX dcim_devicerole_name ON public.dcim_devicerole USING btree (name) WHERE (parent_id IS NULL);
+
+
+--
+-- Name: dcim_devicerole_owner_id_fdcc527d; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_devicerole_owner_id_fdcc527d ON public.dcim_devicerole USING btree (owner_id);
 
 
 --
@@ -15035,6 +15732,13 @@ CREATE INDEX dcim_devicerole_tree_id_196b114c ON public.dcim_devicerole USING bt
 
 
 --
+-- Name: dcim_devicerole_tree_id_lfbf11; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_devicerole_tree_id_lfbf11 ON public.dcim_devicerole USING btree (tree_id, lft);
+
+
+--
 -- Name: dcim_devicetype_default_platform_id_1f6ff6ac; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -15046,6 +15750,13 @@ CREATE INDEX dcim_devicetype_default_platform_id_1f6ff6ac ON public.dcim_devicet
 --
 
 CREATE INDEX dcim_devicetype_manufacturer_id_a3e8029e ON public.dcim_devicetype USING btree (manufacturer_id);
+
+
+--
+-- Name: dcim_devicetype_owner_id_243048ed; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_devicetype_owner_id_243048ed ON public.dcim_devicetype USING btree (owner_id);
 
 
 --
@@ -15105,10 +15816,10 @@ CREATE INDEX dcim_frontport_module_id_952c3f9a ON public.dcim_frontport USING bt
 
 
 --
--- Name: dcim_frontport_rear_port_id_78df2532; Type: INDEX; Schema: public; Owner: nwa
+-- Name: dcim_frontport_owner_id_dfb61151; Type: INDEX; Schema: public; Owner: nwa
 --
 
-CREATE INDEX dcim_frontport_rear_port_id_78df2532 ON public.dcim_frontport USING btree (rear_port_id);
+CREATE INDEX dcim_frontport_owner_id_dfb61151 ON public.dcim_frontport USING btree (owner_id);
 
 
 --
@@ -15123,13 +15834,6 @@ CREATE INDEX dcim_frontporttemplate_device_type_id_f088b952 ON public.dcim_front
 --
 
 CREATE INDEX dcim_frontporttemplate_module_type_id_66851ff9 ON public.dcim_frontporttemplate USING btree (module_type_id);
-
-
---
--- Name: dcim_frontporttemplate_rear_port_id_9775411b; Type: INDEX; Schema: public; Owner: nwa
---
-
-CREATE INDEX dcim_frontporttemplate_rear_port_id_9775411b ON public.dcim_frontporttemplate USING btree (rear_port_id);
 
 
 --
@@ -15193,6 +15897,13 @@ CREATE INDEX dcim_interface_lag_id_ea1a1d12 ON public.dcim_interface USING btree
 --
 
 CREATE INDEX dcim_interface_module_id_05ca2da5 ON public.dcim_interface USING btree (module_id);
+
+
+--
+-- Name: dcim_interface_owner_id_3ae797e2; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_interface_owner_id_3ae797e2 ON public.dcim_interface USING btree (owner_id);
 
 
 --
@@ -15364,6 +16075,13 @@ CREATE INDEX dcim_inventoryitem_manufacturer_id_dcd1b78a ON public.dcim_inventor
 
 
 --
+-- Name: dcim_inventoryitem_owner_id_ad4332eb; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_inventoryitem_owner_id_ad4332eb ON public.dcim_inventoryitem USING btree (owner_id);
+
+
+--
 -- Name: dcim_inventoryitem_parent_id_7ebcd457; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -15378,6 +16096,13 @@ CREATE INDEX dcim_inventoryitem_role_id_2bcfcb04 ON public.dcim_inventoryitem US
 
 
 --
+-- Name: dcim_inventoryitem_tree_id975c; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_inventoryitem_tree_id975c ON public.dcim_inventoryitem USING btree (tree_id, lft);
+
+
+--
 -- Name: dcim_inventoryitem_tree_id_4676ade2; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -15389,6 +16114,13 @@ CREATE INDEX dcim_inventoryitem_tree_id_4676ade2 ON public.dcim_inventoryitem US
 --
 
 CREATE INDEX dcim_inventoryitemrole_name_4c8cfe6d_like ON public.dcim_inventoryitemrole USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: dcim_inventoryitemrole_owner_id_067442e9; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_inventoryitemrole_owner_id_067442e9 ON public.dcim_inventoryitemrole USING btree (owner_id);
 
 
 --
@@ -15441,10 +16173,24 @@ CREATE INDEX dcim_inventoryitemtemplate_tree_id_75ebcb8e ON public.dcim_inventor
 
 
 --
+-- Name: dcim_inventoryitemtemplatedee0; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_inventoryitemtemplatedee0 ON public.dcim_inventoryitemtemplate USING btree (tree_id, lft);
+
+
+--
 -- Name: dcim_location_name; Type: INDEX; Schema: public; Owner: nwa
 --
 
 CREATE UNIQUE INDEX dcim_location_name ON public.dcim_location USING btree (site_id, name) WHERE (parent_id IS NULL);
+
+
+--
+-- Name: dcim_location_owner_id_919a8713; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_location_owner_id_919a8713 ON public.dcim_location USING btree (owner_id);
 
 
 --
@@ -15497,6 +16243,20 @@ CREATE INDEX dcim_location_tree_id_5089ef14 ON public.dcim_location USING btree 
 
 
 --
+-- Name: dcim_location_tree_id_lft_idx; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_location_tree_id_lft_idx ON public.dcim_location USING btree (tree_id, lft);
+
+
+--
+-- Name: dcim_macadd_assigne_54115d_idx; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_macadd_assigne_54115d_idx ON public.dcim_macaddress USING btree (assigned_object_type_id, assigned_object_id);
+
+
+--
 -- Name: dcim_macaddress_assigned_object_type_id_28814a20; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -15504,10 +16264,24 @@ CREATE INDEX dcim_macaddress_assigned_object_type_id_28814a20 ON public.dcim_mac
 
 
 --
+-- Name: dcim_macaddress_owner_id_29ba2f60; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_macaddress_owner_id_29ba2f60 ON public.dcim_macaddress USING btree (owner_id);
+
+
+--
 -- Name: dcim_manufacturer_name_841fcd92_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
 CREATE INDEX dcim_manufacturer_name_841fcd92_like ON public.dcim_manufacturer USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: dcim_manufacturer_owner_id_8d78661f; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_manufacturer_owner_id_8d78661f ON public.dcim_manufacturer USING btree (owner_id);
 
 
 --
@@ -15536,6 +16310,13 @@ CREATE INDEX dcim_module_device_id_53cfd5be ON public.dcim_module USING btree (d
 --
 
 CREATE INDEX dcim_module_module_type_id_a50b39fc ON public.dcim_module USING btree (module_type_id);
+
+
+--
+-- Name: dcim_module_owner_id_ee6f1ef4; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_module_owner_id_ee6f1ef4 ON public.dcim_module USING btree (owner_id);
 
 
 --
@@ -15574,6 +16355,13 @@ CREATE INDEX dcim_modulebay_module_id_a21ddd9a ON public.dcim_modulebay USING bt
 
 
 --
+-- Name: dcim_modulebay_owner_id_311f58c6; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_modulebay_owner_id_311f58c6 ON public.dcim_modulebay USING btree (owner_id);
+
+
+--
 -- Name: dcim_modulebay_parent_id_e483f9b7; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -15585,6 +16373,13 @@ CREATE INDEX dcim_modulebay_parent_id_e483f9b7 ON public.dcim_modulebay USING bt
 --
 
 CREATE INDEX dcim_modulebay_tree_id_223db581 ON public.dcim_modulebay USING btree (tree_id);
+
+
+--
+-- Name: dcim_modulebay_tree_id_lft_idx; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_modulebay_tree_id_lft_idx ON public.dcim_modulebay USING btree (tree_id, lft);
 
 
 --
@@ -15609,6 +16404,13 @@ CREATE INDEX dcim_moduletype_manufacturer_id_7347392e ON public.dcim_moduletype 
 
 
 --
+-- Name: dcim_moduletype_owner_id_2ea2fd3b; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_moduletype_owner_id_2ea2fd3b ON public.dcim_moduletype USING btree (owner_id);
+
+
+--
 -- Name: dcim_moduletype_profile_id_62b5d02d; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -15620,6 +16422,13 @@ CREATE INDEX dcim_moduletype_profile_id_62b5d02d ON public.dcim_moduletype USING
 --
 
 CREATE INDEX dcim_moduletypeprofile_name_1709c36e_like ON public.dcim_moduletypeprofile USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: dcim_moduletypeprofile_owner_id_c4488ff6; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_moduletypeprofile_owner_id_c4488ff6 ON public.dcim_moduletypeprofile USING btree (owner_id);
 
 
 --
@@ -15641,6 +16450,13 @@ CREATE INDEX dcim_platform_manufacturer_id_83f72d3d ON public.dcim_platform USIN
 --
 
 CREATE UNIQUE INDEX dcim_platform_name ON public.dcim_platform USING btree (name) WHERE (manufacturer_id IS NULL);
+
+
+--
+-- Name: dcim_platform_owner_id_0990eb87; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_platform_owner_id_0990eb87 ON public.dcim_platform USING btree (owner_id);
 
 
 --
@@ -15679,6 +16495,62 @@ CREATE INDEX dcim_platform_tree_id_ca32aeb8 ON public.dcim_platform USING btree 
 
 
 --
+-- Name: dcim_platform_tree_id_lft_idx; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_platform_tree_id_lft_idx ON public.dcim_platform USING btree (tree_id, lft);
+
+
+--
+-- Name: dcim_portmapping_device_id_eb86e378; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_portmapping_device_id_eb86e378 ON public.dcim_portmapping USING btree (device_id);
+
+
+--
+-- Name: dcim_portmapping_front_port_id_d8413d45; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_portmapping_front_port_id_d8413d45 ON public.dcim_portmapping USING btree (front_port_id);
+
+
+--
+-- Name: dcim_portmapping_rear_port_id_dc3fb4b8; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_portmapping_rear_port_id_dc3fb4b8 ON public.dcim_portmapping USING btree (rear_port_id);
+
+
+--
+-- Name: dcim_porttemplatemapping_device_type_id_dede0eeb; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_porttemplatemapping_device_type_id_dede0eeb ON public.dcim_porttemplatemapping USING btree (device_type_id);
+
+
+--
+-- Name: dcim_porttemplatemapping_front_port_id_090c3c11; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_porttemplatemapping_front_port_id_090c3c11 ON public.dcim_porttemplatemapping USING btree (front_port_id);
+
+
+--
+-- Name: dcim_porttemplatemapping_module_type_id_3a84e529; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_porttemplatemapping_module_type_id_3a84e529 ON public.dcim_porttemplatemapping USING btree (module_type_id);
+
+
+--
+-- Name: dcim_porttemplatemapping_rear_port_id_93a9b08f; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_porttemplatemapping_rear_port_id_93a9b08f ON public.dcim_porttemplatemapping USING btree (rear_port_id);
+
+
+--
 -- Name: dcim_powerfeed__path_id_a1ea1f28; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -15690,6 +16562,13 @@ CREATE INDEX dcim_powerfeed__path_id_a1ea1f28 ON public.dcim_powerfeed USING btr
 --
 
 CREATE INDEX dcim_powerfeed_cable_id_ec44c4f8 ON public.dcim_powerfeed USING btree (cable_id);
+
+
+--
+-- Name: dcim_powerfeed_owner_id_97320081; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_powerfeed_owner_id_97320081 ON public.dcim_powerfeed USING btree (owner_id);
 
 
 --
@@ -15763,6 +16642,13 @@ CREATE INDEX dcim_poweroutlet_module_id_032f5af2 ON public.dcim_poweroutlet USIN
 
 
 --
+-- Name: dcim_poweroutlet_owner_id_0806d01d; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_poweroutlet_owner_id_0806d01d ON public.dcim_poweroutlet USING btree (owner_id);
+
+
+--
 -- Name: dcim_poweroutlet_power_port_id_9bdf4163; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -15795,6 +16681,13 @@ CREATE INDEX dcim_poweroutlettemplate_power_port_id_c0fb0c42 ON public.dcim_powe
 --
 
 CREATE INDEX dcim_powerpanel_location_id_474b60f8 ON public.dcim_powerpanel USING btree (location_id);
+
+
+--
+-- Name: dcim_powerpanel_owner_id_11e7d421; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_powerpanel_owner_id_11e7d421 ON public.dcim_powerpanel USING btree (owner_id);
 
 
 --
@@ -15854,6 +16747,13 @@ CREATE INDEX dcim_powerport_module_id_d0c27534 ON public.dcim_powerport USING bt
 
 
 --
+-- Name: dcim_powerport_owner_id_b83ff931; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_powerport_owner_id_b83ff931 ON public.dcim_powerport USING btree (owner_id);
+
+
+--
 -- Name: dcim_powerporttemplate_device_type_id_1ddfbfcc; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -15879,6 +16779,13 @@ CREATE INDEX dcim_rack_asset_tag_f88408e5_like ON public.dcim_rack USING btree (
 --
 
 CREATE INDEX dcim_rack_location_id_5f63ec31 ON public.dcim_rack USING btree (location_id);
+
+
+--
+-- Name: dcim_rack_owner_id_7a5532fc; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_rack_owner_id_7a5532fc ON public.dcim_rack USING btree (owner_id);
 
 
 --
@@ -15910,6 +16817,13 @@ CREATE INDEX dcim_rack_tenant_id_7cdf3725 ON public.dcim_rack USING btree (tenan
 
 
 --
+-- Name: dcim_rackreservation_owner_id_12c19e94; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_rackreservation_owner_id_12c19e94 ON public.dcim_rackreservation USING btree (owner_id);
+
+
+--
 -- Name: dcim_rackreservation_rack_id_1ebbaa9b; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -15938,6 +16852,13 @@ CREATE INDEX dcim_rackrole_name_9077cfcc_like ON public.dcim_rackrole USING btre
 
 
 --
+-- Name: dcim_rackrole_owner_id_fb6f0b77; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_rackrole_owner_id_fb6f0b77 ON public.dcim_rackrole USING btree (owner_id);
+
+
+--
 -- Name: dcim_rackrole_slug_40bbcd3a_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -15949,6 +16870,13 @@ CREATE INDEX dcim_rackrole_slug_40bbcd3a_like ON public.dcim_rackrole USING btre
 --
 
 CREATE INDEX dcim_racktype_manufacturer_id_d46a05c6 ON public.dcim_racktype USING btree (manufacturer_id);
+
+
+--
+-- Name: dcim_racktype_owner_id_ce0a0d75; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_racktype_owner_id_ce0a0d75 ON public.dcim_racktype USING btree (owner_id);
 
 
 --
@@ -16001,6 +16929,13 @@ CREATE INDEX dcim_rearport_module_id_9a7b7e91 ON public.dcim_rearport USING btre
 
 
 --
+-- Name: dcim_rearport_owner_id_51174512; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_rearport_owner_id_51174512 ON public.dcim_rearport USING btree (owner_id);
+
+
+--
 -- Name: dcim_rearporttemplate_device_type_id_6a02fd01; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -16019,6 +16954,13 @@ CREATE INDEX dcim_rearporttemplate_module_type_id_4d970e5b ON public.dcim_rearpo
 --
 
 CREATE UNIQUE INDEX dcim_region_name ON public.dcim_region USING btree (name) WHERE (parent_id IS NULL);
+
+
+--
+-- Name: dcim_region_owner_id_7e9d3adf; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_region_owner_id_7e9d3adf ON public.dcim_region USING btree (owner_id);
 
 
 --
@@ -16057,6 +16999,13 @@ CREATE INDEX dcim_region_tree_id_a09ea9a7 ON public.dcim_region USING btree (tre
 
 
 --
+-- Name: dcim_region_tree_id_lft_idx; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_region_tree_id_lft_idx ON public.dcim_region USING btree (tree_id, lft);
+
+
+--
 -- Name: dcim_site_asns_asn_id_3cfd0f00; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -16085,6 +17034,13 @@ CREATE INDEX dcim_site_name_8fe66c76_like ON public.dcim_site USING btree (name 
 
 
 --
+-- Name: dcim_site_owner_id_ef94687e; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_site_owner_id_ef94687e ON public.dcim_site USING btree (owner_id);
+
+
+--
 -- Name: dcim_site_region_id_45210932; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -16110,6 +17066,13 @@ CREATE INDEX dcim_site_tenant_id_15e7df63 ON public.dcim_site USING btree (tenan
 --
 
 CREATE UNIQUE INDEX dcim_sitegroup_name ON public.dcim_sitegroup USING btree (name) WHERE (parent_id IS NULL);
+
+
+--
+-- Name: dcim_sitegroup_owner_id_50283a64; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_sitegroup_owner_id_50283a64 ON public.dcim_sitegroup USING btree (owner_id);
 
 
 --
@@ -16148,10 +17111,31 @@ CREATE INDEX dcim_sitegroup_tree_id_e76dc999 ON public.dcim_sitegroup USING btre
 
 
 --
+-- Name: dcim_sitegroup_tree_id_lft_idx; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_sitegroup_tree_id_lft_idx ON public.dcim_sitegroup USING btree (tree_id, lft);
+
+
+--
+-- Name: dcim_virtualchassis_owner_id_76116efe; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_virtualchassis_owner_id_76116efe ON public.dcim_virtualchassis USING btree (owner_id);
+
+
+--
 -- Name: dcim_virtualdevicecontext_device_id_4f39274b; Type: INDEX; Schema: public; Owner: nwa
 --
 
 CREATE INDEX dcim_virtualdevicecontext_device_id_4f39274b ON public.dcim_virtualdevicecontext USING btree (device_id);
+
+
+--
+-- Name: dcim_virtualdevicecontext_owner_id_33c19ef7; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX dcim_virtualdevicecontext_owner_id_33c19ef7 ON public.dcim_virtualdevicecontext USING btree (owner_id);
 
 
 --
@@ -16302,6 +17286,13 @@ CREATE INDEX extras_configcontext_name_4bbfe25d_like ON public.extras_configcont
 
 
 --
+-- Name: extras_configcontext_owner_id_6c8d9a06; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX extras_configcontext_owner_id_6c8d9a06 ON public.extras_configcontext USING btree (owner_id);
+
+
+--
 -- Name: extras_configcontext_platforms_configcontext_id_2a516699; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -16442,6 +17433,13 @@ CREATE INDEX extras_configcontextprofile_name_070de83b_like ON public.extras_con
 
 
 --
+-- Name: extras_configcontextprofile_owner_id_6b1a975e; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX extras_configcontextprofile_owner_id_6b1a975e ON public.extras_configcontextprofile USING btree (owner_id);
+
+
+--
 -- Name: extras_configtemplate_data_file_id_20c7cff4; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -16453,6 +17451,13 @@ CREATE INDEX extras_configtemplate_data_file_id_20c7cff4 ON public.extras_config
 --
 
 CREATE INDEX extras_configtemplate_data_source_id_f9d26d5d ON public.extras_configtemplate USING btree (data_source_id);
+
+
+--
+-- Name: extras_configtemplate_owner_id_0925c336; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX extras_configtemplate_owner_id_0925c336 ON public.extras_configtemplate USING btree (owner_id);
 
 
 --
@@ -16491,10 +17496,24 @@ CREATE INDEX extras_customfield_object_type_id_489f2239 ON public.extras_customf
 
 
 --
+-- Name: extras_customfield_owner_id_558f69a3; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX extras_customfield_owner_id_558f69a3 ON public.extras_customfield USING btree (owner_id);
+
+
+--
 -- Name: extras_customfieldchoiceset_name_963e63ea_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
 CREATE INDEX extras_customfieldchoiceset_name_963e63ea_like ON public.extras_customfieldchoiceset USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: extras_customfieldchoiceset_owner_id_02d6fc4d; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX extras_customfieldchoiceset_owner_id_02d6fc4d ON public.extras_customfieldchoiceset USING btree (owner_id);
 
 
 --
@@ -16516,6 +17535,13 @@ CREATE INDEX extras_customlink_content_types_customlink_id_229ba2bc ON public.ex
 --
 
 CREATE INDEX extras_customlink_name_daed2d18_like ON public.extras_customlink USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: extras_customlink_owner_id_b4449049; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX extras_customlink_owner_id_b4449049 ON public.extras_customlink USING btree (owner_id);
 
 
 --
@@ -16554,6 +17580,13 @@ CREATE INDEX extras_eventrule_name_899453c6_like ON public.extras_eventrule USIN
 
 
 --
+-- Name: extras_eventrule_owner_id_a4c56a12; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX extras_eventrule_owner_id_a4c56a12 ON public.extras_eventrule USING btree (owner_id);
+
+
+--
 -- Name: extras_exporttemplate_content_types_contenttype_id_d80a5164; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -16579,6 +17612,13 @@ CREATE INDEX extras_exporttemplate_data_file_id_40a91ef8 ON public.extras_export
 --
 
 CREATE INDEX extras_exporttemplate_data_source_id_d61d0feb ON public.extras_exporttemplate USING btree (data_source_id);
+
+
+--
+-- Name: extras_exporttemplate_owner_id_a690b184; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX extras_exporttemplate_owner_id_a690b184 ON public.extras_exporttemplate USING btree (owner_id);
 
 
 --
@@ -16694,6 +17734,13 @@ CREATE INDEX extras_savedfilter_name_8a4bbd09_like ON public.extras_savedfilter 
 
 
 --
+-- Name: extras_savedfilter_owner_id_e022149a; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX extras_savedfilter_owner_id_e022149a ON public.extras_savedfilter USING btree (owner_id);
+
+
+--
 -- Name: extras_savedfilter_slug_4f93a959_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -16771,6 +17818,13 @@ CREATE INDEX extras_tag_object_types_tag_id_2e1aab29 ON public.extras_tag_object
 
 
 --
+-- Name: extras_tag_owner_id_ebb991ad; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX extras_tag_owner_id_ebb991ad ON public.extras_tag USING btree (owner_id);
+
+
+--
 -- Name: extras_tag_slug_aaa5b7e9_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -16813,6 +17867,20 @@ CREATE INDEX extras_webhook_name_82cf60b5_like ON public.extras_webhook USING bt
 
 
 --
+-- Name: extras_webhook_owner_id_bcf756a8; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX extras_webhook_owner_id_bcf756a8 ON public.extras_webhook USING btree (owner_id);
+
+
+--
+-- Name: ipam_aggregate_owner_id_fdaa939f; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_aggregate_owner_id_fdaa939f ON public.ipam_aggregate USING btree (owner_id);
+
+
+--
 -- Name: ipam_aggregate_rir_id_ef7a27bd; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -16824,6 +17892,13 @@ CREATE INDEX ipam_aggregate_rir_id_ef7a27bd ON public.ipam_aggregate USING btree
 --
 
 CREATE INDEX ipam_aggregate_tenant_id_637dd1a1 ON public.ipam_aggregate USING btree (tenant_id);
+
+
+--
+-- Name: ipam_asn_owner_id_2ab253b3; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_asn_owner_id_2ab253b3 ON public.ipam_asn USING btree (owner_id);
 
 
 --
@@ -16845,6 +17920,13 @@ CREATE INDEX ipam_asn_tenant_id_07e8188e ON public.ipam_asn USING btree (tenant_
 --
 
 CREATE INDEX ipam_asnrange_name_c7585e73_like ON public.ipam_asnrange USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: ipam_asnrange_owner_id_a943e984; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_asnrange_owner_id_a943e984 ON public.ipam_asnrange USING btree (owner_id);
 
 
 --
@@ -16873,6 +17955,13 @@ CREATE INDEX ipam_asnrange_tenant_id_ed8f80b7 ON public.ipam_asnrange USING btre
 --
 
 CREATE INDEX ipam_fhrpgr_interfa_2acc3f_idx ON public.ipam_fhrpgroupassignment USING btree (interface_type_id, interface_id);
+
+
+--
+-- Name: ipam_fhrpgroup_owner_id_f5209119; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_fhrpgroup_owner_id_f5209119 ON public.ipam_fhrpgroup USING btree (owner_id);
 
 
 --
@@ -16918,6 +18007,13 @@ CREATE INDEX ipam_ipaddress_nat_inside_id_a45fb7c5 ON public.ipam_ipaddress USIN
 
 
 --
+-- Name: ipam_ipaddress_owner_id_47736b63; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_ipaddress_owner_id_47736b63 ON public.ipam_ipaddress USING btree (owner_id);
+
+
+--
 -- Name: ipam_ipaddress_tenant_id_ac55acfd; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -16929,6 +18025,13 @@ CREATE INDEX ipam_ipaddress_tenant_id_ac55acfd ON public.ipam_ipaddress USING bt
 --
 
 CREATE INDEX ipam_ipaddress_vrf_id_51fcc59b ON public.ipam_ipaddress USING btree (vrf_id);
+
+
+--
+-- Name: ipam_iprange_owner_id_b327afb7; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_iprange_owner_id_b327afb7 ON public.ipam_iprange USING btree (owner_id);
 
 
 --
@@ -17016,10 +18119,24 @@ CREATE INDEX ipam_prefix_gist_idx ON public.ipam_prefix USING gist (prefix inet_
 
 
 --
+-- Name: ipam_prefix_owner_id_12d43bc8; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_prefix_owner_id_12d43bc8 ON public.ipam_prefix USING btree (owner_id);
+
+
+--
 -- Name: ipam_prefix_role_id_0a98d415; Type: INDEX; Schema: public; Owner: nwa
 --
 
 CREATE INDEX ipam_prefix_role_id_0a98d415 ON public.ipam_prefix USING btree (role_id);
+
+
+--
+-- Name: ipam_prefix_scope_t_fe84a6_idx; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_prefix_scope_t_fe84a6_idx ON public.ipam_prefix USING btree (scope_type_id, scope_id);
 
 
 --
@@ -17058,6 +18175,13 @@ CREATE INDEX ipam_rir_name_64a71982_like ON public.ipam_rir USING btree (name va
 
 
 --
+-- Name: ipam_rir_owner_id_172cc053; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_rir_owner_id_172cc053 ON public.ipam_rir USING btree (owner_id);
+
+
+--
 -- Name: ipam_rir_slug_ff1a369a_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -17072,6 +18196,13 @@ CREATE INDEX ipam_role_name_13784849_like ON public.ipam_role USING btree (name 
 
 
 --
+-- Name: ipam_role_owner_id_b42367ab; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_role_owner_id_b42367ab ON public.ipam_role USING btree (owner_id);
+
+
+--
 -- Name: ipam_role_slug_309ca14c_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -17083,6 +18214,13 @@ CREATE INDEX ipam_role_slug_309ca14c_like ON public.ipam_role USING btree (slug 
 --
 
 CREATE INDEX ipam_routetarget_name_212be79f_like ON public.ipam_routetarget USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: ipam_routetarget_owner_id_e968953a; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_routetarget_owner_id_e968953a ON public.ipam_routetarget USING btree (owner_id);
 
 
 --
@@ -17114,6 +18252,13 @@ CREATE INDEX ipam_service_ipaddresses_service_id_ae26b9ab ON public.ipam_service
 
 
 --
+-- Name: ipam_service_owner_id_ab1c827a; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_service_owner_id_ab1c827a ON public.ipam_service USING btree (owner_id);
+
+
+--
 -- Name: ipam_service_parent_object_type_id_8e76bfb3; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -17128,10 +18273,24 @@ CREATE INDEX ipam_servicetemplate_name_1a2f3410_like ON public.ipam_servicetempl
 
 
 --
+-- Name: ipam_servicetemplate_owner_id_bd152acb; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_servicetemplate_owner_id_bd152acb ON public.ipam_servicetemplate USING btree (owner_id);
+
+
+--
 -- Name: ipam_vlan_group_id_88cbfa62; Type: INDEX; Schema: public; Owner: nwa
 --
 
 CREATE INDEX ipam_vlan_group_id_88cbfa62 ON public.ipam_vlan USING btree (group_id);
+
+
+--
+-- Name: ipam_vlan_owner_id_ead15d2b; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_vlan_owner_id_ead15d2b ON public.ipam_vlan USING btree (owner_id);
 
 
 --
@@ -17170,6 +18329,13 @@ CREATE INDEX ipam_vlangr_scope_t_9da557_idx ON public.ipam_vlangroup USING btree
 
 
 --
+-- Name: ipam_vlangroup_owner_id_3a50b541; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_vlangroup_owner_id_3a50b541 ON public.ipam_vlangroup USING btree (owner_id);
+
+
+--
 -- Name: ipam_vlangroup_scope_type_id_6606a755; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -17205,6 +18371,13 @@ CREATE INDEX ipam_vlantranslationpolicy_name_17e0a007_like ON public.ipam_vlantr
 
 
 --
+-- Name: ipam_vlantranslationpolicy_owner_id_f4e1cb82; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_vlantranslationpolicy_owner_id_f4e1cb82 ON public.ipam_vlantranslationpolicy USING btree (owner_id);
+
+
+--
 -- Name: ipam_vlantranslationrule_policy_id_09157735; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -17237,6 +18410,13 @@ CREATE INDEX ipam_vrf_import_targets_routetarget_id_0e05b144 ON public.ipam_vrf_
 --
 
 CREATE INDEX ipam_vrf_import_targets_vrf_id_ed491b19 ON public.ipam_vrf_import_targets USING btree (vrf_id);
+
+
+--
+-- Name: ipam_vrf_owner_id_9b591781; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX ipam_vrf_owner_id_9b591781 ON public.ipam_vrf USING btree (owner_id);
 
 
 --
@@ -17380,6 +18560,13 @@ CREATE INDEX tenancy_contact_groups_contactgroup_id_5c8d6c5a ON public.tenancy_c
 
 
 --
+-- Name: tenancy_contact_owner_id_9d93abff; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX tenancy_contact_owner_id_9d93abff ON public.tenancy_contact USING btree (owner_id);
+
+
+--
 -- Name: tenancy_contactassignment_contact_id_5302baf0; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -17398,6 +18585,13 @@ CREATE INDEX tenancy_contactassignment_content_type_id_0c3f0c67 ON public.tenanc
 --
 
 CREATE INDEX tenancy_contactassignment_role_id_fc08bfb5 ON public.tenancy_contactassignment USING btree (role_id);
+
+
+--
+-- Name: tenancy_contactgroup_owner_id_4bb044c2; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX tenancy_contactgroup_owner_id_4bb044c2 ON public.tenancy_contactgroup USING btree (owner_id);
 
 
 --
@@ -17422,6 +18616,13 @@ CREATE INDEX tenancy_contactgroup_slug_5b0f3e75_like ON public.tenancy_contactgr
 
 
 --
+-- Name: tenancy_contactgroup_tree_d2ce; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX tenancy_contactgroup_tree_d2ce ON public.tenancy_contactgroup USING btree (tree_id, lft);
+
+
+--
 -- Name: tenancy_contactgroup_tree_id_57456c98; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -17436,6 +18637,13 @@ CREATE INDEX tenancy_contactrole_name_44b01a1f_like ON public.tenancy_contactrol
 
 
 --
+-- Name: tenancy_contactrole_owner_id_3677102e; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX tenancy_contactrole_owner_id_3677102e ON public.tenancy_contactrole USING btree (owner_id);
+
+
+--
 -- Name: tenancy_contactrole_slug_c5837d7d_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -17447,6 +18655,13 @@ CREATE INDEX tenancy_contactrole_slug_c5837d7d_like ON public.tenancy_contactrol
 --
 
 CREATE INDEX tenancy_tenant_group_id_7daef6f4 ON public.tenancy_tenant USING btree (group_id);
+
+
+--
+-- Name: tenancy_tenant_owner_id_02823f0b; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX tenancy_tenant_owner_id_02823f0b ON public.tenancy_tenant USING btree (owner_id);
 
 
 --
@@ -17485,6 +18700,13 @@ CREATE INDEX tenancy_tenantgroup_name_53363199_like ON public.tenancy_tenantgrou
 
 
 --
+-- Name: tenancy_tenantgroup_owner_id_a4f64bbd; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX tenancy_tenantgroup_owner_id_a4f64bbd ON public.tenancy_tenantgroup USING btree (owner_id);
+
+
+--
 -- Name: tenancy_tenantgroup_parent_id_2542fc18; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -17506,10 +18728,24 @@ CREATE INDEX tenancy_tenantgroup_tree_id_769a98bf ON public.tenancy_tenantgroup 
 
 
 --
+-- Name: tenancy_tenantgroup_tree_ifebc; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX tenancy_tenantgroup_tree_ifebc ON public.tenancy_tenantgroup USING btree (tree_id, lft);
+
+
+--
 -- Name: thumbnail_kvstore_key_3f850178_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
 CREATE INDEX thumbnail_kvstore_key_3f850178_like ON public.thumbnail_kvstore USING btree (key varchar_pattern_ops);
+
+
+--
+-- Name: unique_active_config_revision; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE UNIQUE INDEX unique_active_config_revision ON public.core_configrevision USING btree (active) WHERE active;
 
 
 --
@@ -17562,10 +18798,66 @@ CREATE INDEX users_objectpermission_object_types_contenttype_id_594b1cc7 ON publ
 
 
 --
+-- Name: users_owner_group_id_197ecf75; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX users_owner_group_id_197ecf75 ON public.users_owner USING btree (group_id);
+
+
+--
+-- Name: users_owner_name_b9fd4685_like; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX users_owner_name_b9fd4685_like ON public.users_owner USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: users_owner_user_groups_group_id_7f7a78f5; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX users_owner_user_groups_group_id_7f7a78f5 ON public.users_owner_user_groups USING btree (group_id);
+
+
+--
+-- Name: users_owner_user_groups_owner_id_1d847a5b; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX users_owner_user_groups_owner_id_1d847a5b ON public.users_owner_user_groups USING btree (owner_id);
+
+
+--
+-- Name: users_owner_users_owner_id_efc9b423; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX users_owner_users_owner_id_efc9b423 ON public.users_owner_users USING btree (owner_id);
+
+
+--
+-- Name: users_owner_users_user_id_2b2e2446; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX users_owner_users_user_id_2b2e2446 ON public.users_owner_users USING btree (user_id);
+
+
+--
+-- Name: users_ownergroup_name_903b8fd1_like; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX users_ownergroup_name_903b8fd1_like ON public.users_ownergroup USING btree (name varchar_pattern_ops);
+
+
+--
 -- Name: users_token_key_820deccd_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
 CREATE INDEX users_token_key_820deccd_like ON public.users_token USING btree (key varchar_pattern_ops);
+
+
+--
+-- Name: users_token_plaintext_46c6f315_like; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX users_token_plaintext_46c6f315_like ON public.users_token USING btree (plaintext varchar_pattern_ops);
 
 
 --
@@ -17594,6 +18886,13 @@ CREATE INDEX users_user_object_permissions_user_id_9d647aac ON public.users_user
 --
 
 CREATE INDEX users_user_username_06e46fe6_like ON public.users_user USING btree (username varchar_pattern_ops);
+
+
+--
+-- Name: virtualizat_scope_t_fb3b6e_idx; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX virtualizat_scope_t_fb3b6e_idx ON public.virtualization_cluster USING btree (scope_type_id, scope_id);
 
 
 --
@@ -17632,6 +18931,13 @@ CREATE INDEX virtualization_cluster_group_id_de379828 ON public.virtualization_c
 
 
 --
+-- Name: virtualization_cluster_owner_id_2ea44dea; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX virtualization_cluster_owner_id_2ea44dea ON public.virtualization_cluster USING btree (owner_id);
+
+
+--
 -- Name: virtualization_cluster_scope_type_id_c49d797a; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -17660,6 +18966,13 @@ CREATE INDEX virtualization_clustergroup_name_4fcd26b4_like ON public.virtualiza
 
 
 --
+-- Name: virtualization_clustergroup_owner_id_a865db22; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX virtualization_clustergroup_owner_id_a865db22 ON public.virtualization_clustergroup USING btree (owner_id);
+
+
+--
 -- Name: virtualization_clustergroup_slug_57ca1d23_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -17674,10 +18987,24 @@ CREATE INDEX virtualization_clustertype_name_ea854d3d_like ON public.virtualizat
 
 
 --
+-- Name: virtualization_clustertype_owner_id_7284f9e4; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX virtualization_clustertype_owner_id_7284f9e4 ON public.virtualization_clustertype USING btree (owner_id);
+
+
+--
 -- Name: virtualization_clustertype_slug_8ee4d0e0_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
 CREATE INDEX virtualization_clustertype_slug_8ee4d0e0_like ON public.virtualization_clustertype USING btree (slug varchar_pattern_ops);
+
+
+--
+-- Name: virtualization_virtualdisk_owner_id_2e14487d; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX virtualization_virtualdisk_owner_id_2e14487d ON public.virtualization_virtualdisk USING btree (owner_id);
 
 
 --
@@ -17706,6 +19033,13 @@ CREATE INDEX virtualization_virtualmachine_config_template_id_d7fc7874 ON public
 --
 
 CREATE INDEX virtualization_virtualmachine_device_id_5a49ed18 ON public.virtualization_virtualmachine USING btree (device_id);
+
+
+--
+-- Name: virtualization_virtualmachine_owner_id_f6593561; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX virtualization_virtualmachine_owner_id_f6593561 ON public.virtualization_virtualmachine USING btree (owner_id);
 
 
 --
@@ -17755,6 +19089,13 @@ CREATE UNIQUE INDEX virtualization_virtualmachine_unique_name_cluster_tenant ON 
 --
 
 CREATE INDEX virtualization_vminterface_bridge_id_7462b91e ON public.virtualization_vminterface USING btree (bridge_id);
+
+
+--
+-- Name: virtualization_vminterface_owner_id_486754ee; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX virtualization_vminterface_owner_id_486754ee ON public.virtualization_vminterface USING btree (owner_id);
 
 
 --
@@ -17821,6 +19162,13 @@ CREATE INDEX vpn_ikepolicy_name_5124aa3b_like ON public.vpn_ikepolicy USING btre
 
 
 --
+-- Name: vpn_ikepolicy_owner_id_dbcaf1bd; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX vpn_ikepolicy_owner_id_dbcaf1bd ON public.vpn_ikepolicy USING btree (owner_id);
+
+
+--
 -- Name: vpn_ikepolicy_proposals_ikepolicy_id_1e1deaab; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -17842,10 +19190,24 @@ CREATE INDEX vpn_ikeproposal_name_254623b7_like ON public.vpn_ikeproposal USING 
 
 
 --
+-- Name: vpn_ikeproposal_owner_id_018a3e69; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX vpn_ikeproposal_owner_id_018a3e69 ON public.vpn_ikeproposal USING btree (owner_id);
+
+
+--
 -- Name: vpn_ipsecpolicy_name_cf28a1aa_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
 CREATE INDEX vpn_ipsecpolicy_name_cf28a1aa_like ON public.vpn_ipsecpolicy USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: vpn_ipsecpolicy_owner_id_e976d198; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX vpn_ipsecpolicy_owner_id_e976d198 ON public.vpn_ipsecpolicy USING btree (owner_id);
 
 
 --
@@ -17884,6 +19246,13 @@ CREATE INDEX vpn_ipsecprofile_name_3ac63c72_like ON public.vpn_ipsecprofile USIN
 
 
 --
+-- Name: vpn_ipsecprofile_owner_id_d7ebc4a0; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX vpn_ipsecprofile_owner_id_d7ebc4a0 ON public.vpn_ipsecprofile USING btree (owner_id);
+
+
+--
 -- Name: vpn_ipsecproposal_name_2fb98e2b_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -17891,10 +19260,24 @@ CREATE INDEX vpn_ipsecproposal_name_2fb98e2b_like ON public.vpn_ipsecproposal US
 
 
 --
+-- Name: vpn_ipsecproposal_owner_id_fdb3b755; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX vpn_ipsecproposal_owner_id_fdb3b755 ON public.vpn_ipsecproposal USING btree (owner_id);
+
+
+--
 -- Name: vpn_l2vpn_name_8824eda5_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
 CREATE INDEX vpn_l2vpn_name_8824eda5_like ON public.vpn_l2vpn USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: vpn_l2vpn_owner_id_894bd11d; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX vpn_l2vpn_owner_id_894bd11d ON public.vpn_l2vpn USING btree (owner_id);
 
 
 --
@@ -17954,6 +19337,13 @@ CREATE INDEX vpn_tunnel_name_f060beab_like ON public.vpn_tunnel USING btree (nam
 
 
 --
+-- Name: vpn_tunnel_owner_id_d04ee1fb; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX vpn_tunnel_owner_id_d04ee1fb ON public.vpn_tunnel USING btree (owner_id);
+
+
+--
 -- Name: vpn_tunnel_tenant_id_f3df2ab3; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -17965,6 +19355,13 @@ CREATE INDEX vpn_tunnel_tenant_id_f3df2ab3 ON public.vpn_tunnel USING btree (ten
 --
 
 CREATE INDEX vpn_tunnelgroup_name_9f6ebf92_like ON public.vpn_tunnelgroup USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: vpn_tunnelgroup_owner_id_64609bfe; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX vpn_tunnelgroup_owner_id_64609bfe ON public.vpn_tunnelgroup USING btree (owner_id);
 
 
 --
@@ -17993,6 +19390,13 @@ CREATE INDEX vpn_tunneltermination_termination_type_id_e546f7a1 ON public.vpn_tu
 --
 
 CREATE INDEX vpn_tunneltermination_tunnel_id_962efa25 ON public.vpn_tunneltermination USING btree (tunnel_id);
+
+
+--
+-- Name: wireless_wi_scope_t_6740a3_idx; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX wireless_wi_scope_t_6740a3_idx ON public.wireless_wirelesslan USING btree (scope_type_id, scope_id);
 
 
 --
@@ -18031,6 +19435,13 @@ CREATE INDEX wireless_wirelesslan_group_id_d9e3d67f ON public.wireless_wirelessl
 
 
 --
+-- Name: wireless_wirelesslan_owner_id_9ea24eeb; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX wireless_wirelesslan_owner_id_9ea24eeb ON public.wireless_wirelesslan USING btree (owner_id);
+
+
+--
 -- Name: wireless_wirelesslan_scope_type_id_c3e37d35; Type: INDEX; Schema: public; Owner: nwa
 --
 
@@ -18052,10 +19463,24 @@ CREATE INDEX wireless_wirelesslan_vlan_id_d7fa6ccc ON public.wireless_wirelessla
 
 
 --
+-- Name: wireless_wirelesslangroup_fbcd; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX wireless_wirelesslangroup_fbcd ON public.wireless_wirelesslangroup USING btree (tree_id, lft);
+
+
+--
 -- Name: wireless_wirelesslangroup_name_2ffd60c8_like; Type: INDEX; Schema: public; Owner: nwa
 --
 
 CREATE INDEX wireless_wirelesslangroup_name_2ffd60c8_like ON public.wireless_wirelesslangroup USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: wireless_wirelesslangroup_owner_id_0ba5f844; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX wireless_wirelesslangroup_owner_id_0ba5f844 ON public.wireless_wirelesslangroup USING btree (owner_id);
 
 
 --
@@ -18105,6 +19530,13 @@ CREATE INDEX wireless_wirelesslink_interface_a_id_bc9e37fd ON public.wireless_wi
 --
 
 CREATE INDEX wireless_wirelesslink_interface_b_id_a82fb2ee ON public.wireless_wirelesslink USING btree (interface_b_id);
+
+
+--
+-- Name: wireless_wirelesslink_owner_id_103f9be1; Type: INDEX; Schema: public; Owner: nwa
+--
+
+CREATE INDEX wireless_wirelesslink_owner_id_103f9be1 ON public.wireless_wirelesslink USING btree (owner_id);
 
 
 --
@@ -18160,6 +19592,14 @@ ALTER TABLE ONLY public.users_user_user_permissions
 
 ALTER TABLE ONLY public.users_user_user_permissions
     ADD CONSTRAINT auth_user_user_permissions_user_id_a95ead1b_fk_auth_user_id FOREIGN KEY (user_id) REFERENCES public.users_user(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: circuits_circuit circuits_circuit_owner_id_c330c2d0_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.circuits_circuit
+    ADD CONSTRAINT circuits_circuit_owner_id_c330c2d0_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -18224,6 +19664,14 @@ ALTER TABLE ONLY public.circuits_circuitgroupassignment
 
 ALTER TABLE ONLY public.circuits_circuitgroupassignment
     ADD CONSTRAINT circuits_circuitgrou_member_type_id_779d1a13_fk_django_co FOREIGN KEY (member_type_id) REFERENCES public.django_content_type(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: circuits_circuitgroup circuits_circuitgroup_owner_id_1edf4d64_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.circuits_circuitgroup
+    ADD CONSTRAINT circuits_circuitgroup_owner_id_1edf4d64_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -18299,6 +19747,14 @@ ALTER TABLE ONLY public.circuits_circuittermination
 
 
 --
+-- Name: circuits_circuittype circuits_circuittype_owner_id_9c3200c2_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.circuits_circuittype
+    ADD CONSTRAINT circuits_circuittype_owner_id_9c3200c2_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: circuits_provider_asns circuits_provider_as_provider_id_becc3f7e_fk_circuits_; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -18315,6 +19771,14 @@ ALTER TABLE ONLY public.circuits_provider_asns
 
 
 --
+-- Name: circuits_provider circuits_provider_owner_id_9f9749b4_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.circuits_provider
+    ADD CONSTRAINT circuits_provider_owner_id_9f9749b4_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: circuits_provideraccount circuits_provideracc_provider_id_4bcd7e50_fk_circuits_; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -18323,11 +19787,27 @@ ALTER TABLE ONLY public.circuits_provideraccount
 
 
 --
+-- Name: circuits_provideraccount circuits_provideraccount_owner_id_6dcd4819_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.circuits_provideraccount
+    ADD CONSTRAINT circuits_provideraccount_owner_id_6dcd4819_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: circuits_providernetwork circuits_providernet_provider_id_7992236c_fk_circuits_; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
 ALTER TABLE ONLY public.circuits_providernetwork
     ADD CONSTRAINT circuits_providernet_provider_id_7992236c_fk_circuits_ FOREIGN KEY (provider_id) REFERENCES public.circuits_provider(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: circuits_providernetwork circuits_providernetwork_owner_id_caa8afde_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.circuits_providernetwork
+    ADD CONSTRAINT circuits_providernetwork_owner_id_caa8afde_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -18371,11 +19851,27 @@ ALTER TABLE ONLY public.circuits_virtualcircuittermination
 
 
 --
+-- Name: circuits_virtualcircuit circuits_virtualcircuit_owner_id_89564a1e_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.circuits_virtualcircuit
+    ADD CONSTRAINT circuits_virtualcircuit_owner_id_89564a1e_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: circuits_virtualcircuit circuits_virtualcircuit_tenant_id_4458eca7_fk_tenancy_tenant_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
 ALTER TABLE ONLY public.circuits_virtualcircuit
     ADD CONSTRAINT circuits_virtualcircuit_tenant_id_4458eca7_fk_tenancy_tenant_id FOREIGN KEY (tenant_id) REFERENCES public.tenancy_tenant(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: circuits_virtualcircuittype circuits_virtualcircuittype_owner_id_12a50b80_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.circuits_virtualcircuittype
+    ADD CONSTRAINT circuits_virtualcircuittype_owner_id_12a50b80_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -18400,6 +19896,14 @@ ALTER TABLE ONLY public.core_autosyncrecord
 
 ALTER TABLE ONLY public.core_datafile
     ADD CONSTRAINT core_datafile_source_id_8d675be2_fk_core_datasource_id FOREIGN KEY (source_id) REFERENCES public.core_datasource(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: core_datasource core_datasource_owner_id_3f4e6ba5_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.core_datasource
+    ADD CONSTRAINT core_datasource_owner_id_3f4e6ba5_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -18464,6 +19968,14 @@ ALTER TABLE ONLY public.core_objectchange
 
 ALTER TABLE ONLY public.core_objecttype
     ADD CONSTRAINT core_objecttype_contenttype_ptr_id_d92548f5_fk_django_co FOREIGN KEY (contenttype_ptr_id) REFERENCES public.django_content_type(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_cable dcim_cable_owner_id_9cea1430_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_cable
+    ADD CONSTRAINT dcim_cable_owner_id_9cea1430_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -18579,6 +20091,14 @@ ALTER TABLE ONLY public.dcim_consoleport
 
 
 --
+-- Name: dcim_consoleport dcim_consoleport_owner_id_0648eae1_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_consoleport
+    ADD CONSTRAINT dcim_consoleport_owner_id_0648eae1_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: dcim_consoleporttemplate dcim_consoleporttemp_device_type_id_075d4015_fk_dcim_devi; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -18667,6 +20187,14 @@ ALTER TABLE ONLY public.dcim_consoleserverport
 
 
 --
+-- Name: dcim_consoleserverport dcim_consoleserverport_owner_id_12b1a827_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_consoleserverport
+    ADD CONSTRAINT dcim_consoleserverport_owner_id_12b1a827_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: dcim_device dcim_device_cluster_id_cf852f78_fk_virtualization_cluster_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -18704,6 +20232,14 @@ ALTER TABLE ONLY public.dcim_device
 
 ALTER TABLE ONLY public.dcim_device
     ADD CONSTRAINT dcim_device_oob_ip_id_5e7219c1_fk_ipam_ipaddress_id FOREIGN KEY (oob_ip_id) REFERENCES public.ipam_ipaddress(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_device dcim_device_owner_id_87378f76_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_device
+    ADD CONSTRAINT dcim_device_owner_id_87378f76_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -18811,6 +20347,14 @@ ALTER TABLE ONLY public.dcim_devicebay
 
 
 --
+-- Name: dcim_devicebay dcim_devicebay_owner_id_d7bcb3e6_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_devicebay
+    ADD CONSTRAINT dcim_devicebay_owner_id_d7bcb3e6_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: dcim_devicebaytemplate dcim_devicebaytempla_device_type_id_f4b24a29_fk_dcim_devi; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -18824,6 +20368,14 @@ ALTER TABLE ONLY public.dcim_devicebaytemplate
 
 ALTER TABLE ONLY public.dcim_devicerole
     ADD CONSTRAINT dcim_devicerole_config_template_id_5874002c_fk_extras_co FOREIGN KEY (config_template_id) REFERENCES public.extras_configtemplate(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_devicerole dcim_devicerole_owner_id_fdcc527d_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_devicerole
+    ADD CONSTRAINT dcim_devicerole_owner_id_fdcc527d_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -18848,6 +20400,14 @@ ALTER TABLE ONLY public.dcim_devicetype
 
 ALTER TABLE ONLY public.dcim_devicetype
     ADD CONSTRAINT dcim_devicetype_manufacturer_id_a3e8029e_fk_dcim_manu FOREIGN KEY (manufacturer_id) REFERENCES public.dcim_manufacturer(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_devicetype dcim_devicetype_owner_id_243048ed_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_devicetype
+    ADD CONSTRAINT dcim_devicetype_owner_id_243048ed_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -18899,11 +20459,11 @@ ALTER TABLE ONLY public.dcim_frontport
 
 
 --
--- Name: dcim_frontport dcim_frontport_rear_port_id_78df2532_fk_dcim_rearport_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+-- Name: dcim_frontport dcim_frontport_owner_id_dfb61151_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
 ALTER TABLE ONLY public.dcim_frontport
-    ADD CONSTRAINT dcim_frontport_rear_port_id_78df2532_fk_dcim_rearport_id FOREIGN KEY (rear_port_id) REFERENCES public.dcim_rearport(id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT dcim_frontport_owner_id_dfb61151_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -18920,14 +20480,6 @@ ALTER TABLE ONLY public.dcim_frontporttemplate
 
 ALTER TABLE ONLY public.dcim_frontporttemplate
     ADD CONSTRAINT dcim_frontporttempla_module_type_id_66851ff9_fk_dcim_modu FOREIGN KEY (module_type_id) REFERENCES public.dcim_moduletype(id) DEFERRABLE INITIALLY DEFERRED;
-
-
---
--- Name: dcim_frontporttemplate dcim_frontporttempla_rear_port_id_9775411b_fk_dcim_rear; Type: FK CONSTRAINT; Schema: public; Owner: nwa
---
-
-ALTER TABLE ONLY public.dcim_frontporttemplate
-    ADD CONSTRAINT dcim_frontporttempla_rear_port_id_9775411b_fk_dcim_rear FOREIGN KEY (rear_port_id) REFERENCES public.dcim_rearporttemplate(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -19000,6 +20552,14 @@ ALTER TABLE ONLY public.dcim_interface
 
 ALTER TABLE ONLY public.dcim_interface
     ADD CONSTRAINT dcim_interface_module_id_05ca2da5_fk_dcim_module_id FOREIGN KEY (module_id) REFERENCES public.dcim_module(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_interface dcim_interface_owner_id_3ae797e2_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_interface
+    ADD CONSTRAINT dcim_interface_owner_id_3ae797e2_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -19179,6 +20739,14 @@ ALTER TABLE ONLY public.dcim_inventoryitem
 
 
 --
+-- Name: dcim_inventoryitem dcim_inventoryitem_owner_id_ad4332eb_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_inventoryitem
+    ADD CONSTRAINT dcim_inventoryitem_owner_id_ad4332eb_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: dcim_inventoryitem dcim_inventoryitem_parent_id_7ebcd457_fk_dcim_inventoryitem_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -19192,6 +20760,14 @@ ALTER TABLE ONLY public.dcim_inventoryitem
 
 ALTER TABLE ONLY public.dcim_inventoryitem
     ADD CONSTRAINT dcim_inventoryitem_role_id_2bcfcb04_fk_dcim_inve FOREIGN KEY (role_id) REFERENCES public.dcim_inventoryitemrole(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_inventoryitemrole dcim_inventoryitemrole_owner_id_067442e9_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_inventoryitemrole
+    ADD CONSTRAINT dcim_inventoryitemrole_owner_id_067442e9_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -19235,6 +20811,14 @@ ALTER TABLE ONLY public.dcim_inventoryitemtemplate
 
 
 --
+-- Name: dcim_location dcim_location_owner_id_919a8713_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_location
+    ADD CONSTRAINT dcim_location_owner_id_919a8713_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: dcim_location dcim_location_parent_id_d77f3318_fk_dcim_location_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -19267,6 +20851,22 @@ ALTER TABLE ONLY public.dcim_macaddress
 
 
 --
+-- Name: dcim_macaddress dcim_macaddress_owner_id_29ba2f60_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_macaddress
+    ADD CONSTRAINT dcim_macaddress_owner_id_29ba2f60_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_manufacturer dcim_manufacturer_owner_id_8d78661f_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_manufacturer
+    ADD CONSTRAINT dcim_manufacturer_owner_id_8d78661f_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: dcim_module dcim_module_device_id_53cfd5be_fk_dcim_device_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -19288,6 +20888,14 @@ ALTER TABLE ONLY public.dcim_module
 
 ALTER TABLE ONLY public.dcim_module
     ADD CONSTRAINT dcim_module_module_type_id_a50b39fc_fk_dcim_moduletype_id FOREIGN KEY (module_type_id) REFERENCES public.dcim_moduletype(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_module dcim_module_owner_id_ee6f1ef4_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_module
+    ADD CONSTRAINT dcim_module_owner_id_ee6f1ef4_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -19331,6 +20939,14 @@ ALTER TABLE ONLY public.dcim_modulebay
 
 
 --
+-- Name: dcim_modulebay dcim_modulebay_owner_id_311f58c6_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_modulebay
+    ADD CONSTRAINT dcim_modulebay_owner_id_311f58c6_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: dcim_modulebay dcim_modulebay_parent_id_e483f9b7_fk_dcim_modulebay_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -19363,11 +20979,27 @@ ALTER TABLE ONLY public.dcim_moduletype
 
 
 --
+-- Name: dcim_moduletype dcim_moduletype_owner_id_2ea2fd3b_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_moduletype
+    ADD CONSTRAINT dcim_moduletype_owner_id_2ea2fd3b_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: dcim_moduletype dcim_moduletype_profile_id_62b5d02d_fk_dcim_modu; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
 ALTER TABLE ONLY public.dcim_moduletype
     ADD CONSTRAINT dcim_moduletype_profile_id_62b5d02d_fk_dcim_modu FOREIGN KEY (profile_id) REFERENCES public.dcim_moduletypeprofile(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_moduletypeprofile dcim_moduletypeprofile_owner_id_c4488ff6_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_moduletypeprofile
+    ADD CONSTRAINT dcim_moduletypeprofile_owner_id_c4488ff6_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -19387,11 +21019,75 @@ ALTER TABLE ONLY public.dcim_platform
 
 
 --
+-- Name: dcim_platform dcim_platform_owner_id_0990eb87_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_platform
+    ADD CONSTRAINT dcim_platform_owner_id_0990eb87_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: dcim_platform dcim_platform_parent_id_795c7101_fk_dcim_platform_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
 ALTER TABLE ONLY public.dcim_platform
     ADD CONSTRAINT dcim_platform_parent_id_795c7101_fk_dcim_platform_id FOREIGN KEY (parent_id) REFERENCES public.dcim_platform(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_portmapping dcim_portmapping_device_id_eb86e378_fk_dcim_device_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_portmapping
+    ADD CONSTRAINT dcim_portmapping_device_id_eb86e378_fk_dcim_device_id FOREIGN KEY (device_id) REFERENCES public.dcim_device(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_portmapping dcim_portmapping_front_port_id_d8413d45_fk_dcim_frontport_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_portmapping
+    ADD CONSTRAINT dcim_portmapping_front_port_id_d8413d45_fk_dcim_frontport_id FOREIGN KEY (front_port_id) REFERENCES public.dcim_frontport(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_portmapping dcim_portmapping_rear_port_id_dc3fb4b8_fk_dcim_rearport_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_portmapping
+    ADD CONSTRAINT dcim_portmapping_rear_port_id_dc3fb4b8_fk_dcim_rearport_id FOREIGN KEY (rear_port_id) REFERENCES public.dcim_rearport(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_porttemplatemapping dcim_porttemplatemap_device_type_id_dede0eeb_fk_dcim_devi; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_porttemplatemapping
+    ADD CONSTRAINT dcim_porttemplatemap_device_type_id_dede0eeb_fk_dcim_devi FOREIGN KEY (device_type_id) REFERENCES public.dcim_devicetype(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_porttemplatemapping dcim_porttemplatemap_front_port_id_090c3c11_fk_dcim_fron; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_porttemplatemapping
+    ADD CONSTRAINT dcim_porttemplatemap_front_port_id_090c3c11_fk_dcim_fron FOREIGN KEY (front_port_id) REFERENCES public.dcim_frontporttemplate(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_porttemplatemapping dcim_porttemplatemap_module_type_id_3a84e529_fk_dcim_modu; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_porttemplatemapping
+    ADD CONSTRAINT dcim_porttemplatemap_module_type_id_3a84e529_fk_dcim_modu FOREIGN KEY (module_type_id) REFERENCES public.dcim_moduletype(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_porttemplatemapping dcim_porttemplatemap_rear_port_id_93a9b08f_fk_dcim_rear; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_porttemplatemapping
+    ADD CONSTRAINT dcim_porttemplatemap_rear_port_id_93a9b08f_fk_dcim_rear FOREIGN KEY (rear_port_id) REFERENCES public.dcim_rearporttemplate(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -19408,6 +21104,14 @@ ALTER TABLE ONLY public.dcim_powerfeed
 
 ALTER TABLE ONLY public.dcim_powerfeed
     ADD CONSTRAINT dcim_powerfeed_cable_id_ec44c4f8_fk_dcim_cable_id FOREIGN KEY (cable_id) REFERENCES public.dcim_cable(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_powerfeed dcim_powerfeed_owner_id_97320081_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_powerfeed
+    ADD CONSTRAINT dcim_powerfeed_owner_id_97320081_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -19491,6 +21195,14 @@ ALTER TABLE ONLY public.dcim_poweroutlet
 
 
 --
+-- Name: dcim_poweroutlet dcim_poweroutlet_owner_id_0806d01d_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_poweroutlet
+    ADD CONSTRAINT dcim_poweroutlet_owner_id_0806d01d_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: dcim_poweroutlet dcim_poweroutlet_power_port_id_9bdf4163_fk_dcim_powerport_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -19528,6 +21240,14 @@ ALTER TABLE ONLY public.dcim_poweroutlettemplate
 
 ALTER TABLE ONLY public.dcim_powerpanel
     ADD CONSTRAINT dcim_powerpanel_location_id_474b60f8_fk_dcim_location_id FOREIGN KEY (location_id) REFERENCES public.dcim_location(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_powerpanel dcim_powerpanel_owner_id_11e7d421_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_powerpanel
+    ADD CONSTRAINT dcim_powerpanel_owner_id_11e7d421_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -19595,6 +21315,14 @@ ALTER TABLE ONLY public.dcim_powerport
 
 
 --
+-- Name: dcim_powerport dcim_powerport_owner_id_b83ff931_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_powerport
+    ADD CONSTRAINT dcim_powerport_owner_id_b83ff931_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: dcim_powerporttemplate dcim_powerporttempla_device_type_id_1ddfbfcc_fk_dcim_devi; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -19616,6 +21344,14 @@ ALTER TABLE ONLY public.dcim_powerporttemplate
 
 ALTER TABLE ONLY public.dcim_rack
     ADD CONSTRAINT dcim_rack_location_id_5f63ec31_fk_dcim_location_id FOREIGN KEY (location_id) REFERENCES public.dcim_location(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_rack dcim_rack_owner_id_7a5532fc_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_rack
+    ADD CONSTRAINT dcim_rack_owner_id_7a5532fc_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -19651,6 +21387,14 @@ ALTER TABLE ONLY public.dcim_rack
 
 
 --
+-- Name: dcim_rackreservation dcim_rackreservation_owner_id_12c19e94_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_rackreservation
+    ADD CONSTRAINT dcim_rackreservation_owner_id_12c19e94_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: dcim_rackreservation dcim_rackreservation_rack_id_1ebbaa9b_fk_dcim_rack_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -19675,11 +21419,27 @@ ALTER TABLE ONLY public.dcim_rackreservation
 
 
 --
+-- Name: dcim_rackrole dcim_rackrole_owner_id_fb6f0b77_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_rackrole
+    ADD CONSTRAINT dcim_rackrole_owner_id_fb6f0b77_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: dcim_racktype dcim_racktype_manufacturer_id_d46a05c6_fk_dcim_manufacturer_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
 ALTER TABLE ONLY public.dcim_racktype
     ADD CONSTRAINT dcim_racktype_manufacturer_id_d46a05c6_fk_dcim_manufacturer_id FOREIGN KEY (manufacturer_id) REFERENCES public.dcim_manufacturer(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_racktype dcim_racktype_owner_id_ce0a0d75_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_racktype
+    ADD CONSTRAINT dcim_racktype_owner_id_ce0a0d75_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -19731,6 +21491,14 @@ ALTER TABLE ONLY public.dcim_rearport
 
 
 --
+-- Name: dcim_rearport dcim_rearport_owner_id_51174512_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_rearport
+    ADD CONSTRAINT dcim_rearport_owner_id_51174512_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: dcim_rearporttemplate dcim_rearporttemplat_device_type_id_6a02fd01_fk_dcim_devi; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -19744,6 +21512,14 @@ ALTER TABLE ONLY public.dcim_rearporttemplate
 
 ALTER TABLE ONLY public.dcim_rearporttemplate
     ADD CONSTRAINT dcim_rearporttemplat_module_type_id_4d970e5b_fk_dcim_modu FOREIGN KEY (module_type_id) REFERENCES public.dcim_moduletype(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_region dcim_region_owner_id_7e9d3adf_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_region
+    ADD CONSTRAINT dcim_region_owner_id_7e9d3adf_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -19779,6 +21555,14 @@ ALTER TABLE ONLY public.dcim_site
 
 
 --
+-- Name: dcim_site dcim_site_owner_id_ef94687e_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_site
+    ADD CONSTRAINT dcim_site_owner_id_ef94687e_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: dcim_site dcim_site_region_id_45210932_fk_dcim_region_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -19795,6 +21579,14 @@ ALTER TABLE ONLY public.dcim_site
 
 
 --
+-- Name: dcim_sitegroup dcim_sitegroup_owner_id_50283a64_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_sitegroup
+    ADD CONSTRAINT dcim_sitegroup_owner_id_50283a64_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: dcim_sitegroup dcim_sitegroup_parent_id_533a5e44_fk_dcim_sitegroup_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -19808,6 +21600,14 @@ ALTER TABLE ONLY public.dcim_sitegroup
 
 ALTER TABLE ONLY public.dcim_virtualchassis
     ADD CONSTRAINT dcim_virtualchassis_master_id_ab54cfc6_fk_dcim_device_id FOREIGN KEY (master_id) REFERENCES public.dcim_device(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_virtualchassis dcim_virtualchassis_owner_id_76116efe_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_virtualchassis
+    ADD CONSTRAINT dcim_virtualchassis_owner_id_76116efe_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -19840,6 +21640,14 @@ ALTER TABLE ONLY public.dcim_virtualdevicecontext
 
 ALTER TABLE ONLY public.dcim_virtualdevicecontext
     ADD CONSTRAINT dcim_virtualdevicecontext_device_id_4f39274b_fk_dcim_device_id FOREIGN KEY (device_id) REFERENCES public.dcim_device(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dcim_virtualdevicecontext dcim_virtualdevicecontext_owner_id_33c19ef7_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.dcim_virtualdevicecontext
+    ADD CONSTRAINT dcim_virtualdevicecontext_owner_id_33c19ef7_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -20051,6 +21859,14 @@ ALTER TABLE ONLY public.extras_configcontext_locations
 
 
 --
+-- Name: extras_configcontext extras_configcontext_owner_id_6c8d9a06_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.extras_configcontext
+    ADD CONSTRAINT extras_configcontext_owner_id_6c8d9a06_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: extras_configcontext_platforms extras_configcontext_platform_id_3fdfedc0_fk_dcim_plat; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -20115,6 +21931,14 @@ ALTER TABLE ONLY public.extras_configcontext_tenant_groups
 
 
 --
+-- Name: extras_configcontextprofile extras_configcontextprofile_owner_id_6b1a975e_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.extras_configcontextprofile
+    ADD CONSTRAINT extras_configcontextprofile_owner_id_6b1a975e_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: extras_configtemplate extras_configtemplat_data_source_id_f9d26d5d_fk_core_data; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -20128,6 +21952,14 @@ ALTER TABLE ONLY public.extras_configtemplate
 
 ALTER TABLE ONLY public.extras_configtemplate
     ADD CONSTRAINT extras_configtemplate_data_file_id_20c7cff4_fk_core_datafile_id FOREIGN KEY (data_file_id) REFERENCES public.core_datafile(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: extras_configtemplate extras_configtemplate_owner_id_0925c336_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.extras_configtemplate
+    ADD CONSTRAINT extras_configtemplate_owner_id_0925c336_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -20155,11 +21987,27 @@ ALTER TABLE ONLY public.extras_customfield_object_types
 
 
 --
+-- Name: extras_customfield extras_customfield_owner_id_558f69a3_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.extras_customfield
+    ADD CONSTRAINT extras_customfield_owner_id_558f69a3_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: extras_customfield extras_customfield_related_object_type__fa9aa45b_fk_django_co; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
 ALTER TABLE ONLY public.extras_customfield
     ADD CONSTRAINT extras_customfield_related_object_type__fa9aa45b_fk_django_co FOREIGN KEY (related_object_type_id) REFERENCES public.django_content_type(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: extras_customfieldchoiceset extras_customfieldchoiceset_owner_id_02d6fc4d_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.extras_customfieldchoiceset
+    ADD CONSTRAINT extras_customfieldchoiceset_owner_id_02d6fc4d_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -20176,6 +22024,14 @@ ALTER TABLE ONLY public.extras_customlink_object_types
 
 ALTER TABLE ONLY public.extras_customlink_object_types
     ADD CONSTRAINT extras_customlink_ob_contenttype_id_600977f4_fk_django_co FOREIGN KEY (contenttype_id) REFERENCES public.django_content_type(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: extras_customlink extras_customlink_owner_id_b4449049_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.extras_customlink
+    ADD CONSTRAINT extras_customlink_owner_id_b4449049_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -20211,6 +22067,14 @@ ALTER TABLE ONLY public.extras_eventrule_object_types
 
 
 --
+-- Name: extras_eventrule extras_eventrule_owner_id_a4c56a12_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.extras_eventrule
+    ADD CONSTRAINT extras_eventrule_owner_id_a4c56a12_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: extras_exporttemplate_object_types extras_exporttemplat_contenttype_id_0f034708_fk_django_co; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -20240,6 +22104,14 @@ ALTER TABLE ONLY public.extras_exporttemplate_object_types
 
 ALTER TABLE ONLY public.extras_exporttemplate
     ADD CONSTRAINT extras_exporttemplate_data_file_id_40a91ef8_fk_core_datafile_id FOREIGN KEY (data_file_id) REFERENCES public.core_datafile(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: extras_exporttemplate extras_exporttemplate_owner_id_a690b184_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.extras_exporttemplate
+    ADD CONSTRAINT extras_exporttemplate_owner_id_a690b184_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -20331,6 +22203,14 @@ ALTER TABLE ONLY public.extras_savedfilter_object_types
 
 
 --
+-- Name: extras_savedfilter extras_savedfilter_owner_id_e022149a_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.extras_savedfilter
+    ADD CONSTRAINT extras_savedfilter_owner_id_e022149a_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: extras_savedfilter extras_savedfilter_user_id_10502e81_fk_auth_user_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -20395,6 +22275,14 @@ ALTER TABLE ONLY public.extras_tag_object_types
 
 
 --
+-- Name: extras_tag extras_tag_owner_id_ebb991ad_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.extras_tag
+    ADD CONSTRAINT extras_tag_owner_id_ebb991ad_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: extras_taggeditem extras_taggeditem_content_type_id_ba5562ed_fk_django_co; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -20408,6 +22296,22 @@ ALTER TABLE ONLY public.extras_taggeditem
 
 ALTER TABLE ONLY public.extras_taggeditem
     ADD CONSTRAINT extras_taggeditem_tag_id_d48af7c7_fk_extras_tag_id FOREIGN KEY (tag_id) REFERENCES public.extras_tag(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: extras_webhook extras_webhook_owner_id_bcf756a8_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.extras_webhook
+    ADD CONSTRAINT extras_webhook_owner_id_bcf756a8_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: ipam_aggregate ipam_aggregate_owner_id_fdaa939f_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.ipam_aggregate
+    ADD CONSTRAINT ipam_aggregate_owner_id_fdaa939f_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -20427,6 +22331,14 @@ ALTER TABLE ONLY public.ipam_aggregate
 
 
 --
+-- Name: ipam_asn ipam_asn_owner_id_2ab253b3_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.ipam_asn
+    ADD CONSTRAINT ipam_asn_owner_id_2ab253b3_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: ipam_asn ipam_asn_rir_id_f5ad3cff_fk_ipam_rir_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -20443,6 +22355,14 @@ ALTER TABLE ONLY public.ipam_asn
 
 
 --
+-- Name: ipam_asnrange ipam_asnrange_owner_id_a943e984_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.ipam_asnrange
+    ADD CONSTRAINT ipam_asnrange_owner_id_a943e984_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: ipam_asnrange ipam_asnrange_rir_id_c9c31183_fk_ipam_rir_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -20456,6 +22376,14 @@ ALTER TABLE ONLY public.ipam_asnrange
 
 ALTER TABLE ONLY public.ipam_asnrange
     ADD CONSTRAINT ipam_asnrange_tenant_id_ed8f80b7_fk_tenancy_tenant_id FOREIGN KEY (tenant_id) REFERENCES public.tenancy_tenant(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: ipam_fhrpgroup ipam_fhrpgroup_owner_id_f5209119_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.ipam_fhrpgroup
+    ADD CONSTRAINT ipam_fhrpgroup_owner_id_f5209119_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -20491,6 +22419,14 @@ ALTER TABLE ONLY public.ipam_ipaddress
 
 
 --
+-- Name: ipam_ipaddress ipam_ipaddress_owner_id_47736b63_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.ipam_ipaddress
+    ADD CONSTRAINT ipam_ipaddress_owner_id_47736b63_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: ipam_ipaddress ipam_ipaddress_tenant_id_ac55acfd_fk_tenancy_tenant_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -20504,6 +22440,14 @@ ALTER TABLE ONLY public.ipam_ipaddress
 
 ALTER TABLE ONLY public.ipam_ipaddress
     ADD CONSTRAINT ipam_ipaddress_vrf_id_51fcc59b_fk_ipam_vrf_id FOREIGN KEY (vrf_id) REFERENCES public.ipam_vrf(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: ipam_iprange ipam_iprange_owner_id_b327afb7_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.ipam_iprange
+    ADD CONSTRAINT ipam_iprange_owner_id_b327afb7_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -20595,6 +22539,14 @@ ALTER TABLE ONLY public.ipam_prefix
 
 
 --
+-- Name: ipam_prefix ipam_prefix_owner_id_12d43bc8_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.ipam_prefix
+    ADD CONSTRAINT ipam_prefix_owner_id_12d43bc8_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: ipam_prefix ipam_prefix_role_id_0a98d415_fk_ipam_role_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -20635,6 +22587,30 @@ ALTER TABLE ONLY public.ipam_prefix
 
 
 --
+-- Name: ipam_rir ipam_rir_owner_id_172cc053_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.ipam_rir
+    ADD CONSTRAINT ipam_rir_owner_id_172cc053_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: ipam_role ipam_role_owner_id_b42367ab_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.ipam_role
+    ADD CONSTRAINT ipam_role_owner_id_b42367ab_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: ipam_routetarget ipam_routetarget_owner_id_e968953a_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.ipam_routetarget
+    ADD CONSTRAINT ipam_routetarget_owner_id_e968953a_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: ipam_routetarget ipam_routetarget_tenant_id_5a0b35e8_fk_tenancy_tenant_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -20659,6 +22635,14 @@ ALTER TABLE ONLY public.ipam_service_ipaddresses
 
 
 --
+-- Name: ipam_service ipam_service_owner_id_ab1c827a_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.ipam_service
+    ADD CONSTRAINT ipam_service_owner_id_ab1c827a_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: ipam_service ipam_service_parent_object_type_i_8e76bfb3_fk_django_co; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -20667,11 +22651,27 @@ ALTER TABLE ONLY public.ipam_service
 
 
 --
+-- Name: ipam_servicetemplate ipam_servicetemplate_owner_id_bd152acb_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.ipam_servicetemplate
+    ADD CONSTRAINT ipam_servicetemplate_owner_id_bd152acb_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: ipam_vlan ipam_vlan_group_id_88cbfa62_fk_ipam_vlangroup_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
 ALTER TABLE ONLY public.ipam_vlan
     ADD CONSTRAINT ipam_vlan_group_id_88cbfa62_fk_ipam_vlangroup_id FOREIGN KEY (group_id) REFERENCES public.ipam_vlangroup(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: ipam_vlan ipam_vlan_owner_id_ead15d2b_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.ipam_vlan
+    ADD CONSTRAINT ipam_vlan_owner_id_ead15d2b_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -20707,6 +22707,14 @@ ALTER TABLE ONLY public.ipam_vlan
 
 
 --
+-- Name: ipam_vlangroup ipam_vlangroup_owner_id_3a50b541_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.ipam_vlangroup
+    ADD CONSTRAINT ipam_vlangroup_owner_id_3a50b541_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: ipam_vlangroup ipam_vlangroup_scope_type_id_6606a755_fk_django_content_type_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -20728,6 +22736,14 @@ ALTER TABLE ONLY public.ipam_vlangroup
 
 ALTER TABLE ONLY public.ipam_vlantranslationrule
     ADD CONSTRAINT ipam_vlantranslation_policy_id_09157735_fk_ipam_vlan FOREIGN KEY (policy_id) REFERENCES public.ipam_vlantranslationpolicy(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: ipam_vlantranslationpolicy ipam_vlantranslationpolicy_owner_id_f4e1cb82_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.ipam_vlantranslationpolicy
+    ADD CONSTRAINT ipam_vlantranslationpolicy_owner_id_f4e1cb82_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -20760,6 +22776,14 @@ ALTER TABLE ONLY public.ipam_vrf_import_targets
 
 ALTER TABLE ONLY public.ipam_vrf_import_targets
     ADD CONSTRAINT ipam_vrf_import_targets_vrf_id_ed491b19_fk_ipam_vrf_id FOREIGN KEY (vrf_id) REFERENCES public.ipam_vrf(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: ipam_vrf ipam_vrf_owner_id_9b591781_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.ipam_vrf
+    ADD CONSTRAINT ipam_vrf_owner_id_9b591781_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -20811,6 +22835,14 @@ ALTER TABLE ONLY public.tenancy_contact_groups
 
 
 --
+-- Name: tenancy_contact tenancy_contact_owner_id_9d93abff_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.tenancy_contact
+    ADD CONSTRAINT tenancy_contact_owner_id_9d93abff_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: tenancy_contactassignment tenancy_contactassig_contact_id_5302baf0_fk_tenancy_c; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -20835,6 +22867,14 @@ ALTER TABLE ONLY public.tenancy_contactassignment
 
 
 --
+-- Name: tenancy_contactgroup tenancy_contactgroup_owner_id_4bb044c2_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.tenancy_contactgroup
+    ADD CONSTRAINT tenancy_contactgroup_owner_id_4bb044c2_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: tenancy_contactgroup tenancy_contactgroup_parent_id_c087d69f_fk_tenancy_c; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -20843,11 +22883,35 @@ ALTER TABLE ONLY public.tenancy_contactgroup
 
 
 --
+-- Name: tenancy_contactrole tenancy_contactrole_owner_id_3677102e_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.tenancy_contactrole
+    ADD CONSTRAINT tenancy_contactrole_owner_id_3677102e_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: tenancy_tenant tenancy_tenant_group_id_7daef6f4_fk_tenancy_tenantgroup_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
 ALTER TABLE ONLY public.tenancy_tenant
     ADD CONSTRAINT tenancy_tenant_group_id_7daef6f4_fk_tenancy_tenantgroup_id FOREIGN KEY (group_id) REFERENCES public.tenancy_tenantgroup(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: tenancy_tenant tenancy_tenant_owner_id_02823f0b_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.tenancy_tenant
+    ADD CONSTRAINT tenancy_tenant_owner_id_02823f0b_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: tenancy_tenantgroup tenancy_tenantgroup_owner_id_a4f64bbd_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.tenancy_tenantgroup
+    ADD CONSTRAINT tenancy_tenantgroup_owner_id_a4f64bbd_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -20904,6 +22968,46 @@ ALTER TABLE ONLY public.users_objectpermission_object_types
 
 ALTER TABLE ONLY public.users_objectpermission_object_types
     ADD CONSTRAINT users_objectpermissi_objectpermission_id_38c7d8f5_fk_users_obj FOREIGN KEY (objectpermission_id) REFERENCES public.users_objectpermission(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: users_owner users_owner_group_id_197ecf75_fk_users_ownergroup_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.users_owner
+    ADD CONSTRAINT users_owner_group_id_197ecf75_fk_users_ownergroup_id FOREIGN KEY (group_id) REFERENCES public.users_ownergroup(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: users_owner_user_groups users_owner_user_groups_group_id_7f7a78f5_fk_users_group_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.users_owner_user_groups
+    ADD CONSTRAINT users_owner_user_groups_group_id_7f7a78f5_fk_users_group_id FOREIGN KEY (group_id) REFERENCES public.users_group(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: users_owner_user_groups users_owner_user_groups_owner_id_1d847a5b_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.users_owner_user_groups
+    ADD CONSTRAINT users_owner_user_groups_owner_id_1d847a5b_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: users_owner_users users_owner_users_owner_id_efc9b423_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.users_owner_users
+    ADD CONSTRAINT users_owner_users_owner_id_efc9b423_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: users_owner_users users_owner_users_user_id_2b2e2446_fk_users_user_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.users_owner_users
+    ADD CONSTRAINT users_owner_users_user_id_2b2e2446_fk_users_user_id FOREIGN KEY (user_id) REFERENCES public.users_user(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -21003,11 +23107,35 @@ ALTER TABLE ONLY public.virtualization_cluster
 
 
 --
+-- Name: virtualization_cluster virtualization_cluster_owner_id_2ea44dea_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.virtualization_cluster
+    ADD CONSTRAINT virtualization_cluster_owner_id_2ea44dea_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: virtualization_cluster virtualization_cluster_tenant_id_bc2868d0_fk_tenancy_tenant_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
 ALTER TABLE ONLY public.virtualization_cluster
     ADD CONSTRAINT virtualization_cluster_tenant_id_bc2868d0_fk_tenancy_tenant_id FOREIGN KEY (tenant_id) REFERENCES public.tenancy_tenant(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: virtualization_clustergroup virtualization_clustergroup_owner_id_a865db22_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.virtualization_clustergroup
+    ADD CONSTRAINT virtualization_clustergroup_owner_id_a865db22_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: virtualization_clustertype virtualization_clustertype_owner_id_7284f9e4_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.virtualization_clustertype
+    ADD CONSTRAINT virtualization_clustertype_owner_id_7284f9e4_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -21032,6 +23160,14 @@ ALTER TABLE ONLY public.virtualization_virtualmachine
 
 ALTER TABLE ONLY public.virtualization_virtualmachine
     ADD CONSTRAINT virtualization_virtu_device_id_5a49ed18_fk_dcim_devi FOREIGN KEY (device_id) REFERENCES public.dcim_device(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: virtualization_virtualmachine virtualization_virtu_owner_id_f6593561_fk_users_own; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.virtualization_virtualmachine
+    ADD CONSTRAINT virtualization_virtu_owner_id_f6593561_fk_users_own FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -21080,6 +23216,14 @@ ALTER TABLE ONLY public.virtualization_virtualmachine
 
 ALTER TABLE ONLY public.virtualization_virtualdisk
     ADD CONSTRAINT virtualization_virtu_virtual_machine_id_7bc8b6c2_fk_virtualiz FOREIGN KEY (virtual_machine_id) REFERENCES public.virtualization_virtualmachine(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: virtualization_virtualdisk virtualization_virtualdisk_owner_id_2e14487d_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.virtualization_virtualdisk
+    ADD CONSTRAINT virtualization_virtualdisk_owner_id_2e14487d_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -21163,11 +23307,27 @@ ALTER TABLE ONLY public.virtualization_vminterface_tagged_vlans
 
 
 --
+-- Name: virtualization_vminterface virtualization_vminterface_owner_id_486754ee_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.virtualization_vminterface
+    ADD CONSTRAINT virtualization_vminterface_owner_id_486754ee_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: virtualization_vminterface virtualization_vminterface_vrf_id_4b570a8c_fk_ipam_vrf_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
 ALTER TABLE ONLY public.virtualization_vminterface
     ADD CONSTRAINT virtualization_vminterface_vrf_id_4b570a8c_fk_ipam_vrf_id FOREIGN KEY (vrf_id) REFERENCES public.ipam_vrf(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: vpn_ikepolicy vpn_ikepolicy_owner_id_dbcaf1bd_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.vpn_ikepolicy
+    ADD CONSTRAINT vpn_ikepolicy_owner_id_dbcaf1bd_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -21184,6 +23344,22 @@ ALTER TABLE ONLY public.vpn_ikepolicy_proposals
 
 ALTER TABLE ONLY public.vpn_ikepolicy_proposals
     ADD CONSTRAINT vpn_ikepolicy_propos_ikeproposal_id_a9ead252_fk_vpn_ikepr FOREIGN KEY (ikeproposal_id) REFERENCES public.vpn_ikeproposal(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: vpn_ikeproposal vpn_ikeproposal_owner_id_018a3e69_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.vpn_ikeproposal
+    ADD CONSTRAINT vpn_ikeproposal_owner_id_018a3e69_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: vpn_ipsecpolicy vpn_ipsecpolicy_owner_id_e976d198_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.vpn_ipsecpolicy
+    ADD CONSTRAINT vpn_ipsecpolicy_owner_id_e976d198_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -21216,6 +23392,30 @@ ALTER TABLE ONLY public.vpn_ipsecprofile
 
 ALTER TABLE ONLY public.vpn_ipsecprofile
     ADD CONSTRAINT vpn_ipsecprofile_ipsec_policy_id_e06f2323_fk_vpn_ipsecpolicy_id FOREIGN KEY (ipsec_policy_id) REFERENCES public.vpn_ipsecpolicy(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: vpn_ipsecprofile vpn_ipsecprofile_owner_id_d7ebc4a0_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.vpn_ipsecprofile
+    ADD CONSTRAINT vpn_ipsecprofile_owner_id_d7ebc4a0_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: vpn_ipsecproposal vpn_ipsecproposal_owner_id_fdb3b755_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.vpn_ipsecproposal
+    ADD CONSTRAINT vpn_ipsecproposal_owner_id_fdb3b755_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: vpn_l2vpn vpn_l2vpn_owner_id_894bd11d_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.vpn_l2vpn
+    ADD CONSTRAINT vpn_l2vpn_owner_id_894bd11d_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -21259,11 +23459,27 @@ ALTER TABLE ONLY public.vpn_tunnel
 
 
 --
+-- Name: vpn_tunnel vpn_tunnel_owner_id_d04ee1fb_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.vpn_tunnel
+    ADD CONSTRAINT vpn_tunnel_owner_id_d04ee1fb_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: vpn_tunnel vpn_tunnel_tenant_id_f3df2ab3_fk_tenancy_tenant_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
 ALTER TABLE ONLY public.vpn_tunnel
     ADD CONSTRAINT vpn_tunnel_tenant_id_f3df2ab3_fk_tenancy_tenant_id FOREIGN KEY (tenant_id) REFERENCES public.tenancy_tenant(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: vpn_tunnelgroup vpn_tunnelgroup_owner_id_64609bfe_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.vpn_tunnelgroup
+    ADD CONSTRAINT vpn_tunnelgroup_owner_id_64609bfe_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -21331,6 +23547,14 @@ ALTER TABLE ONLY public.wireless_wirelesslan
 
 
 --
+-- Name: wireless_wirelesslan wireless_wirelesslan_owner_id_9ea24eeb_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.wireless_wirelesslan
+    ADD CONSTRAINT wireless_wirelesslan_owner_id_9ea24eeb_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: wireless_wirelesslangroup wireless_wirelesslan_parent_id_37ca8b87_fk_wireless_; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -21360,6 +23584,14 @@ ALTER TABLE ONLY public.wireless_wirelesslan
 
 ALTER TABLE ONLY public.wireless_wirelesslan
     ADD CONSTRAINT wireless_wirelesslan_vlan_id_d7fa6ccc_fk_ipam_vlan_id FOREIGN KEY (vlan_id) REFERENCES public.ipam_vlan(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: wireless_wirelesslangroup wireless_wirelesslangroup_owner_id_0ba5f844_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.wireless_wirelesslangroup
+    ADD CONSTRAINT wireless_wirelesslangroup_owner_id_0ba5f844_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -21395,6 +23627,14 @@ ALTER TABLE ONLY public.wireless_wirelesslink
 
 
 --
+-- Name: wireless_wirelesslink wireless_wirelesslink_owner_id_103f9be1_fk_users_owner_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
+--
+
+ALTER TABLE ONLY public.wireless_wirelesslink
+    ADD CONSTRAINT wireless_wirelesslink_owner_id_103f9be1_fk_users_owner_id FOREIGN KEY (owner_id) REFERENCES public.users_owner(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: wireless_wirelesslink wireless_wirelesslink_tenant_id_4c0638ee_fk_tenancy_tenant_id; Type: FK CONSTRAINT; Schema: public; Owner: nwa
 --
 
@@ -21405,4 +23645,6 @@ ALTER TABLE ONLY public.wireless_wirelesslink
 --
 -- PostgreSQL database dump complete
 --
+
+\unrestrict 1m8jA9R8BKYOP6LunkbQyolOQtQKPMaPzDT1qxB6GYvER2lBazVbKuCpQ8N07uO
 

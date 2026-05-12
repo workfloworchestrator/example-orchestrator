@@ -18,11 +18,11 @@ from random import randrange
 from typing import Annotated, TypeAlias, cast
 
 from more_itertools.more import unzip
-from orchestrator.targets import Target
-from orchestrator.types import SubscriptionLifecycle
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.steps import store_process_subscription
-from orchestrator.workflows.utils import create_workflow
+from orchestrator.core.forms import FormPage
+from orchestrator.core.types import SubscriptionLifecycle
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.steps import store_process_subscription
+from orchestrator.core.workflows.utils import create_workflow
 from pydantic import AfterValidator, ConfigDict
 
 from nwastdlib.vlans import VlanRanges
@@ -30,7 +30,6 @@ from products.product_blocks.sap import SAPBlockInactive
 from products.product_types.l2vpn import L2vpnInactive, L2vpnProvisioning
 from products.product_types.port import Port
 from products.services.description import description
-from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 from pydantic_forms.validators import Choice
 from workflows.l2vpn.shared.forms import ports_selector
@@ -163,12 +162,12 @@ def provision_l2vpn_in_nrm(subscription: L2vpnProvisioning) -> State:
     return {"subscription": subscription}
 
 
-@create_workflow("Create l2vpn", initial_input_form=initial_input_form_generator)
+@create_workflow(initial_input_form=initial_input_form_generator)
 def create_l2vpn() -> StepList:
     return (
         begin
         >> construct_l2vpn_model
-        >> store_process_subscription(Target.CREATE)
+        >> store_process_subscription()
         >> ims_create_vlans
         >> ims_create_l2vpn
         >> ims_create_l2vpn_terminations
