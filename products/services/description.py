@@ -15,7 +15,7 @@
 from functools import singledispatch
 from typing import Union
 
-from orchestrator.domain.base import ProductBlockModel, ProductModel, SubscriptionModel
+from orchestrator.core.domain.base import ProductBlockModel, ProductModel, SubscriptionModel
 
 from products.product_blocks.core_port import CorePortBlockProvisioning
 from products.product_blocks.sap import SAPBlockProvisioning
