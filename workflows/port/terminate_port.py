@@ -12,13 +12,13 @@
 # limitations under the License.
 
 
-from orchestrator.types import SubscriptionLifecycle
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.steps import set_status
-from orchestrator.workflows.utils import terminate_workflow
+from orchestrator.core.forms import FormPage
+from orchestrator.core.types import SubscriptionLifecycle
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.steps import set_status
+from orchestrator.core.workflows.utils import terminate_workflow
 
 from products.product_types.port import PortProvisioning
-from pydantic_forms.core import FormPage
 from pydantic_forms.types import InputForm, State, UUIDstr
 from pydantic_forms.validators import DisplaySubscription
 from workflows.port.shared.steps import update_port_in_ims
@@ -42,6 +42,6 @@ def release_port(subscription: PortProvisioning) -> State:
     return {"subscription": subscription}
 
 
-@terminate_workflow("Terminate port", initial_input_form=terminate_initial_input_form_generator)
+@terminate_workflow(initial_input_form=terminate_initial_input_form_generator)
 def terminate_port() -> StepList:
     return begin >> set_status(SubscriptionLifecycle.PROVISIONING) >> release_port >> update_port_in_ims

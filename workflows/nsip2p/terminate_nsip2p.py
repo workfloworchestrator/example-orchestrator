@@ -11,10 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from orchestrator.forms import FormPage
-from orchestrator.forms.validators import DisplaySubscription
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import terminate_workflow
+from orchestrator.core.forms import FormPage
+from orchestrator.core.forms.validators import DisplaySubscription
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.utils import terminate_workflow
 
 from products import Nsip2p
 from pydantic_forms.types import InputForm, UUIDstr
@@ -44,6 +44,6 @@ def ims_remove_vlans(subscription: Nsip2p) -> None:
     remove_saps_in_netbox(saps)
 
 
-@terminate_workflow("Terminate NSIP2P", initial_input_form=terminate_initial_input_form_generator)
+@terminate_workflow(initial_input_form=terminate_initial_input_form_generator)
 def terminate_nsip2p() -> StepList:
     return begin >> ims_remove_nsip2p >> ims_remove_vlans

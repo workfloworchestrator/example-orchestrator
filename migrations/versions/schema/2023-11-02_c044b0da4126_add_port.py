@@ -9,14 +9,14 @@ Create Date: 2023-11-02 10:46:33.372496
 from uuid import uuid4
 
 from alembic import op
-from orchestrator.migrations.helpers import (
+from orchestrator.core.migrations.helpers import (
     create,
     create_workflow,
     delete,
     delete_workflow,
     ensure_default_workflows,
 )
-from orchestrator.targets import Target
+from orchestrator.core.targets import Target
 
 from products.product_types.port import PortSpeed
 

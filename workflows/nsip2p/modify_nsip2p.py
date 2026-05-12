@@ -11,12 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import ensure_provisioning_status, modify_workflow, reconcile_workflow
+from orchestrator.core.forms import FormPage
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.utils import ensure_provisioning_status, modify_workflow, reconcile_workflow
 
 from products.product_types.nsip2p import Nsip2p, Nsip2pProvisioning
 from products.services.description import description
-from pydantic_forms.core import FormPage
 from pydantic_forms.types import FormGenerator, State, UUIDstr
 from workflows.shared import modify_summary_form
 
@@ -61,11 +61,11 @@ def update_nsip2p_in_nrm(subscription: Nsip2p) -> State:
 update_nsip2p_in_external_systems = begin >> update_nsip2p_in_nrm
 
 
-@modify_workflow("Modify NSIP2P", initial_input_form=initial_input_form_generator)
+@modify_workflow(initial_input_form=initial_input_form_generator)
 def modify_nsip2p() -> StepList:
     return begin >> update_subscription >> update_nsip2p_in_external_systems
 
 
-@reconcile_workflow("Reconcile NSIP2P")
+@reconcile_workflow()
 def reconcile_nsip2p() -> StepList:
     return begin >> update_nsip2p_in_external_systems

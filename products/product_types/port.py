@@ -14,8 +14,8 @@
 
 from enum import IntEnum
 
-from orchestrator.domain.base import SubscriptionModel
-from orchestrator.types import SubscriptionLifecycle
+from orchestrator.core.domain.base import SubscriptionModel
+from orchestrator.core.types import SubscriptionLifecycle
 
 from products.product_blocks.port import PortBlock, PortBlockInactive, PortBlockProvisioning
 

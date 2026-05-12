@@ -12,7 +12,7 @@
 # limitations under the License.
 from typing import Callable, List, Tuple
 
-from orchestrator.workflow import StepList, conditional, step
+from orchestrator.core.workflow import StepList, conditional, step
 
 from products.product_types.node import Node, NodeProvisioning
 from products.services.netbox.netbox import build_payload
