@@ -13,9 +13,9 @@
 
 
 import structlog
-from orchestrator import workflow
-from orchestrator.targets import Target
-from orchestrator.workflow import StepList, done, init, step
+from orchestrator.core import workflow
+from orchestrator.core.targets import Target
+from orchestrator.core.workflow import StepList, done, init, step
 
 from pydantic_forms.types import State
 from services import netbox
@@ -81,6 +81,6 @@ def create_prefixes() -> State:
     return {"prefixes_created": prefixes_created}
 
 
-@workflow("Bootstrap Netbox", target=Target.SYSTEM)
+@workflow(target=Target.SYSTEM)
 def task_bootstrap_netbox() -> StepList:
     return init >> create_initial_set_of_objects >> create_prefixes >> done

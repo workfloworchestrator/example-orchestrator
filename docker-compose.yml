@@ -9,7 +9,7 @@ x-netbox: &netbox
     - ./docker/netbox/netbox.env
     - path: ./docker/overrides/netbox/netbox.env
       required: false
-  user: "unit:root"
+  user: "1000:0"
   healthcheck:
     start_period: 360s
     timeout: 3s
@@ -73,6 +73,7 @@ services:
 
   embeddings:
     container_name: embeddings
+    platform: linux/amd64
     image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.8
     command: --model-id sentence-transformers/all-MiniLM-L6-v2
     profiles:
@@ -109,7 +110,7 @@ services:
 
   federation:
     container_name: federation
-    image: ghcr.io/apollographql/router:v2.6.2
+    image: ghcr.io/apollographql/router:v2.11.0
     ports:
       - "4000:4000"
     depends_on:
@@ -165,13 +166,10 @@ services:
     image: ${ORCH_BACKEND_TAG:-ghcr.io/workfloworchestrator/orchestrator-core:latest}
     env_file:
       - ./docker/orchestrator/orchestrator.env
-      - ./docker/embeddings/embeddings.env
       - path: ./docker/overrides/orchestrator/orchestrator.env
         required: false
     environment:
       LSO_ENABLED: ${COMPOSE_PROFILES:+True}
-      AGENT_ENABLED: ${AGENT_ENABLED:-False}
-      SEARCH_ENABLED: ${SEARCH_ENABLED:-False}
     ports:
       - "8080:8080"
       - "5678:5678" #Enable Python debugger

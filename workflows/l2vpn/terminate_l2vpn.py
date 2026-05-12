@@ -12,11 +12,11 @@
 # limitations under the License.
 
 
-from orchestrator.workflow import StepList, begin, step
-from orchestrator.workflows.utils import terminate_workflow
+from orchestrator.core.forms import FormPage
+from orchestrator.core.workflow import StepList, begin, step
+from orchestrator.core.workflows.utils import terminate_workflow
 
 from products.product_types.l2vpn import L2vpn
-from pydantic_forms.core import FormPage
 from pydantic_forms.types import InputForm, UUIDstr
 from pydantic_forms.validators import DisplaySubscription
 from workflows.shared import remove_l2vpn_in_netbox, remove_saps_in_netbox
@@ -45,6 +45,6 @@ def ims_remove_vlans(subscription: L2vpn) -> None:
     remove_saps_in_netbox(saps)
 
 
-@terminate_workflow("Terminate l2vpn", initial_input_form=terminate_initial_input_form_generator)
+@terminate_workflow(initial_input_form=terminate_initial_input_form_generator)
 def terminate_l2vpn() -> StepList:
     return begin >> ims_remove_l2vpn >> ims_remove_vlans
