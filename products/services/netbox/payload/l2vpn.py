@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-from orchestrator.domain import SubscriptionModel
+from orchestrator.core.domain import SubscriptionModel
 
 from products.product_blocks.virtual_circuit import VirtualCircuitBlockProvisioning
 from products.services.description import description
