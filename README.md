@@ -647,8 +647,7 @@ this product.
 
 <details>
 <summary>This section contains advanced information about how to configure the Orchestrator. It is also possible to use
-a more user friendly tool available <a href="https://workfloworchestrator.
-org/orchestrator-core/reference-docs/cli/#generate">here</a>.
+a more user friendly tool available <a href="https://workfloworchestrator.org/orchestrator-core/reference-docs/cli/#generate">here</a>.
 This tool uses a configuration file to generate the boilerplate, migrations and configuration necessary to make use of
 the product straight away.
 </summary>
