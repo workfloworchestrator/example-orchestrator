@@ -12,8 +12,16 @@
 # limitations under the License.
 
 import strawberry
+from orchestrator.core.graphql import Query
+from orchestrator.core.graphql.pagination import Connection
 from orchestrator.core.graphql.schemas import DEFAULT_GRAPHQL_MODELS
+from orchestrator.core.graphql.schemas.customer import CustomerType
+from orchestrator.core.graphql.types import GraphqlFilter, GraphqlSort, OrchestratorInfo
+from orchestrator.core.graphql.utils.to_graphql_result_page import to_graphql_result_page
+from sqlalchemy import func, select
 
+from db.models import CustomerTable, db
+from oauth2_lib.strawberry import authenticated_field
 from products.product_blocks.node import NodeBlockInactive as _NodeBlockInactive
 
 
@@ -39,3 +47,29 @@ CUSTOM_GRAPHQL_MODELS = DEFAULT_GRAPHQL_MODELS | {
     "NodeBlockInactive": NodeBlockInactive,
     "NodeBlock": NodeBlockInactive,
 }
+
+
+async def resolve_customers(
+    info: OrchestratorInfo,
+    filter_by: list[GraphqlFilter] | None = None,
+    sort_by: list[GraphqlSort] | None = None,
+    first: int = 10,
+    after: int = 0,
+) -> Connection[CustomerType]:
+    """Resolve customers from the local CustomerTable instead of the default static customer."""
+    stmt = select(CustomerTable)
+    total = db.session.scalar(select(func.count()).select_from(stmt.subquery()))
+    stmt = stmt.offset(after).limit(first + 1)
+    customers = db.session.execute(stmt).scalars().all()
+
+    graphql_customers = [
+        CustomerType(customer_id=c.customer_id, fullname=c.fullname, shortcode=c.shortcode) for c in customers
+    ]
+    return to_graphql_result_page(graphql_customers, first, after, total)
+
+
+@strawberry.federation.type(description="Example orchestrator queries")
+class ExampleQuery(Query):
+    customers: Connection[CustomerType] = authenticated_field(
+        resolver=resolve_customers, description="Returns customers from the local database"
+    )

@@ -66,6 +66,10 @@ Example workflow orchestrator implementation based on the
     - [Federation](#federation)
       - [Requirements](#requirements)
       - [Example queries](#example-queries)
+  - [Customer information](#customer-information)
+    - [Static (default)](#static-default)
+    - [Local table](#local-table)
+    - [Remote](#remote)
   - [Configuration](#configuration)
   - [Glossary](#glossary)
 
@@ -1602,6 +1606,90 @@ query GetEnrichedSubscriptions {
 ```
 
 <img src=".pictures/graphql_federation.png" alt="federated query" width="75%" height="auto">
+
+## Customer information
+
+The orchestrator needs to associate each subscription with a customer. There are three ways to handle customer information, depending on your deployment scenario.
+
+### Static (default)
+
+The simplest approach: a single customer is configured through three environment variables in orchestrator-core's `AppSettings`:
+
+- `DEFAULT_CUSTOMER_FULLNAME` (default: `"Default::Orchestrator-Core Customer"`)
+- `DEFAULT_CUSTOMER_SHORTCODE` (default: `"default-cust"`)
+- `DEFAULT_CUSTOMER_IDENTIFIER` (default: a fixed UUID)
+
+The built-in GraphQL `customers` resolver returns this single customer. This is suitable for single-tenant deployments or development environments where customer selection is not needed.
+
+No database table or additional code is required.
+
+### Local table
+
+This example orchestrator demonstrates the local table approach. A `CustomerTable` is added to the database (see `db/models.py`) and populated through a migration with example customers. The default GraphQL `customers` resolver is overridden to read from the database instead of returning the static default.
+
+**Implementation steps:**
+
+1. **Define the model** in `db/models.py`:
+
+    ```python
+    class CustomerTable(BaseModel):
+        __tablename__ = "customers"
+        customer_id = mapped_column(String, server_default=text("uuid_generate_v4()"), primary_key=True)
+        fullname = mapped_column(String(255))
+        shortcode = mapped_column(String(255), index=True)
+    ```
+
+2. **Register the model** in `db/__init__.py` so it is picked up by Alembic:
+
+    ```python
+    ALL_DB_MODELS.extend([CustomerTable])
+    ```
+
+3. **Override the GraphQL resolver** to read customers from the database (see `graphql_federation.py`):
+
+    ```python
+    async def resolve_customers(info, filter_by=None, sort_by=None, first=10, after=0):
+        stmt = select(CustomerTable)
+        customers = db.session.execute(stmt).scalars().all()
+        return [CustomerType(customer_id=c.customer_id, ...) for c in customers]
+
+    @strawberry.federation.type(description="Example orchestrator queries")
+    class ExampleQuery(Query):
+        customers = authenticated_field(resolver=resolve_customers, ...)
+    ```
+
+4. **Register the custom query** in `wsgi.py`:
+
+    ```python
+    app.register_graphql(query=ExampleQuery, graphql_models=CUSTOM_GRAPHQL_MODELS)
+    ```
+
+5. **Create a migration** to create the table and seed example data.
+
+6. **Add `CustomerId` to create workflow forms** so the UI renders a customer dropdown:
+
+    ```python
+    from orchestrator.core.forms.validators import CustomerId
+
+    class CreateNodeForm(FormPage):
+        customer_id: CustomerId
+        # ... other fields
+    ```
+
+   The `CustomerId` type tells the orchestrator frontend to render a dropdown that fetches customers from the GraphQL `customers` query. The selected customer ID is then passed to `from_product_id(customer_id=customer_id, ...)` when constructing the subscription.
+
+How you fill the customer table is up to you: through a migration (as shown here), an admin interface, a sync workflow that imports from an external system, or any other mechanism.
+
+For more details on extending the GraphQL query, see the [WFO documentation on GraphQL][^11].
+
+### Remote
+
+For production environments with an existing customer administration system (such as a CRM), you can integrate with it by:
+
+1. **Overriding the GraphQL `customers` resolver** to proxy requests to the external system's API, translating the response into `CustomerType` objects.
+2. **Optionally syncing customers** into a local `CustomerTable` through a periodic task workflow, similar to how SURF imports customers from their CRM (see `workflows/tasks/` for task workflow examples).
+
+This approach keeps the orchestrator's customer data in sync with the authoritative source while still allowing the UI to use the standard customer dropdown.
 
 ## Configuration
 

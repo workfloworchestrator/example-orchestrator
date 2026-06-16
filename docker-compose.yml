@@ -176,6 +176,7 @@ services:
     expose:
       - 5678 #Enable Python debugger
     volumes:
+      - ./db:/home/orchestrator/db
       - ./workflows:/home/orchestrator/workflows
       - ./products:/home/orchestrator/products
       - ./migrations:/home/orchestrator/migrations

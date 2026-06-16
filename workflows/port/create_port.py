@@ -13,11 +13,11 @@
 
 
 import json
-import uuid
 from random import randrange
 from typing import TypeAlias, cast
 
 from orchestrator.core.forms import FormPage
+from orchestrator.core.forms.validators import CustomerId
 from orchestrator.core.services.products import get_product_by_id
 from orchestrator.core.types import SubscriptionLifecycle
 from orchestrator.core.utils.json import json_dumps
@@ -45,7 +45,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
     class SelectNodeForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        # organisation: OrganisationId
+        customer_id: CustomerId
 
         node_subscription_id: NodeChoice
 
@@ -76,12 +76,13 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
     summary_fields = ["port_ims_id", "port_description", "port_mode", "auto_negotiation", "lldp"]
     yield from create_summary_form(user_input_dict, product_name, summary_fields)
 
-    return user_input_dict | {"node_subscription_id": node_subscription_id}
+    return user_input_dict | select_node_dict
 
 
 @step("Construct Subscription model")
 def construct_port_model(
     product: UUIDstr,
+    customer_id: UUIDstr,
     node_subscription_id: UUIDstr,
     port_ims_id: int,
     port_description: str | None,
@@ -91,7 +92,7 @@ def construct_port_model(
 ) -> State:
     subscription = PortInactive.from_product_id(
         product_id=product,
-        customer_id=str(uuid.uuid4()),
+        customer_id=customer_id,
         status=SubscriptionLifecycle.INITIAL,
     )
     node = Node.from_subscription(node_subscription_id)

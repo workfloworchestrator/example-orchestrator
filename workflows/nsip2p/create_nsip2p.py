@@ -11,13 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import uuid
 from functools import partial
 from random import randrange
 from typing import Annotated, TypeAlias, cast
 
 from more_itertools import unzip
 from orchestrator.core.forms import FormPage
+from orchestrator.core.forms.validators import CustomerId
 from orchestrator.core.types import SubscriptionLifecycle
 from orchestrator.core.workflow import StepList, begin, step
 from orchestrator.core.workflows.steps import store_process_subscription
@@ -53,6 +53,8 @@ def validate_single_vlan(vlan: VlanRanges, info: ValidationInfo) -> VlanRanges:
 def initial_input_form_generator(product_name: str) -> FormGenerator:
     class CreateNsip2pForm(FormPage):
         model_config = ConfigDict(title=product_name)
+
+        customer_id: CustomerId
 
         speed: int
         speed_policer: bool | None = False
@@ -95,6 +97,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 @step("Construct NSIP2P Subscription model")
 def construct_nsip2p_model(
     product: UUIDstr,
+    customer_id: UUIDstr,
     ports: list[UUIDstr],
     speed: int,
     speed_policer: bool,
@@ -102,7 +105,7 @@ def construct_nsip2p_model(
 ) -> State:
     subscription = Nsip2pInactive.from_product_id(
         product_id=product,
-        customer_id=str(uuid.uuid4()),
+        customer_id=customer_id,
         status=SubscriptionLifecycle.INITIAL,
     )
     subscription.virtual_circuit.speed = speed

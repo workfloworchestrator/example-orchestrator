@@ -13,11 +13,11 @@
 
 
 import json
-import uuid
 from random import randrange
 from typing import TypeAlias, cast
 
 from orchestrator.core.forms import FormPage
+from orchestrator.core.forms.validators import CustomerId
 from orchestrator.core.services.products import get_product_by_id
 from orchestrator.core.types import SubscriptionLifecycle
 from orchestrator.core.utils.json import json_dumps
@@ -44,6 +44,8 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
 
     class SelectNodes(FormPage):
         model_config = ConfigDict(title=f"{product_name} - node A and B")
+
+        customer_id: CustomerId
 
         node_subscription_id_a: NodeAChoice
         node_subscription_id_b: NodeBChoice
@@ -84,6 +86,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
 @step("Construct Subscription model")
 def construct_core_link_model(
     product: UUIDstr,
+    customer_id: UUIDstr,
     node_subscription_id_a: UUIDstr,
     node_subscription_id_b: UUIDstr,
     port_ims_id_a: int,
@@ -92,7 +95,7 @@ def construct_core_link_model(
 ) -> State:
     subscription = CoreLinkInactive.from_product_id(
         product_id=product,
-        customer_id=str(uuid.uuid4()),
+        customer_id=customer_id,
         status=SubscriptionLifecycle.INITIAL,
     )
     # side A

@@ -13,11 +13,11 @@
 
 
 import json
-import uuid
 from random import randrange
 from typing import TypeAlias, cast
 
 from orchestrator.core.forms import FormPage
+from orchestrator.core.forms.validators import CustomerId
 from orchestrator.core.services.products import get_product_by_id
 from orchestrator.core.types import SubscriptionLifecycle
 from orchestrator.core.utils.json import json_dumps
@@ -48,7 +48,7 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
     class CreateNodeForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        # organisation: OrganisationId
+        customer_id: CustomerId
 
         auto_add_interfaces: bool = True
 
@@ -73,7 +73,7 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
 @step("Construct Subscription model")
 def construct_node_model(
     product: UUIDstr,
-    # organisation: UUIDstr,
+    customer_id: UUIDstr,
     role_id: int,
     type_id: int,
     site_id: int,
@@ -83,7 +83,7 @@ def construct_node_model(
 ) -> State:
     subscription = NodeInactive.from_product_id(
         product_id=product,
-        customer_id=str(uuid.uuid4()),
+        customer_id=customer_id,
         status=SubscriptionLifecycle.INITIAL,
     )
     print(f"construct model: type(node_status): {type(node_status)} == {node_status}")

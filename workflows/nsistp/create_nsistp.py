@@ -12,13 +12,12 @@
 # limitations under the License.
 
 
-import uuid
 from functools import partial
 from typing import Annotated, TypeAlias, cast
 
 import structlog
 from orchestrator.core.forms import FormPage
-from orchestrator.core.forms.validators import Divider, Label
+from orchestrator.core.forms.validators import CustomerId, Divider, Label
 from orchestrator.core.types import SubscriptionLifecycle
 from orchestrator.core.workflow import StepList, begin, step
 from orchestrator.core.workflows.steps import store_process_subscription
@@ -52,6 +51,8 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 
     class CreateNsiStpForm(FormPage):
         model_config = ConfigDict(title=product_name)
+
+        customer_id: CustomerId
 
         nsistp_settings: Label
 
@@ -99,6 +100,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 @step("Construct Subscription model")
 def construct_nsistp_model(
     product: UUIDstr,
+    customer_id: UUIDstr,
     port: UUIDstr,
     vlan: VlanRanges,
     topology: str,
@@ -111,7 +113,7 @@ def construct_nsistp_model(
 ) -> State:
     nsistp = NsistpInactive.from_product_id(
         product_id=product,
-        customer_id=str(uuid.uuid4()),
+        customer_id=customer_id,
         status=SubscriptionLifecycle.INITIAL,
     )
     nsistp.nsistp.topology = topology

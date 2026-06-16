@@ -15,9 +15,10 @@
 from orchestrator.core import OrchestratorCore
 from orchestrator.core.settings import AppSettings
 
+import db  # noqa: F401  Side-effects: registers CustomerTable with ALL_DB_MODELS
 import products  # noqa: F401  Side-effects
 import workflows  # noqa: F401  Side-effects
-from graphql_federation import CUSTOM_GRAPHQL_MODELS
+from graphql_federation import CUSTOM_GRAPHQL_MODELS, ExampleQuery
 
 app = OrchestratorCore(base_settings=AppSettings())
-app.register_graphql(graphql_models=CUSTOM_GRAPHQL_MODELS)
+app.register_graphql(query=ExampleQuery, graphql_models=CUSTOM_GRAPHQL_MODELS)
