@@ -48,7 +48,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
     class CreateL2vpnForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        customer: customer_selector()
+        customer_id: customer_selector()
 
         number_of_ports: AllowedNumberOfL2vpnPorts
         speed: int

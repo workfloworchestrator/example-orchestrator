@@ -52,7 +52,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
     class CreateNsiStpForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        customer: customer_selector()
+        customer_id: customer_selector()
 
         nsistp_settings: Label
 

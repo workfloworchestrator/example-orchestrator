@@ -44,7 +44,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
     class SelectNodeForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        customer: customer_selector()
+        customer_id: customer_selector()
 
         node_subscription_id: NodeChoice
 

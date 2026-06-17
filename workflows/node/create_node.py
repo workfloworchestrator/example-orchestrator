@@ -47,7 +47,7 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
     class CreateNodeForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        customer: customer_selector()
+        customer_id: customer_selector()
 
         auto_add_interfaces: bool = True
 

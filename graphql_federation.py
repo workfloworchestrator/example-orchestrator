@@ -13,17 +13,29 @@
 
 import strawberry
 from orchestrator.core.db import db
-from orchestrator.core.graphql import Query
-from orchestrator.core.graphql.pagination import Connection
+from orchestrator.core.db.filters import create_memoized_field_list, generic_filter_from_clauses
+from orchestrator.core.db.filters.search_filters import default_inferred_column_clauses
+from orchestrator.core.db.sorting import generic_column_sort, generic_sort
 from orchestrator.core.graphql.schemas import DEFAULT_GRAPHQL_MODELS
 from orchestrator.core.graphql.schemas.customer import CustomerType
-from orchestrator.core.graphql.types import GraphqlFilter, GraphqlSort, OrchestratorInfo
-from orchestrator.core.graphql.utils.to_graphql_result_page import to_graphql_result_page
-from sqlalchemy import func, select
+from orchestrator.core.graphql.schemas.process import ProcessType
+from orchestrator.core.graphql.schemas.subscription import SubscriptionInterface
+from orchestrator.core.graphql.utils.override_class import override_class
+from orchestrator.core.utils.helpers import to_camel
+from sqlalchemy import select
+from sqlalchemy.inspection import inspect
 
 from db.models import CustomerTable
-from oauth2_lib.strawberry import authenticated_field
 from products.product_blocks.node import NodeBlockInactive as _NodeBlockInactive
+
+CUSTOMER_TABLE_COLUMN_CLAUSES = default_inferred_column_clauses(CustomerTable)
+CUSTOMER_SORT_FUNCTIONS_BY_COLUMN = {
+    to_camel(key): generic_column_sort(value, CustomerTable) for [key, value] in inspect(CustomerTable).columns.items()
+}
+customer_filter_fields = create_memoized_field_list(CUSTOMER_TABLE_COLUMN_CLAUSES)
+customer_sort_fields = create_memoized_field_list(CUSTOMER_SORT_FUNCTIONS_BY_COLUMN)
+filter_customers = generic_filter_from_clauses(CUSTOMER_TABLE_COLUMN_CLAUSES)
+sort_customers = generic_sort(CUSTOMER_SORT_FUNCTIONS_BY_COLUMN)
 
 
 @strawberry.federation.type(keys=["id"])
@@ -44,33 +56,46 @@ class NodeBlockInactive:
         return DeviceType(id=self.ims_id) if self.ims_id else None
 
 
+def _resolve_customer_from_table(customer_id: str) -> CustomerType:
+    stmt = select(CustomerTable).where(CustomerTable.customer_id == customer_id)
+    customer = db.session.execute(stmt).scalars().one_or_none()
+    if customer:
+        return CustomerType(
+            customer_id=customer.customer_id,
+            fullname=customer.fullname,
+            shortcode=customer.shortcode,
+        )
+    return CustomerType(
+        customer_id=str(customer_id),
+        fullname="missing",
+        shortcode="missing",
+    )
+
+
+async def resolve_subscription_customer(root: SubscriptionInterface) -> CustomerType:
+    return _resolve_customer_from_table(root.customer_id)
+
+
+async def resolve_process_customer(root: ProcessType) -> CustomerType:
+    return _resolve_customer_from_table(root.customer_id)
+
+
+subscription_customer_field = strawberry.field(
+    resolver=resolve_subscription_customer,
+    description="Returns customer of a subscription",
+)
+subscription_customer_field.name = "customer"
+
+process_customer_field = strawberry.field(
+    resolver=resolve_process_customer,
+    description="Returns customer of a process",
+)
+process_customer_field.name = "customer"
+
+custom_subscription_interface = override_class(SubscriptionInterface, [subscription_customer_field])
+override_class(ProcessType, [process_customer_field])
+
 CUSTOM_GRAPHQL_MODELS = DEFAULT_GRAPHQL_MODELS | {
     "NodeBlockInactive": NodeBlockInactive,
     "NodeBlock": NodeBlockInactive,
 }
-
-
-async def resolve_customers(
-    info: OrchestratorInfo,
-    filter_by: list[GraphqlFilter] | None = None,
-    sort_by: list[GraphqlSort] | None = None,
-    first: int = 10,
-    after: int = 0,
-) -> Connection[CustomerType]:
-    """Resolve customers from the local CustomerTable instead of the default static customer."""
-    stmt = select(CustomerTable)
-    total = db.session.scalar(select(func.count()).select_from(stmt.subquery()))
-    stmt = stmt.offset(after).limit(first + 1)
-    customers = db.session.execute(stmt).scalars().all()
-
-    graphql_customers = [
-        CustomerType(customer_id=c.customer_id, fullname=c.fullname, shortcode=c.shortcode) for c in customers
-    ]
-    return to_graphql_result_page(graphql_customers, first, after, total)
-
-
-@strawberry.federation.type(description="Example orchestrator queries")
-class ExampleQuery(Query):
-    customers: Connection[CustomerType] = authenticated_field(
-        resolver=resolve_customers, description="Returns customers from the local database"
-    )
