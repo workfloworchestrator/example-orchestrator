@@ -18,7 +18,6 @@ from typing import Annotated, TypeAlias, cast
 
 from more_itertools.more import unzip
 from orchestrator.core.forms import FormPage
-from orchestrator.core.forms.validators import CustomerId
 from orchestrator.core.types import SubscriptionLifecycle
 from orchestrator.core.workflow import StepList, begin, step
 from orchestrator.core.workflows.steps import store_process_subscription
@@ -38,6 +37,7 @@ from workflows.shared import (
     create_l2vpn_in_netbox,
     create_l2vpn_terminations_in_netbox,
     create_saps_in_netbox,
+    customer_selector,
     update_ports_in_netbox,
     validate_vlan,
     validate_vlan_not_in_use,
@@ -48,7 +48,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
     class CreateL2vpnForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        customer_id: CustomerId
+        customer: customer_selector()
 
         number_of_ports: AllowedNumberOfL2vpnPorts
         speed: int

@@ -1666,17 +1666,17 @@ This example orchestrator demonstrates the local table approach. A `CustomerTabl
 
 5. **Create a migration** to create the table and seed example data.
 
-6. **Add `CustomerId` to create workflow forms** so the UI renders a customer dropdown:
+6. **Add a customer selector to create workflow forms** so the UI renders a customer dropdown:
 
     ```python
-    from orchestrator.core.forms.validators import CustomerId
+    from workflows.shared import customer_selector
 
     class CreateNodeForm(FormPage):
-        customer_id: CustomerId
+        customer: customer_selector()
         # ... other fields
     ```
 
-   The `CustomerId` type tells the orchestrator frontend to render a dropdown that fetches customers from the GraphQL `customers` query. The selected customer ID is then passed to `from_product_id(customer_id=customer_id, ...)` when constructing the subscription.
+   The `customer_selector()` function queries the `CustomerTable` and returns a `Choice` type that the orchestrator frontend renders as a dropdown. The selected customer ID is then passed to `from_product_id(customer_id=customer_id, ...)` when constructing the subscription.
 
 How you fill the customer table is up to you: through a migration (as shown here), an admin interface, a sync workflow that imports from an external system, or any other mechanism.
 
@@ -1687,7 +1687,7 @@ For more details on extending the GraphQL query, see the [WFO documentation on G
 For production environments with an existing customer administration system (such as a CRM), you can integrate with it by:
 
 1. **Overriding the GraphQL `customers` resolver** to proxy requests to the external system's API, translating the response into `CustomerType` objects.
-2. **Optionally syncing customers** into a local `CustomerTable` through a periodic task workflow, similar to how SURF imports customers from their CRM (see `workflows/tasks/` for task workflow examples).
+2. **Optionally syncing customers** into a local `CustomerTable` through a periodic task workflow that imports customers from the external system on a schedule.
 
 This approach keeps the orchestrator's customer data in sync with the authoritative source while still allowing the UI to use the standard customer dropdown.
 

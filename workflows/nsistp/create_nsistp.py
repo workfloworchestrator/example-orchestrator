@@ -17,7 +17,7 @@ from typing import Annotated, TypeAlias, cast
 
 import structlog
 from orchestrator.core.forms import FormPage
-from orchestrator.core.forms.validators import CustomerId, Divider, Label
+from orchestrator.core.forms.validators import Divider, Label
 from orchestrator.core.types import SubscriptionLifecycle
 from orchestrator.core.workflow import StepList, begin, step
 from orchestrator.core.workflows.steps import store_process_subscription
@@ -39,7 +39,7 @@ from workflows.nsistp.shared.forms import (
     port_selector,
     validate_both_aliases_empty_or_not,
 )
-from workflows.shared import create_summary_form, validate_vlan, validate_vlan_not_in_use
+from workflows.shared import create_summary_form, customer_selector, validate_vlan, validate_vlan_not_in_use
 
 logger = structlog.get_logger(__name__)
 
@@ -52,7 +52,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
     class CreateNsiStpForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        customer_id: CustomerId
+        customer: customer_selector()
 
         nsistp_settings: Label
 

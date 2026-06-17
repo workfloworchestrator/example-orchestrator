@@ -17,7 +17,6 @@ from random import randrange
 from typing import TypeAlias, cast
 
 from orchestrator.core.forms import FormPage
-from orchestrator.core.forms.validators import CustomerId
 from orchestrator.core.services.products import get_product_by_id
 from orchestrator.core.types import SubscriptionLifecycle
 from orchestrator.core.utils.json import json_dumps
@@ -35,7 +34,7 @@ from pydantic_forms.validators import Choice
 from services import netbox
 from services.lso_client import execute_playbook, lso_interaction
 from settings import settings
-from workflows.shared import free_port_selector, node_selector
+from workflows.shared import customer_selector, free_port_selector, node_selector
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
@@ -45,7 +44,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
     class SelectNodes(FormPage):
         model_config = ConfigDict(title=f"{product_name} - node A and B")
 
-        customer_id: CustomerId
+        customer: customer_selector()
 
         node_subscription_id_a: NodeAChoice
         node_subscription_id_b: NodeBChoice

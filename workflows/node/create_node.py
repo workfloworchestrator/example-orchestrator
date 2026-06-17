@@ -17,7 +17,6 @@ from random import randrange
 from typing import TypeAlias, cast
 
 from orchestrator.core.forms import FormPage
-from orchestrator.core.forms.validators import CustomerId
 from orchestrator.core.services.products import get_product_by_id
 from orchestrator.core.types import SubscriptionLifecycle
 from orchestrator.core.utils.json import json_dumps
@@ -36,7 +35,7 @@ from services import netbox
 from services.lso_client import execute_playbook, lso_interaction
 from workflows.node.shared.forms import NodeStatusChoice, node_role_selector, node_type_selector, site_selector
 from workflows.node.shared.steps import if_auto_add_ifaces, update_interfaces, update_node_in_ims
-from workflows.shared import create_summary_form
+from workflows.shared import create_summary_form, customer_selector
 
 
 def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGenerator:
@@ -48,7 +47,7 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
     class CreateNodeForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        customer_id: CustomerId
+        customer: customer_selector()
 
         auto_add_interfaces: bool = True
 

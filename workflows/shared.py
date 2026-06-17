@@ -38,6 +38,7 @@ from pydantic_core.core_schema import ValidationInfo
 from sqlalchemy import select
 from sqlalchemy.orm import aliased
 
+from db.models import CustomerTable
 from nwastdlib.vlans import VlanRanges
 from products import Port
 from products.product_blocks.sap import SAPBlock, SAPBlockProvisioning
@@ -457,3 +458,10 @@ def remove_saps_in_netbox(saps: list[SAPBlock]) -> None:
         for vlan in vlans:
             netbox.delete_vlan(id=vlan.id)
         netbox.delete_vlan_group(id=sap.ims_id)
+
+
+def customer_selector() -> type[Choice]:
+    stmt = select(CustomerTable.customer_id, CustomerTable.fullname).order_by(CustomerTable.fullname)
+    rows = db.session.execute(stmt).all()
+    customers = {str(row.customer_id): row.fullname for row in rows}
+    return Choice("CustomersEnum", zip(customers.keys(), customers.items()))  # type: ignore

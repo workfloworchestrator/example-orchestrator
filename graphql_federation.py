@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import strawberry
+from orchestrator.core.db import db
 from orchestrator.core.graphql import Query
 from orchestrator.core.graphql.pagination import Connection
 from orchestrator.core.graphql.schemas import DEFAULT_GRAPHQL_MODELS
@@ -20,7 +21,7 @@ from orchestrator.core.graphql.types import GraphqlFilter, GraphqlSort, Orchestr
 from orchestrator.core.graphql.utils.to_graphql_result_page import to_graphql_result_page
 from sqlalchemy import func, select
 
-from db.models import CustomerTable, db
+from db.models import CustomerTable
 from oauth2_lib.strawberry import authenticated_field
 from products.product_blocks.node import NodeBlockInactive as _NodeBlockInactive
 

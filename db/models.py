@@ -1,15 +1,11 @@
-from typing import cast
 from uuid import UUID
 
-from orchestrator.core.db import WrappedDatabase
-from orchestrator.core.db.database import BaseModel, Database
+from orchestrator.core.db import db
+from orchestrator.core.db.database import BaseModel
 from sqlalchemy import String, select, text
 from sqlalchemy.orm import mapped_column
 
 from pydantic_forms.types import UUIDstr
-
-wrapped_db = WrappedDatabase()
-db = cast(Database, wrapped_db)
 
 
 class CustomerTable(BaseModel):
