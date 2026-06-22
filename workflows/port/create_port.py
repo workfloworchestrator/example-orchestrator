@@ -30,20 +30,12 @@ from products.product_types.node import Node
 from products.product_types.port import PortInactive, PortProvisioning
 from products.services.description import description
 from pydantic_forms.types import FormGenerator, State, UUIDstr
-from pydantic_forms.validators import Choice, Label, callout
-from pydantic_forms.validators.components.callout import CalloutMessageType
+from pydantic_forms.validators import Choice, Label
 from services import netbox
 from services.lso_client import execute_playbook, lso_interaction
 from workflows.port.shared.forms import PortModeChoice
 from workflows.port.shared.steps import update_port_in_ims
 from workflows.shared import create_summary_form, customer_selector, free_port_selector, node_selector
-
-PrimaryCallout = callout(
-    header="Note",
-    message="Selecting a customer is configurable. Please check the 'Customer information' section in the README for "
-    " more information.",
-    message_type=CalloutMessageType.PRIMARY,
-)
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
@@ -52,7 +44,6 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
     class SelectNodeForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        callout_1: PrimaryCallout = None  # type: ignore[valid-type]
         customer_id: customer_selector()
 
         node_subscription_id: NodeChoice
