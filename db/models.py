@@ -11,6 +11,7 @@ from pydantic_forms.types import UUIDstr
 class CustomerTable(BaseModel):
     __tablename__ = "customers"
 
+    # Only customer_id is mandatory for the customer table, the other fields are optional and can be chosen by the user
     customer_id = mapped_column(String, server_default=text("uuid_generate_v4()"), primary_key=True)
     fullname = mapped_column(String(255))
     shortcode = mapped_column(String(255), index=True)

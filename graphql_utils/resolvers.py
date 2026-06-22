@@ -16,7 +16,6 @@ from orchestrator.core.db import db
 from orchestrator.core.db.filters import create_memoized_field_list, generic_filter_from_clauses
 from orchestrator.core.db.filters.search_filters import default_inferred_column_clauses
 from orchestrator.core.db.sorting import generic_column_sort, generic_sort
-from orchestrator.core.graphql.schemas import DEFAULT_GRAPHQL_MODELS
 from orchestrator.core.graphql.schemas.customer import CustomerType
 from orchestrator.core.graphql.schemas.process import ProcessType
 from orchestrator.core.graphql.schemas.subscription import SubscriptionInterface
@@ -26,7 +25,6 @@ from sqlalchemy import select
 from sqlalchemy.inspection import inspect
 
 from db.models import CustomerTable
-from products.product_blocks.node import NodeBlockInactive as _NodeBlockInactive
 
 CUSTOMER_TABLE_COLUMN_CLAUSES = default_inferred_column_clauses(CustomerTable)
 CUSTOMER_SORT_FUNCTIONS_BY_COLUMN = {
@@ -36,24 +34,6 @@ customer_filter_fields = create_memoized_field_list(CUSTOMER_TABLE_COLUMN_CLAUSE
 customer_sort_fields = create_memoized_field_list(CUSTOMER_SORT_FUNCTIONS_BY_COLUMN)
 filter_customers = generic_filter_from_clauses(CUSTOMER_TABLE_COLUMN_CLAUSES)
 sort_customers = generic_sort(CUSTOMER_SORT_FUNCTIONS_BY_COLUMN)
-
-
-@strawberry.federation.type(keys=["id"])
-class DeviceType:
-    """The name of this class matches that in Netbox."""
-
-    id: strawberry.ID
-
-
-@strawberry.experimental.pydantic.type(model=_NodeBlockInactive, all_fields=True)
-class NodeBlockInactive:
-    @strawberry.field(description="Get netbox device by IMS ID")
-    def netbox_device(self) -> DeviceType | None:
-        """Add a field which contains an object with nothing but an ID.
-
-        Federation resolves the other DeviceType fields from Netbox.
-        """
-        return DeviceType(id=self.ims_id) if self.ims_id else None
 
 
 def _resolve_customer_from_table(customer_id: str) -> CustomerType:
@@ -94,8 +74,3 @@ process_customer_field.name = "customer"
 
 custom_subscription_interface = override_class(SubscriptionInterface, [subscription_customer_field])
 override_class(ProcessType, [process_customer_field])
-
-CUSTOM_GRAPHQL_MODELS = DEFAULT_GRAPHQL_MODELS | {
-    "NodeBlockInactive": NodeBlockInactive,
-    "NodeBlock": NodeBlockInactive,
-}

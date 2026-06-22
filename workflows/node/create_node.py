@@ -30,12 +30,20 @@ from products.product_types.node import NodeInactive, NodeProvisioning
 from products.services.description import description
 from products.services.netbox.netbox import build_payload
 from pydantic_forms.types import FormGenerator, State, UUIDstr
-from pydantic_forms.validators import Choice, Label
+from pydantic_forms.validators import Choice, Label, callout
+from pydantic_forms.validators.components.callout import CalloutMessageType
 from services import netbox
 from services.lso_client import execute_playbook, lso_interaction
 from workflows.node.shared.forms import NodeStatusChoice, node_role_selector, node_type_selector, site_selector
 from workflows.node.shared.steps import if_auto_add_ifaces, update_interfaces, update_node_in_ims
 from workflows.shared import create_summary_form, customer_selector
+
+PrimaryCallout = callout(
+    header="Note",
+    message="Selecting a customer is configurable. Please check the 'Customer information' section in the README for "
+    " more information.",
+    message_type=CalloutMessageType.PRIMARY,
+)
 
 
 def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGenerator:
@@ -47,6 +55,7 @@ def initial_input_form_generator(product_name: str, product: UUIDstr) -> FormGen
     class CreateNodeForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
+        callout_1: PrimaryCallout = None  # type: ignore[valid-type]
         customer_id: customer_selector()
 
         auto_add_interfaces: bool = True
