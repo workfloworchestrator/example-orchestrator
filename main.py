@@ -17,6 +17,7 @@ from orchestrator.core.cli.main import app as core_cli
 from orchestrator.core.db import init_database
 from orchestrator.core.log_config import LOGGER_OVERRIDES
 
+import db  # noqa: F401  Registers CustomerTable with ALL_DB_MODELS
 import products  # noqa: F401  Registers SUBSCRIPTION_MODEL_REGISTRY entries
 from nwastdlib.logging import initialise_logging
 

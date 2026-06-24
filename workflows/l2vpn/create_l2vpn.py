@@ -12,7 +12,6 @@
 # limitations under the License.
 
 
-import uuid
 from functools import partial
 from random import randrange
 from typing import Annotated, TypeAlias, cast
@@ -38,6 +37,7 @@ from workflows.shared import (
     create_l2vpn_in_netbox,
     create_l2vpn_terminations_in_netbox,
     create_saps_in_netbox,
+    customer_selector,
     update_ports_in_netbox,
     validate_vlan,
     validate_vlan_not_in_use,
@@ -47,6 +47,8 @@ from workflows.shared import (
 def initial_input_form_generator(product_name: str) -> FormGenerator:
     class CreateL2vpnForm(FormPage):
         model_config = ConfigDict(title=product_name)
+
+        customer_id: customer_selector()
 
         number_of_ports: AllowedNumberOfL2vpnPorts
         speed: int
@@ -81,7 +83,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 @step("Construct Subscription model")
 def construct_l2vpn_model(
     product: UUIDstr,
-    # organisation: UUIDstr,
+    customer_id: UUIDstr,
     ports: list[UUIDstr],
     speed: int,
     speed_policer: bool,
@@ -89,7 +91,7 @@ def construct_l2vpn_model(
 ) -> State:
     subscription = L2vpnInactive.from_product_id(
         product_id=product,
-        customer_id=str(uuid.uuid4()),
+        customer_id=customer_id,
         status=SubscriptionLifecycle.INITIAL,
     )
     subscription.virtual_circuit.speed = speed

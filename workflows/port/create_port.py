@@ -13,7 +13,6 @@
 
 
 import json
-import uuid
 from random import randrange
 from typing import TypeAlias, cast
 
@@ -36,7 +35,7 @@ from services import netbox
 from services.lso_client import execute_playbook, lso_interaction
 from workflows.port.shared.forms import PortModeChoice
 from workflows.port.shared.steps import update_port_in_ims
-from workflows.shared import create_summary_form, free_port_selector, node_selector
+from workflows.shared import create_summary_form, customer_selector, free_port_selector, node_selector
 
 
 def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGenerator:
@@ -45,7 +44,7 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
     class SelectNodeForm(FormPage):
         model_config = ConfigDict(title=product_name)
 
-        # organisation: OrganisationId
+        customer_id: customer_selector()
 
         node_subscription_id: NodeChoice
 
@@ -76,12 +75,13 @@ def initial_input_form_generator(product: UUIDstr, product_name: str) -> FormGen
     summary_fields = ["port_ims_id", "port_description", "port_mode", "auto_negotiation", "lldp"]
     yield from create_summary_form(user_input_dict, product_name, summary_fields)
 
-    return user_input_dict | {"node_subscription_id": node_subscription_id}
+    return user_input_dict | select_node_dict
 
 
 @step("Construct Subscription model")
 def construct_port_model(
     product: UUIDstr,
+    customer_id: UUIDstr,
     node_subscription_id: UUIDstr,
     port_ims_id: int,
     port_description: str | None,
@@ -91,7 +91,7 @@ def construct_port_model(
 ) -> State:
     subscription = PortInactive.from_product_id(
         product_id=product,
-        customer_id=str(uuid.uuid4()),
+        customer_id=customer_id,
         status=SubscriptionLifecycle.INITIAL,
     )
     node = Node.from_subscription(node_subscription_id)

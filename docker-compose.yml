@@ -176,6 +176,7 @@ services:
     expose:
       - 5678 #Enable Python debugger
     volumes:
+      - ./db:/home/orchestrator/db
       - ./workflows:/home/orchestrator/workflows
       - ./products:/home/orchestrator/products
       - ./migrations:/home/orchestrator/migrations
@@ -183,7 +184,7 @@ services:
       - ./main.py:/home/orchestrator/main.py
       - ./wsgi.py:/home/orchestrator/wsgi.py
       - ./settings.py:/home/orchestrator/settings.py
-      - ./graphql_federation.py:/home/orchestrator/graphql_federation.py
+      - ./graphql_utils:/home/orchestrator/graphql_utils
       - ./utils:/home/orchestrator/utils
       - ./services:/home/orchestrator/services
       - ./pyproject.toml:/home/orchestrator/pyproject.toml

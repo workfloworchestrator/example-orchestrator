@@ -6,6 +6,7 @@
       "auto_add_interfaces_info": "Auto administrate interfaces in IMS",
       "auto_negotiation": "Auto-Negotiation",
       "auto_negotiation_info": "Enable Ethernet Auto-Negotiation?",
+      "customer_id": "Customer",
       "lldp": "LLDP",
       "lldp_info": "Enable Link Layer Discovery Protocol?",
       "node_description": "Node description",

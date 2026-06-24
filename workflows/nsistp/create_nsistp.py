@@ -12,7 +12,6 @@
 # limitations under the License.
 
 
-import uuid
 from functools import partial
 from typing import Annotated, TypeAlias, cast
 
@@ -40,7 +39,7 @@ from workflows.nsistp.shared.forms import (
     port_selector,
     validate_both_aliases_empty_or_not,
 )
-from workflows.shared import create_summary_form, validate_vlan, validate_vlan_not_in_use
+from workflows.shared import create_summary_form, customer_selector, validate_vlan, validate_vlan_not_in_use
 
 logger = structlog.get_logger(__name__)
 
@@ -52,6 +51,8 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 
     class CreateNsiStpForm(FormPage):
         model_config = ConfigDict(title=product_name)
+
+        customer_id: customer_selector()
 
         nsistp_settings: Label
 
@@ -99,6 +100,7 @@ def initial_input_form_generator(product_name: str) -> FormGenerator:
 @step("Construct Subscription model")
 def construct_nsistp_model(
     product: UUIDstr,
+    customer_id: UUIDstr,
     port: UUIDstr,
     vlan: VlanRanges,
     topology: str,
@@ -111,7 +113,7 @@ def construct_nsistp_model(
 ) -> State:
     nsistp = NsistpInactive.from_product_id(
         product_id=product,
-        customer_id=str(uuid.uuid4()),
+        customer_id=customer_id,
         status=SubscriptionLifecycle.INITIAL,
     )
     nsistp.nsistp.topology = topology
