@@ -2,14 +2,43 @@ import os
 import shutil
 import time
 from collections.abc import Generator
+from pathlib import Path
 
 import pytest
 import requests
 from playwright.sync_api import Browser, BrowserContext, Page, Playwright
 
+_SCREENSHOTS_DIR = Path("screenshots")
+
 _BOOTSTRAP_TASK_NAME = "task_bootstrap_netbox"
 _POLL_INTERVAL = 2  # seconds
 _POLL_TIMEOUT = 120  # seconds
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Clear the screenshots directory before each test session."""
+    if _SCREENSHOTS_DIR.exists():
+        shutil.rmtree(_SCREENSHOTS_DIR)
+    _SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> Generator:
+    """Take a screenshot after each test call, for both passed and failed tests."""
+    outcome = yield
+    report = outcome.get_result()
+
+    if report.when != "call":
+        return
+
+    page: Page | None = item.funcargs.get("page")  # type: ignore[assignment]
+    if page is None:
+        return
+
+    status = "failed" if report.failed else "passed"
+    _SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
+    screenshot_path = _SCREENSHOTS_DIR / f"{item.name}_{status}.png"
+    page.screenshot(path=str(screenshot_path))
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:

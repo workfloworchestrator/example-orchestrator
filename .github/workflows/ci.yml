@@ -127,12 +127,12 @@ jobs:
             --orchestrator-api-url http://localhost:8080/api \
             --orchestrator-ui-url http://localhost:3000
 
-      - name: Upload e2e test artifacts
+      - name: Upload e2e screenshots
         uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
-          name: e2e-artifacts
-          path: test-results/
+          name: e2e-screenshots-${{ github.run_id }}
+          path: screenshots/
           retention-days: 7
 
       - name: Tear down Docker Compose
