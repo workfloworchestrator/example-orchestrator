@@ -22,7 +22,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(
         "--orchestrator-api-url",
         action="store",
-        default=os.getenv("ORCH_API_URL", "http://localhost:8080/api/v1"),
+        default=os.getenv("ORCH_API_URL", "http://localhost:8080/api"),
         help="Base URL for the Orchestrator backend API.",
     )
     parser.addoption(

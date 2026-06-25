@@ -35,8 +35,9 @@ jobs:
       - name: Run remaining pre-commit hooks
         run: uv run pre-commit run --all-files
 
-  validate-compose:
-    name: Spin up and test health of services
+  validate-compose-and-e2e-tests:
+    # Validates the Docker Compose stack is healthy and runs the e2e test suite against it.
+    name: Spin up services and run e2e tests
     runs-on: ubuntu-latest
     needs: precommit  # Only run if precommit checks pass
 
@@ -47,9 +48,26 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.29"
+          python-version: '3.13'
+
+      - name: Install the project
+        run: uv sync
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('uv.lock') }}
+
+      - name: Install Playwright browsers
+        run: uv run playwright install chromium --with-deps
+
       - name: Start Docker Compose stack
-        run: |
-          docker compose up -d --build
+        run: docker compose up -d --build
 
       - name: Wait for services with health checks to become healthy
         run: |
@@ -102,6 +120,20 @@ jobs:
 
       - name: Check errors inside service logs
         run: docker compose logs --no-color | grep -v "uvicorn\.error" | grep -i "error" && exit 1 || echo "No errors detected."
+
+      - name: Run e2e tests
+        run: |
+          uv run pytest tests/e2e/ \
+            --orchestrator-api-url http://localhost:8080/api \
+            --orchestrator-ui-url http://localhost:3000
+
+      - name: Upload e2e test artifacts
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-artifacts
+          path: test-results/
+          retention-days: 7
 
       - name: Tear down Docker Compose
         if: always()
