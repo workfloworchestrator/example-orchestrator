@@ -54,3 +54,4 @@ LazyWorkflowInstance("workflows.nsip2p.validate_nsip2p", "validate_nsip2p")
 
 LazyWorkflowInstance("workflows.tasks.bootstrap_netbox", "task_bootstrap_netbox")
 LazyWorkflowInstance("workflows.tasks.wipe_netbox", "task_wipe_netbox")
+LazyWorkflowInstance("workflows.tasks.e2e_showcase", "task_e2e_component_showcase")
