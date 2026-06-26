@@ -7,6 +7,7 @@ Example workflow orchestrator implementation based on the
   - [Quickstart](#quickstart)
     - [Start application](#start-application)
     - [Using the example orchestrator](#using-the-example-orchestrator)
+  - [Testing](#testing)
   - [Summary](#summary)
   - [Introduction](#introduction)
   - [Example orchestrator](#example-orchestrator)
@@ -153,6 +154,18 @@ netbox pages to see the orchestrator interact with netbox:
 - Overlay
   - L2VPNs
   - Terminations
+
+## Testing
+
+The project includes a Playwright-based end-to-end test suite located in `tests/e2e/`. The tests run against the full Docker Compose stack and are executed automatically in CI on every pull request.
+
+To run the tests locally, start the stack first (see [Quickstart](#quickstart)), then:
+
+```bash
+uv run pytest tests/e2e/
+```
+
+See [`docs/tests/e2e.md`](docs/tests/e2e.md) for full details on local setup and available options.
 
 ## Summary
 
