@@ -2,7 +2,7 @@ import re
 
 from playwright.sync_api import Page, expect
 
-SHOWCASE_TITLE = "E2E Component Showcase"
+SHOWCASE_TITLE = "Component Showcase"
 
 
 ### Helper functions
@@ -12,21 +12,21 @@ def open_showcase_task(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}/tasks")
     page.get_by_role("button", name=re.compile("New task")).click()
     page.get_by_role("option", name=re.compile(SHOWCASE_TITLE)).click()
-    expect(page).to_have_url(re.compile(r"/tasks/new/task_e2e_component_showcase$"))
+    expect(page).to_have_url(re.compile(r"/tasks/new/task_showcase$"))
     expect(page.get_by_test_id("pydantic-form-header")).to_have_text(SHOWCASE_TITLE)
 
 
 def fill_showcase_form(
     page: Page,
     *,
-    text_value: str = "hello e2e",
+    text_value: str = "hello showcase",
     run_conditional_step: bool = True,
     show_suspended_step: bool = False,
     fail_on_purpose: bool = False,
 ) -> None:
     page.get_by_test_id("text_value").fill(text_value)
-    page.get_by_test_id("optional_text").fill("optional e2e")
-    page.get_by_test_id("long_text").fill("long e2e details")
+    page.get_by_test_id("optional_text").fill("optional showcase")
+    page.get_by_test_id("long_text").fill("long showcase details")
     page.get_by_test_id("integer_value").fill("4")
     page.get_by_test_id("constrained_integer").fill("5")
     page.get_by_test_id("boolean_value").check()
@@ -50,8 +50,8 @@ def select_combo_option(page: Page, test_id: str, value: str) -> None:
 
 def submit_initial_and_summary(page: Page) -> None:
     page.get_by_test_id("button-submit-form-submit").click()
-    expect(page.get_by_role("heading", name="E2E Component Showcase Summary")).to_be_visible()
-    expect(page.get_by_test_id("submitted_values")).to_contain_text("text_value: hello e2e")
+    expect(page.get_by_role("heading", name="Component Showcase Summary")).to_be_visible()
+    expect(page.get_by_test_id("submitted_values")).to_contain_text("text_value: hello showcase")
     expect(page.get_by_test_id("submitted_values")).to_contain_text("single_choice: beta")
     page.get_by_test_id("button-submit-form-submit").click()
 
@@ -81,8 +81,8 @@ def test_showcase_happy_path_completes(page: Page, base_url: str) -> None:
 
     expect(page).to_have_url(re.compile(r"/tasks/[0-9a-f-]+$"), timeout=30_000)
     expect_process_status(page, "COMPLETED")
-    expect(page.get_by_text("E2E record initial input").first).to_be_visible()
-    expect(page.get_by_text("E2E conditional step").first).to_be_visible()
+    expect(page.get_by_text("Record initial input").first).to_be_visible()
+    expect(page.get_by_text("Conditional step").first).to_be_visible()
 
 
 def test_showcase_validation_errors_keep_user_on_form(page: Page, base_url: str) -> None:
@@ -93,14 +93,14 @@ def test_showcase_validation_errors_keep_user_on_form(page: Page, base_url: str)
 
     page.get_by_test_id("button-submit-form-submit").click()
 
-    expect(page).to_have_url(re.compile(r"/tasks/new/task_e2e_component_showcase$"))
-    expect(page.get_by_text("E2E Component Showcase Summary")).not_to_be_visible()
+    expect(page).to_have_url(re.compile(r"/tasks/new/task_showcase$"))
+    expect(page.get_by_text("Component Showcase Summary")).not_to_be_visible()
     expect(page.get_by_text(re.compile("reserved|less than or equal|10", re.IGNORECASE))).to_be_visible()
 
-    page.get_by_test_id("text_value").fill("corrected e2e")
+    page.get_by_test_id("text_value").fill("corrected showcase")
     page.get_by_test_id("constrained_integer").fill("5")
     page.get_by_test_id("button-submit-form-submit").click()
-    expect(page.get_by_role("heading", name="E2E Component Showcase Summary")).to_be_visible()
+    expect(page.get_by_role("heading", name="Component Showcase Summary")).to_be_visible()
 
 
 def test_showcase_conditional_step_can_be_skipped(page: Page, base_url: str) -> None:
@@ -111,7 +111,7 @@ def test_showcase_conditional_step_can_be_skipped(page: Page, base_url: str) -> 
     submit_initial_and_summary(page)
 
     expect_process_status(page, "COMPLETED")
-    conditional_step = page.get_by_text("E2E conditional step").locator("xpath=ancestor::*[contains(., 'skipped')][1]")
+    conditional_step = page.get_by_text("Conditional step").locator("xpath=ancestor::*[contains(., 'skipped')][1]")
     expect(conditional_step).to_contain_text("skipped")
 
 
@@ -122,15 +122,15 @@ def test_showcase_suspended_step_can_be_resumed(page: Page, base_url: str) -> No
 
     submit_initial_and_summary(page)
 
-    expect(page.get_by_role("heading", name="E2E Suspended Confirmation")).to_be_visible(timeout=30_000)
+    expect(page.get_by_role("heading", name="Suspended Confirmation")).to_be_visible(timeout=30_000)
     expect_process_status(page, "SUSPENDED")
-    page.get_by_test_id("confirmation_text").fill("resume e2e")
+    page.get_by_test_id("confirmation_text").fill("resume showcase")
     page.get_by_test_id("confirmation_details").fill("resume details")
     page.get_by_test_id("confirmed").check()
     page.get_by_test_id("button-submit-form-submit").click()
 
     expect_process_status(page, "COMPLETED")
-    expect(page.get_by_text("E2E suspended confirmation").first).to_be_visible()
+    expect(page.get_by_text("Suspended confirmation").first).to_be_visible()
 
 
 def test_showcase_deliberate_failure_is_rendered(page: Page, base_url: str) -> None:
@@ -141,5 +141,5 @@ def test_showcase_deliberate_failure_is_rendered(page: Page, base_url: str) -> N
     submit_initial_and_summary(page)
 
     expect_process_status(page, "FAILED")
-    expect(page.get_by_text("E2E deliberate failure").first).to_be_visible()
+    expect(page.get_by_text("Deliberate failure").first).to_be_visible()
     expect(page.get_by_role("button", name="Show traceback")).to_be_visible()

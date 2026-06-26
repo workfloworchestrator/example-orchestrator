@@ -136,7 +136,7 @@ The `--system-browser` option is mainly for Fedora and other developer machines 
 
 Most workflows in this repository are domain workflows. They depend on product data, NetBox state, subscription lifecycle, and sometimes optional LSO behavior. That makes them useful integration tests, but not ideal as the only coverage for generic UI behavior.
 
-A dedicated system task, for example `E2E Component Showcase`, should be implemented to provide deterministic coverage for:
+A dedicated system task, for example `Component Showcase`, should be implemented to provide deterministic coverage for:
 
 - every supported frontend form component;
 - normal process step progression;
@@ -154,18 +154,18 @@ The task should not create real products or rely on NetBox inventory. It should 
 Suggested location:
 
 ```text
-workflows/tasks/e2e_showcase.py
+workflows/tasks/showcase.py
 ```
 
 Suggested registration:
 
 ```python
 @workflow(
-    "E2E Component Showcase",
+    "Component Showcase",
     initial_input_form=initial_input_form_generator,
     target=Target.SYSTEM,
 )
-def task_e2e_component_showcase() -> StepList:
+def task_showcase() -> StepList:
     return (
         init
         >> record_initial_input

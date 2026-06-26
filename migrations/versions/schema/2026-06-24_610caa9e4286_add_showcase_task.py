@@ -1,4 +1,4 @@
-"""Add E2E component showcase task.
+"""Add showcase task.
 
 Revision ID: 610caa9e4286
 Revises: b3a1c7e9f012
@@ -19,10 +19,10 @@ depends_on = None
 
 new_workflows = [
     {
-        "name": "task_e2e_component_showcase",
+        "name": "task_showcase",
         "target": Target.SYSTEM,
         "is_task": True,
-        "description": "E2E Component Showcase",
+        "description": "Component Showcase",
     },
 ]
 

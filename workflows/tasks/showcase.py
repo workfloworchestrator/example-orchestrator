@@ -17,15 +17,15 @@ from pydantic_forms.validators.components.callout import CalloutMessageType
 ShowcaseInteger = Annotated[int, Ge(1), Le(10)]
 
 ShowcaseCallout = callout(
-    header="E2E showcase",
-    message="This task is used by end-to-end tests to exercise generic form components and process states.",
+    header="Showcase",
+    message="This task exercises generic form components and process states.",
     message_type=CalloutMessageType.PRIMARY,
 )
 
 
 def must_not_be_reserved(value: str) -> str:
     if value.casefold() == "reserved":
-        raise ValueError("The value 'reserved' is intentionally rejected by the E2E showcase task")
+        raise ValueError("The value 'reserved' is intentionally rejected by the showcase task")
     return value
 
 
@@ -60,7 +60,7 @@ def initial_input_form_generator() -> FormGenerator:
     MultiChoice: TypeAlias = cast(type[list[Choice]], multi_choice_selector())
 
     class E2EShowcaseForm(FormPage):
-        model_config = ConfigDict(title="E2E Component Showcase")
+        model_config = ConfigDict(title="Component Showcase")
 
         callout_1: ShowcaseCallout = None  # type: ignore[valid-type]
         general_settings: Label
@@ -95,7 +95,7 @@ def initial_input_form_generator() -> FormGenerator:
     user_input_dict = user_input.model_dump()
 
     class E2EShowcaseSummary(FormPage):
-        model_config = ConfigDict(title="E2E Component Showcase Summary")
+        model_config = ConfigDict(title="Component Showcase Summary")
 
         submitted_values: LongText = "\n".join(f"{key}: {value}" for key, value in sorted(user_input_dict.items()))
         continue_task: bool = True
@@ -104,7 +104,7 @@ def initial_input_form_generator() -> FormGenerator:
     return user_input_dict | summary_input.model_dump()
 
 
-@step("E2E record initial input")
+@step("Record initial input")
 def record_initial_input(
     text_value: str,
     optional_text: str | None,
@@ -129,15 +129,15 @@ def record_initial_input(
     }
 
 
-@step("E2E conditional step")
+@step("Conditional step")
 def run_conditional_step() -> State:
     return {"e2e_conditional_step_ran": True}
 
 
-@inputstep("E2E suspended confirmation", assignee=Assignee("SYSTEM"))
+@inputstep("Suspended confirmation", assignee=Assignee("SYSTEM"))
 def show_suspended_form(state: State) -> FormGenerator:
     class E2ESuspendedForm(FormPage):
-        model_config = ConfigDict(title="E2E Suspended Confirmation")
+        model_config = ConfigDict(title="Suspended Confirmation")
 
         suspended_label: Label
         confirmation_text: str
@@ -148,21 +148,21 @@ def show_suspended_form(state: State) -> FormGenerator:
     return state | {"e2e_suspended_input": user_input.model_dump()}
 
 
-@step("E2E callback action")
+@step("Callback action")
 def request_callback(callback_route: str) -> State:
     return {"e2e_callback_route": callback_route}
 
 
-@step("E2E callback validation")
+@step("Callback validation")
 def validate_callback(callback_result: dict[str, Any]) -> State:
     return {"e2e_callback_result": callback_result}
 
 
-@step("E2E deliberate failure")
+@step("Deliberate failure")
 def fail_when_requested(fail_on_purpose: bool) -> State:
     if fail_on_purpose:
         raise ProcessFailureError(
-            message="E2E deliberate failure",
+            message="Deliberate failure",
             details={"reason": "fail_on_purpose was selected"},
         )
     return {"e2e_failure_step_checked": True}
@@ -174,7 +174,7 @@ callback_when_requested = conditional(lambda state: state.get("wait_for_callback
 
 
 @workflow(initial_input_form=initial_input_form_generator, target=Target.SYSTEM)
-def task_e2e_component_showcase() -> StepList:
+def task_showcase() -> StepList:
     return (
         init
         >> record_initial_input
@@ -182,7 +182,7 @@ def task_e2e_component_showcase() -> StepList:
         >> suspend_when_requested(show_suspended_form)
         >> callback_when_requested(
             callback_step(
-                name="E2E callback step",
+                name="Callback step",
                 action_step=request_callback,
                 validate_step=validate_callback,
             )
