@@ -40,6 +40,9 @@ def ims_remove_l2vpn(subscription: L2vpn) -> None:
 
 @step("Remove VLANs from IMS")
 def ims_remove_vlans(subscription: L2vpn) -> None:
+    """Note: this step is not idempotent.
+    If you want to use this workflow, this step has to be
+    refactored to make it idempotent."""
     saps = subscription.virtual_circuit.saps
 
     remove_saps_in_netbox(saps)
