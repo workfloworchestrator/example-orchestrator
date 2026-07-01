@@ -118,6 +118,9 @@ def construct_l2vpn_model(
 
 @step("Create VLANs in IMS")
 def ims_create_vlans(subscription: L2vpnProvisioning) -> State:
+    """Note: this step is not idempotent.
+    If you want to use this workflow, this step has to be
+    refactored to make it idempotent."""
     saps = subscription.virtual_circuit.saps
 
     sap_payloads = create_saps_in_netbox(saps, subscription)
