@@ -169,7 +169,7 @@ services:
       - path: ./docker/overrides/orchestrator/orchestrator.env
         required: false
     environment:
-      LSO_ENABLED: ${COMPOSE_PROFILES:+True}
+      LSO_ENABLED: ${LSO_ENABLED:-False}
     ports:
       - "8080:8080"
       - "5678:5678" #Enable Python debugger

@@ -89,7 +89,7 @@ This will start the `orchestrator`, `orchestrator-ui`, `netbox`, `federation`, `
 To include LSO, run the following command instead:
 
 ```
-COMPOSE_PROFILES=lso docker compose up
+COMPOSE_PROFILES=lso LSO_ENABLED=True docker compose up
 ```
 
 This will build the Docker image for LSO locally, and make the orchestrator use the included Ansible playbooks.
