@@ -211,7 +211,6 @@ services:
 
   lso:
     container_name: orchestrator-lso
-    #image: orchestrator-lso
     profiles:
       - lso
     build:
