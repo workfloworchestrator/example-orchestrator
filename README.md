@@ -478,7 +478,7 @@ are defined:
 - SAPBlock
 - VirtualCircuitBlock
 
-Usually, the top-level product block if a product is named after the
+Usually, the top-level product block of a product is named after the
 product, but this is not true for the top-level product block of the
 L2VPN product. The more generic name `VirtualCIrcuitBlock` allows the
 reuse of this product block by other services like Internet Access and
@@ -687,7 +687,7 @@ class Port(PortProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
 ```
 
 As can be seen in the above example, the inactive product type
-definition is subclassed from SubScriptionModel, and the following
+definition is subclassed from SubscriptionModel, and the following
 definitions are subclassed from the previous one. This product has one
 fixed input called speed and one port product block (see below about
 naming). Notice that the port product block matches the lifecycle of the
@@ -797,9 +797,8 @@ optional to allow the creation of an empty product block instance. All
 resource types that are used to hold the user input for the subscription
 is stored using resource types that are not optional anymore in the
 provisioning lifecycle state. All resource types used to store
-information that is generated while provisioning the subscription is
-stored using resource types that are optional while provisioning but are
-not optional anymore for the active lifecycle state. Resource types that
+information for the provisioning lifecycle state are optional, but they aren't
+optional for the active lifecycle state. Resource types that
 are still optional in the active state are used to store non-mandatory
 information.
 
@@ -847,7 +846,7 @@ not fail.
 
 Sometimes there are resource types that depend on information stored on
 other product blocks, even on linked product blocks that do not belong
-to the same subscription. This kind of types need to be calculated at
+to the same subscription. This allows for types to be calculated at
 run time so that they include the most recent information. Consider the
 following example of a, stripped down version, of a port and node
 product block, and a title for the port block that is generated
@@ -861,7 +860,8 @@ class PortBlock(PortBlockProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE])
     port_name: str
     node: NodeBlock
 
-    @serializable_property
+    @computed_field
+    @property
     def title(self) -> str:
         return f"{self.port_name} on {self.node.node_name}"
 
@@ -869,11 +869,11 @@ class Port(PortProvisioning, lifecycle=[SubscriptionLifecycle.ACTIVE]):
     port: PortBlock
 ```
 
-A `@serializable_property` has been added that will dynamically render
+A `@computed_field` has been added that will dynamically render
 the title of the port product block. Even after a modify workflow was
 run to change the node name on the node subscription, the title of the
 port block will always be up to date. The title can be referenced as any
-other resource type using subscription.port.title. This is not a random
+other resource type using `subscription.port.title`. This is not a fictional
 example, the title of a product block is used by the orchestrator GUI
 while displaying detailed subscription information.
 
