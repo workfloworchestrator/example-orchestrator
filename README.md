@@ -78,11 +78,10 @@ Example workflow orchestrator implementation based on the
 
 ### Docker runtime on Apple Silicon (colima + virtiofs)
 
-!!! note
-
-    This section is **only** needed on **ARM / Apple Silicon (M-series) Macs**. On
-    Linux and Intel machines the stock Docker install works and you can skip ahead
-    to [Start application](#start-application).
+> [!NOTE]
+> This section is **only** needed on **ARM / Apple Silicon (M-series) Macs**. On
+> Linux and Intel machines the stock Docker install works and you can skip ahead
+> to [Start application](#start-application).
 
 The containerlab SR Linux nodes (`clab/srlinux01.clab.yaml`) don't run under a
 default macOS Docker setup. They need a Docker VM that mounts host paths with
@@ -107,24 +106,24 @@ brew install colima docker
 colima start --vm-type vz --mount-type virtiofs --memory 8 --cpu 4
 ```
 
-!!! danger "Do not run Docker Desktop at the same time as colima"
+> [!CAUTION]
+> **Do not run Docker Desktop at the same time as colima.** Both register a
+> `docker` CLI context and fight over the `/var/run/docker.sock` symlink and host
+> ports, giving you a broken, non-deterministic Docker setup. Quit Docker Desktop
+> (and disable "Start at login") before using colima.
 
-    Both register a `docker` CLI context and fight over the `/var/run/docker.sock`
-    symlink and host ports, giving you a broken, non-deterministic Docker setup.
-    Quit Docker Desktop (and disable "Start at login") before using colima.
-
-!!! warning "`mountType` / `vmType` are fixed at VM creation"
-
-    The `--mount-type`/`--vm-type` flags are silently ignored on an existing VM.
-    If your colima VM was created with `sshfs`, recreate it (this destroys the
-    VM's containers, images and volumes):
-
-    ```bash
-    colima delete && colima start --vm-type vz --mount-type virtiofs --memory 8 --cpu 4
-    ```
-
-    Memory and CPU, by contrast, *can* be changed on a plain restart:
-    `colima stop && colima start --memory 8 --cpu 4`.
+> [!WARNING]
+> `mountType` and `vmType` can **only** be set when the VM is first created — the
+> `--mount-type`/`--vm-type` flags are silently ignored on an existing VM. If your
+> colima VM was created with `sshfs`, recreate it (this destroys the VM's
+> containers, images and volumes):
+>
+> ```bash
+> colima delete && colima start --vm-type vz --mount-type virtiofs --memory 8 --cpu 4
+> ```
+>
+> Memory and CPU, by contrast, *can* be changed on a plain restart:
+> `colima stop && colima start --memory 8 --cpu 4`.
 
 Verify the VM before continuing:
 
