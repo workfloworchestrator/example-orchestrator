@@ -8,7 +8,8 @@ RUN pip install orchestrator-lso=="3.0.0"
 
 RUN pip install pynetbox ansible
 
-RUN mkdir -p $ANSIBLE_COLLECTIONS_PATH
+# TODO Check with Karel if this is needed. It was causing the build to fail, commenting out seems to work fine.
+# RUN mkdir -p $ANSIBLE_COLLECTIONS_PATH
 
 RUN ansible-galaxy collection install nokia.srlinux
 

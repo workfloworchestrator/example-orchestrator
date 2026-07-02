@@ -7,3 +7,6 @@ lint.sh
 clab-*
 *.clab.yml.bak
 .env
+
+# Artifacts from the e2e tests
+screenshots/
