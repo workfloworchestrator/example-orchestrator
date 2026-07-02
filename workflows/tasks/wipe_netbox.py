@@ -13,10 +13,9 @@
 from typing import Annotated
 
 import structlog
-from orchestrator.core import workflow
 from orchestrator.core.forms import FormPage
-from orchestrator.core.targets import Target
 from orchestrator.core.workflow import StepList, done, init, step
+from orchestrator.core.workflows.utils import task
 from pydantic import AfterValidator, ConfigDict
 
 from pydantic_forms.types import FormGenerator, State
@@ -72,6 +71,6 @@ def wipe_all_objects() -> State:
     return {"objects_deleted": objects_deleted}
 
 
-@workflow(initial_input_form=initial_input_form_generator, target=Target.SYSTEM)
+@task(initial_input_form=initial_input_form_generator)
 def task_wipe_netbox() -> StepList:
     return init >> wipe_all_objects >> done
