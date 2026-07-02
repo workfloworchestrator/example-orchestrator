@@ -76,6 +76,63 @@ Example workflow orchestrator implementation based on the
 
 ## Quickstart
 
+### Docker runtime on Apple Silicon (colima + virtiofs)
+
+!!! note
+
+    This section is **only** needed on **ARM / Apple Silicon (M-series) Macs**. On
+    Linux and Intel machines the stock Docker install works and you can skip ahead
+    to [Start application](#start-application).
+
+The containerlab SR Linux nodes (`clab/srlinux01.clab.yaml`) don't run under a
+default macOS Docker setup. They need a Docker VM that mounts host paths with
+**virtiofs** and has enough memory. Two hard requirements, both learned the hard
+way:
+
+- **`virtiofs` mounts, not `sshfs`.** SR Linux generates a TLS keypair at boot and
+  `chown`s it. `sshfs` (colima's legacy mount type) forbids `chown` even as root,
+  so the keygen fails, `sr_linux_mgr` crash-loops, and no management server
+  (JSON-RPC / gNMI / gRPC) ever comes online.
+- **≥ 8 GB VM memory.** Each SR Linux node reserves ~2 GB. On a smaller VM the
+  kernel OOM-killer repeatedly kills `sr_mgmt_server` and the nodes never settle.
+
+Install [colima](https://github.com/abiosoft/colima) and the Docker CLI, then
+create the VM with the right settings:
+
+```bash
+brew install colima docker
+
+# vm-type vz + virtiofs is the Apple Silicon fast/reliable path.
+# Sizes: 8 GB RAM / 4 CPUs comfortably runs the 3-node lab + the compose stack.
+colima start --vm-type vz --mount-type virtiofs --memory 8 --cpu 4
+```
+
+!!! danger "Do not run Docker Desktop at the same time as colima"
+
+    Both register a `docker` CLI context and fight over the `/var/run/docker.sock`
+    symlink and host ports, giving you a broken, non-deterministic Docker setup.
+    Quit Docker Desktop (and disable "Start at login") before using colima.
+
+!!! warning "`mountType` / `vmType` are fixed at VM creation"
+
+    The `--mount-type`/`--vm-type` flags are silently ignored on an existing VM.
+    If your colima VM was created with `sshfs`, recreate it (this destroys the
+    VM's containers, images and volumes):
+
+    ```bash
+    colima delete && colima start --vm-type vz --mount-type virtiofs --memory 8 --cpu 4
+    ```
+
+    Memory and CPU, by contrast, *can* be changed on a plain restart:
+    `colima stop && colima start --memory 8 --cpu 4`.
+
+Verify the VM before continuing:
+
+```bash
+colima status | grep mountType   # -> mountType: virtiofs
+colima ssh -- free -h            # Mem total should be ~8 GB
+```
+
 ### Start application
 
 Make sure you have docker installed and run:

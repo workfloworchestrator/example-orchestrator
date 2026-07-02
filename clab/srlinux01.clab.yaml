@@ -8,6 +8,8 @@ topology:
     srl:
       type: ixrd2
       image: ghcr.io/nokia/srlinux:25.7.1
+      # Enable JSON-RPC (HTTP) at boot so the orchestrator can reach every srl node.
+      startup-config: configs/srl-jsonrpc.partial.cli
     # cvx:
     #   type: cumulus_cvx
     #   image: networkop/cx:4.3.0
