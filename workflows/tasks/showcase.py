@@ -1,13 +1,12 @@
 from typing import Annotated, Any, TypeAlias, cast
 
 from annotated_types import Ge, Le
-from orchestrator.core import workflow
 from orchestrator.core.config.assignee import Assignee
 from orchestrator.core.forms import FormPage
 from orchestrator.core.forms.validators import Divider, Label
-from orchestrator.core.targets import Target
 from orchestrator.core.utils.errors import ProcessFailureError
 from orchestrator.core.workflow import StepList, callback_step, conditional, done, init, inputstep, step
+from orchestrator.core.workflows.utils import task
 from pydantic import AfterValidator, ConfigDict, model_validator
 
 from pydantic_forms.types import FormGenerator, State
@@ -173,7 +172,7 @@ suspend_when_requested = conditional(lambda state: state.get("show_suspended_ste
 callback_when_requested = conditional(lambda state: state.get("wait_for_callback") is True)
 
 
-@workflow(initial_input_form=initial_input_form_generator, target=Target.SYSTEM)
+@task(initial_input_form=initial_input_form_generator)
 def task_showcase() -> StepList:
     return (
         init
