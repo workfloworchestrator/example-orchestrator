@@ -1,0 +1,28 @@
+name: Dispatch to workfloworchestrator.github.io
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - README.md
+
+jobs:
+  trigger-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DOCS_APP_ID }}
+          private-key: ${{ secrets.DOCS_APP_PRIVATE_KEY }}
+          owner: workfloworchestrator
+          repositories: workfloworchestrator.github.io
+
+      - name: Trigger docs build on workfloworchestrator.github.io
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh api repos/workfloworchestrator/workfloworchestrator.github.io/dispatches \
+            -f event_type=docs-update
