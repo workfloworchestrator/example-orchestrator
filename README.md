@@ -480,7 +480,7 @@ are defined:
 
 Usually, the top-level product block of a product is named after the
 product, but this is not true for the top-level product block of the
-L2VPN product. The more generic name `VirtualCIrcuitBlock` allows the
+L2VPN product. The more generic name `VirtualCircuitBlock` allows the
 reuse of this product block by other services like Internet Access and
 L3VPN.
 
