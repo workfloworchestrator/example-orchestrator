@@ -1,5 +1,8 @@
 FROM python:3.13.13-alpine
 
+# Keep in sync with lso/lso.env
+ENV ANSIBLE_COLLECTIONS_PATH=/app/demo/ansible/ansible_collections
+
 WORKDIR /app
 
 RUN apk add --update --no-cache gcc libc-dev libffi-dev
