@@ -40,8 +40,10 @@ def get_node_interface_list(node_name: str) -> List[Tuple[str, str, int]]:
     :param node_name: name of the node to retrieve interfaces from
     :return: list of interface tuples with name, type, and speed (kbps) details
     """
-    ten_gig_interfaces = [(f"ethernet-1/{i}", "10gbase-x-xfp", 10000000) for i in range(10)]
-    hundred_gig_interfaces = [(f"ethernet-1/{i + 10}", "100gbase-x-cfp", 100000000) for i in range(4)]
+    # SR Linux interface names are 1-indexed (ethernet-1/0 is rejected by the device),
+    # so numbering starts at 1: ten-gig on 1/1..1/10, hundred-gig on 1/11..1/14.
+    ten_gig_interfaces = [(f"ethernet-1/{i}", "10gbase-x-xfp", 10000000) for i in range(1, 11)]
+    hundred_gig_interfaces = [(f"ethernet-1/{i + 11}", "100gbase-x-cfp", 100000000) for i in range(4)]
     return ten_gig_interfaces + hundred_gig_interfaces
 
 
