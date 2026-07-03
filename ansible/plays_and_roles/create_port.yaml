@@ -1,12 +1,13 @@
 - name: Deploy a port on a nokia node
   hosts: all
+  gather_facts: no
+  vars_files:
+   - netbox.yml
   vars:
    ansible_network_os: nokia.srlinux.srlinux
    ansible_connection: ansible.netcommon.httpapi
    ansible_user: admin
    ansible_password: NokiaSrl1!
-   netbox_url: "http://netbox:8080"
-   netbox_token: "e744057d755255a31818bf74df2350c26eeabe54"
    vlan_tagging: false
    debug: false
   tasks:
