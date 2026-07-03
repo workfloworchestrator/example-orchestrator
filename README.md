@@ -24,7 +24,7 @@ Example workflow orchestrator implementation based on the
       - [shared](#shared)
     - [Main application](#main-application)
     - [Implemented products](#implemented-products)
-    - [Product Hiearchy Diagram](#product-hiearchy-diagram)
+    - [Product Hierarchy Diagram](#product-hierarchy-diagram)
     - [How to use](#how-to-use)
       - [Node](#node)
       - [CoreLink](#corelink)
@@ -225,11 +225,11 @@ See [`docs/tests/e2e.md`](docs/tests/e2e.md) for full details on local setup and
 
 ## Summary
 
-More and more NREN’s start automating and orchestrating their
+More and more NRENs start automating and orchestrating their
 operational network procedures and flows of information, making use of
 the open-source Workflow Orchestrator. When a NREN creates an
 orchestrator based on the WFO framework, custom integration code needs
-to be written that is business specific. To accommodate NREN’s to help
+to be written that is business specific. To accommodate NRENs helping
 each other while writing this code, and to facilitate collaboration for
 the further development of the framework and to achieve a set of
 standardized products and workflows, a set of best common practices
@@ -296,7 +296,7 @@ information while leaving others unautomated for the moment:
   - Network nodes including loopback IP addresses
   - Core links in between network nodes including point-to-point IP addresses
   - Customer ports
-  - Customer L2VPN’s
+  - Customer L2VPNs
 - Not automated administration and provisioning of:
   - Role, make and model of the network nodes
   - Sites where network nodes are installed
@@ -313,7 +313,7 @@ The GraphQL APIs of WFO and NetBox support Federation[^8] through the GraphQL fr
 ## Example orchestrator
 
 To automate the administration and provisioning of the nodes, core
-links, customer ports and L2VPN’s of the virtual NREN, an orchestrator
+links, customer ports and L2VPNs of the virtual NREN, an orchestrator
 is implemented making use of the WFO framework.
 
 ### Folder layout
@@ -492,7 +492,7 @@ port.
 When this example orchestrator is deployed, it can create a growing
 graph of product blocks as is shown below.
 
-### Product Hiearchy Diagram
+### Product Hierarchy Diagram
 
 <center><img src=".pictures/subscriptions.png" alt="Product block graph" width=75% height=75%></center>
 
@@ -508,7 +508,7 @@ orchestrator:
 
 - Sites
 - Device roles
-- Device Manufactures
+- Device Manufacturers
 - Device Types
 - IPv4 and IPv6 prefix for node loopback addresses
 - IPv4 and IPv6 prefix for core link addressing
@@ -522,7 +522,7 @@ in the orchestrator UI in the `New task` pulldown on the `Tasks` page.
 #### Node
 
 The Node create workflow will read all configured, sites and device
-roles, manufactures types, and allows the user to choose appropriate
+roles, manufacturer types, and allows the user to choose appropriate
 values using dropdowns. The only thing that needs to be entered by hand
 is a unique name for the node and an optional description. This is
 enough to create a node subscription and administer the node in the IMS.
@@ -539,7 +539,7 @@ used by the create workflows of the core link and customer port
 products.
 
 There are variants of the node product that allow the creation of nodes
-for different manufactures, and only the matching device types will be
+for different manufacturers, and only the matching device types will be
 shown in the dropdown.
 
 #### CoreLink
