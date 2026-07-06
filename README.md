@@ -894,6 +894,15 @@ subscriptions against the OSS and BSS. The decorators
 and the `@step` decorator is used to define workflow steps that can be
 used in any type of workflow.
 
+### Workflow step idempotence
+
+It is good practice to define [idempotent](https://en.wikipedia.org/wiki/Idempotence) steps; a step may have to be 
+retried after failing partway through its execution.
+Be aware that some example steps for L2VPN are not idempotent (yet): 
+- `ims_create_vlans` in `/workflows/l2vpn/create_l2vpn.py`
+- `ims_remove_vlans` in `/workflows/l2vpn/terminate_l2vpn.py`
+If you want to use these workflows, the above steps should be refactored to make them idempotent.
+
 ### Workflow Architecture - Passing information from one step to the next
 
 Information between workflow steps is passed using `State`, which is
