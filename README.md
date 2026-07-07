@@ -998,15 +998,16 @@ order. For those that use a test-driven development style probably will
 start with the validate workflow. But in general people start with the
 create workflow as it helps to discuss the product model (the
 information involved) and the workflows (the procedures involved) with
-the stakeholders to get the requirements clear. Once the minimal viable
-create workflow is implemented, the validate workflow can be written to
+the stakeholders to get the requirements clear.
+
+Once the minimal viable create workflow is implemented, the validate workflow can be written to
 ensure that all information is administered correctly in all touched OSS
-and BSS and is not changed again by hand because human workflows were
+and BSS and is not changed again by hand, e.g. because human workflows were
 not correctly adapted yet. Then after the terminate workflow is written,
 the complete lifecycle of the product can be tested. Even when the
-modify is not implemented, a change to a subscription can be carried out
+modify workflow is not implemented, a change to a subscription can be carried out
 by terminating the subscription and creating it again with the modified
-input. Finally, the modify workflow is implemented to allow changes to a
+input. Finally, the modify workflow can be implemented to allow changes to a
 subscription with minimal or no impact to the customer.
 </details>
 
@@ -1055,24 +1056,24 @@ def create_node() -> StepList:
 1. Collect input from user (`initial_input_form`)
 2. Instantiate subscription (`construct_node_model`):
    1. Create inactive subscription model
-   2. assign user input to subscription
-   3. transition to subscription to provisioning
-3. Register create process for this subscription (`store_process_subscription`)
+   2. Assign user input to subscription
+   3. Transition subscription to the Provisioning lifecycle
+3. Register executed workflow for this subscription (`store_process_subscription`)
 4. Interact with OSS and/or BSS, in this example
    1. Administer subscription in IMS (`create_node_in ims`)
    2. Reserve IP addresses in IPAM (`reserve_loopback_addresses`)
    3. Provision subscription in the network (`provision_node_in_nrm`)
-5. Transition subscription to active and ‘in sync’ (`@create_workflow`)
+5. Transition subscription to the Active lifecycle and 'in sync' (`@create_workflow`)
 
 As long as every step remains as idempotent as possible, the work can be
 divided over fewer or more steps as desired.
 
 #### Input Form
 
-The input form is created by subclassing the `FormPage` and add the
+The input form is created by subclassing the `FormPage` and adding the
 input fields together with the type and indication if they are optional
-or not. Additional form settings can be changed via the Config class,
-like for example the title of the form page.
+or not. Additional form settings can be changed via the `ConfigDict` class,
+such as the title of the form page.
 
 ```python
 class CreateNodeForm(FormPage):
@@ -1131,11 +1132,15 @@ fields. To check if the A and B side of a point-to-point service are not
 on the same network node one could use:
 
 ```python
-@model_validator(mode="after")
-def separate_nodes(self) -> "SelectNodes":
-    if self.node_subscription_id_b == self.node_subscription_id_a:
-        raise ValueError("node B cannot be the same as node A")
-    return self
+class SelectNodes(FormPage):
+    node_subscription_id_a: NodeAChoice
+    node_subscription_id_b: NodeBChoice
+
+    @model_validator(mode="after")
+    def separate_nodes(self) -> "SelectNodes":
+        if self.node_subscription_id_b == self.node_subscription_id_a:
+            raise ValueError("node B cannot be the same as node A")
+        return self
 ```
 
 For more information on validation, see the [Pydantic
@@ -1174,14 +1179,14 @@ def modify_node() -> StepList:
 1. Collect input from user (`initial_input_form`)
 2. Necessary subscription administration (`@modify_workflow`):
    1. Register modify process for this subscription
-   2. Set subscription ‘out of sync’ to prevent the start of other processes
-3. Transition subscription to Provisioning (`set_status`)
+   2. Set subscription 'out of sync' to prevent the start of other workflows
+3. Transition subscription to the Provisioning lifecycle (`set_status`)
 4. Update subscription with the user input
 5. Interact with OSS and/or BSS, in this example
    1. Update subscription in IMS (`update_node_in ims`)
    2. Update subscription in NRM (`update_node_in nrm`)
-6. Transition subscription to active (`set_status`)
-7. Set subscription ‘in sync’ (`@modify_workflow`)
+6. Transition subscription to the Active lifecycle (`set_status`)
+7. Set subscription 'in sync' (`@modify_workflow`)
 
 Like a create workflow, the modify workflow also uses an initial input
 form but this time to only collect the values from the user that need to
@@ -1209,7 +1214,7 @@ yield from modify_summary_form(user_input_dict, subscription.node, summary_field
 
 ### Terminate workflow
 
-At the end of the subscription lifecycle, the terminate workflow updates
+At the end of the subscription's life, the terminate workflow updates
 all OSS and BSS accordingly, and the `@terminate_workflow` decorator
 takes care of most of the necessary subscription administration.
 
@@ -1227,15 +1232,15 @@ def terminate_node() -> StepList:
 
 1. Show subscription details and ask user to confirm termination (`initial_input_form`)
 2. Necessary subscription administration (`@terminate_workflow`):
-   1. Register terminate process for this subscription
-   2. Set subscription ‘out of sync’ to prevent the start of other processes
+   1. Register terminate workflow for this subscription
+   2. Set subscription 'out of sync' to prevent the start of other workflows
 3. Get subscription and add information for following steps to the State (`load_initial_state`)
 4. Interact with OSS and/or BSS, in this example
    1. Delete node in IMS (`delete_node_in ims`)
    2. Deprovision node in NRM (`deprovision_node_in_nrm`)
 5. Necessary subscription administration (`@terminate_workflow`)
-   1. Transition subscription to terminated
-   2. Set subscription ‘in sync’
+   1. Transition subscription to Terminated lifecycle
+   2. Set subscription 'in sync'
 
 The initial input form for the terminate workflow is very simple, it
 only has to show the details of the subscription:
@@ -1248,14 +1253,12 @@ class TerminateForm(FormPage):
 ### Validate workflows
 
 And finally, the validate workflow, used to check if the information in
-all OSS and BSS is still the same with the information in the
+all OSS and BSS is still in sync with the information in the
 subscription. One way to do this is to reconstruct the payload sent to
 the external system using information queried from that system, and
-compare this with the payload that would have been sent by generating a
-payload based on the current state of the subscription. The
-`@validate_workflow` decorator takes care of necessary subscription
-administration. There is no initial input form for this type of
-workflow.
+compare this with the payload generated from the current state of the 
+subscription. The `@validate_workflow` decorator takes care of necessary subscription
+administration. There is no initial input form for this type of workflow.
 
 ```python
 @validate_workflow("Validate l2vpn")
@@ -1269,21 +1272,21 @@ def validate_l2vpn() -> StepList:
 ```
 
 1. Necessary subscription administration (`@validate_workflow`):
-   1. Register validate process for this subscription
-   2. Set subscription ‘out of sync’, even when subscription is already out of sync
+   1. Register validate workflow for this subscription
+   2. Set subscription 'out of sync', even when subscription is already out of sync
 2. One or more steps to validate the subscription against all OSS and BSS:
    1. Validate subscription against IMS:
       1. `validate_l2vpn_in_ims`
       2. `validate_l2vpn_terminations_in_ims`
       3. `validate_vlans_on_ports_in_ims`
-3. Set subscription ‘in sync’ again (`@validate_workflow`)
+3. Set subscription 'in sync' again (`@validate_workflow`)
 
 When one of the validation steps fail, the subscription will stay ‘out
 of sync’, prohibiting other workflows to be started for this
 subscription. The failed validation step can be retried as many times as
 needed until it succeeds, which finally will set the subscription ‘in
 sync’ and allow other workflows to be started again. This safeguards
-workflows to be started for subscription with mismatching information in
+workflows to be started for subscriptions with mismatching information in
 OSS and BSS which would make these workflows likely to fail.
 
 It is better to limit the number of validations done in each step. This
@@ -1295,12 +1298,12 @@ done by comparing a payload created for a product block in the
 orchestrator with a payload that is generated by querying the external
 system.
 
-Not only validations per subscription can be done, is also possible to
-validate other requirements. For example, to make sure that there are no
+Not only subscriptions can be validated, it is also possible to
+validate all sorts of other requirements. For example, to make sure that there are no
 L2VPNs administered in IMS that do not have a matching subscription in
-the orchestrator, a task (a workflow with `Target.SYSTEM`) can be
+the orchestrator, a _task_ (a workflow decorated with `@task()`) can be
 written that will retrieve a list of all L2VPNs from IMS and compare it
-against a list of all L2VPN subscription from the orchestrator.
+against all L2VPN subscriptions known in the orchestrator.
 
 ### Reconcile workflow
 
