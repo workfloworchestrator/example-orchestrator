@@ -998,15 +998,16 @@ order. For those that use a test-driven development style probably will
 start with the validate workflow. But in general people start with the
 create workflow as it helps to discuss the product model (the
 information involved) and the workflows (the procedures involved) with
-the stakeholders to get the requirements clear. Once the minimal viable
-create workflow is implemented, the validate workflow can be written to
+the stakeholders to get the requirements clear.
+
+Once the minimal viable create workflow is implemented, the validate workflow can be written to
 ensure that all information is administered correctly in all touched OSS
-and BSS and is not changed again by hand because human workflows were
+and BSS and is not changed again by hand, e.g. because human workflows were
 not correctly adapted yet. Then after the terminate workflow is written,
 the complete lifecycle of the product can be tested. Even when the
-modify is not implemented, a change to a subscription can be carried out
+modify workflow is not implemented, a change to a subscription can be carried out
 by terminating the subscription and creating it again with the modified
-input. Finally, the modify workflow is implemented to allow changes to a
+input. Finally, the modify workflow can be implemented to allow changes to a
 subscription with minimal or no impact to the customer.
 </details>
 
