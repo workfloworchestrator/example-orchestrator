@@ -168,6 +168,45 @@ To access `federation`, point your browser to:
 http://localhost:4000
 ```
 
+#### Podman / SELinux notes
+
+The instructions above assume Docker. Podman (`podman-compose`) works too, but
+needs a few adjustments on Fedora and other SELinux-enforcing systems.
+
+**Host port 80.** The `nginx` service maps `80:80`, but rootless Podman cannot
+bind host ports below 1024 (the kernel reserves those for root). Either run
+Podman as root, or remap the port, e.g. `-f` an override that sets `8082:80`,
+and open `http://localhost:8082/` instead.
+
+**Optional `depends_on` with `required: false`.** The `orchestrator` service
+declares an optional dependency on `embeddings` (`required: false`), and
+`embeddings` is gated behind the `embeddings` profile. `podman-compose` does
+not honour `required: false` — it still tries to wait on the `embeddings`
+container, which is absent when the profile is off, and the resulting error
+silently leaves `orchestrator` (and everything downstream) in `Created`. Two
+workarounds:
+
+- enable the profile so the dependency exists:
+  ```
+  COMPOSE_PROFILES=embeddings podman-compose up
+  ```
+- or drop the `embeddings` entry from `orchestrator.depends_on` (e.g. via an
+  override file) so podman-compose no longer waits on it.
+
+**SELinux `:z` volume flags.** On SELinux-enforcing systems, bind-mounted host
+directories keep the `user_home_t` label, which container processes
+(`container_t`) cannot read. The `:z` flag tells Podman to relabel the source
+to `container_file_t` so the mount is accessible. The base `docker-compose.yml`
+ships without `:z` for portability; apply `selinux-override.yml` to add it to
+the bind mounts:
+
+```
+podman-compose -f docker-compose.yml -f selinux-override.yml up
+```
+
+Named volumes (`db-data`, `netbox-media-files`, etc.) do not need `:z` — Podman
+creates them already labeled `container_file_t`.
+
 ### Using the example orchestrator
 
 Use the following steps to see the example orchestrator in action:
