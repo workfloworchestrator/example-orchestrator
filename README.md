@@ -72,65 +72,22 @@ Example workflow orchestrator implementation based on the
     - [Local table](#local-table)
     - [Remote](#remote)
   - [Configuration](#configuration)
+  - [Docker runtimes](#docker-runtimes)
+    - [Apple Silicon (colima + virtiofs)](#apple-silicon-colima--virtiofs)
+    - [Fedora / RHEL with Podman](#fedora--rhel-with-podman)
+      - [podman-compose optional dependencies](#podman-compose-optional-dependencies)
+      - [SELinux bind-mount labels](#selinux-bind-mount-labels)
   - [Glossary](#glossary)
 
 ## Quickstart
 
-### Docker runtime on Apple Silicon (colima + virtiofs)
-
 > [!NOTE]
-> This section is **only** needed on **ARM / Apple Silicon (M-series) Macs**. On
-> Linux and Intel machines the stock Docker install works and you can skip ahead
-> to [Start application](#start-application).
-
-The containerlab SR Linux nodes (`clab/srlinux01.clab.yaml`) don't run under a
-default macOS Docker setup. They need a Docker VM that mounts host paths with
-**virtiofs** and has enough memory. Two hard requirements, both learned the hard
-way:
-
-- **`virtiofs` mounts, not `sshfs`.** SR Linux generates a TLS keypair at boot and
-  `chown`s it. `sshfs` (colima's legacy mount type) forbids `chown` even as root,
-  so the keygen fails, `sr_linux_mgr` crash-loops, and no management server
-  (JSON-RPC / gNMI / gRPC) ever comes online.
-- **≥ 8 GB VM memory.** Each SR Linux node reserves ~2 GB. On a smaller VM the
-  kernel OOM-killer repeatedly kills `sr_mgmt_server` and the nodes never settle.
-
-Install [colima](https://github.com/abiosoft/colima) and the Docker CLI, then
-create the VM with the right settings:
-
-```bash
-brew install colima docker
-
-# vm-type vz + virtiofs is the Apple Silicon fast/reliable path.
-# Sizes: 8 GB RAM / 4 CPUs comfortably runs the 3-node lab + the compose stack.
-colima start --vm-type vz --mount-type virtiofs --memory 8 --cpu 4
-```
-
-> [!CAUTION]
-> **Do not run Docker Desktop at the same time as colima.** Both register a
-> `docker` CLI context and fight over the `/var/run/docker.sock` symlink and host
-> ports, giving you a broken, non-deterministic Docker setup. Quit Docker Desktop
-> (and disable "Start at login") before using colima.
-
-> [!WARNING]
-> `mountType` and `vmType` can **only** be set when the VM is first created — the
-> `--mount-type`/`--vm-type` flags are silently ignored on an existing VM. If your
-> colima VM was created with `sshfs`, recreate it (this destroys the VM's
-> containers, images and volumes):
->
-> ```bash
-> colima delete && colima start --vm-type vz --mount-type virtiofs --memory 8 --cpu 4
-> ```
->
-> Memory and CPU, by contrast, *can* be changed on a plain restart:
-> `colima stop && colima start --memory 8 --cpu 4`.
-
-Verify the VM before continuing:
-
-```bash
-colima status | grep mountType   # -> mountType: virtiofs
-colima ssh -- free -h            # Mem total should be ~8 GB
-```
+> The Quickstart below assumes a stock Docker install on Linux or Intel macOS.
+> Two setups need extra steps: **ARM / Apple Silicon (M-series) Macs** need a
+> colima VM with `virtiofs` mounts and ≥ 8 GB memory, and **Fedora / RHEL with
+> Podman** needs `:z` volume flags (SELinux) and a `depends_on` workaround
+> (podman-compose). See [Docker runtimes](#docker-runtimes). If neither applies,
+> skip ahead to [Start application](#start-application).
 
 ### Start application
 
@@ -167,40 +124,6 @@ To access `federation`, point your browser to:
 ```
 http://localhost:4000
 ```
-
-#### Podman / SELinux notes
-
-The instructions above assume Docker. Podman (`podman-compose`) works too, but
-needs a few adjustments on Fedora and other SELinux-enforcing systems.
-
-**Optional `depends_on` with `required: false`.** The `orchestrator` service
-declares an optional dependency on `embeddings` (`required: false`), and
-`embeddings` is gated behind the `embeddings` profile. `podman-compose` does
-not honour `required: false` — it still tries to wait on the `embeddings`
-container, which is absent when the profile is off, and the resulting error
-silently leaves `orchestrator` (and everything downstream) in `Created`. Two
-workarounds:
-
-- enable the profile so the dependency exists:
-  ```
-  COMPOSE_PROFILES=embeddings podman-compose up
-  ```
-- or drop the `embeddings` entry from `orchestrator.depends_on` (e.g. via an
-  override file) so podman-compose no longer waits on it.
-
-**SELinux `:z` volume flags.** On SELinux-enforcing systems, bind-mounted host
-directories keep the `user_home_t` label, which container processes
-(`container_t`) cannot read. The `:z` flag tells Podman to relabel the source
-to `container_file_t` so the mount is accessible. The base `docker-compose.yml`
-ships without `:z` for portability; apply `selinux-override.yml` to add it to
-the bind mounts:
-
-```
-podman-compose -f docker-compose.yml -f selinux-override.yml up
-```
-
-Named volumes (`db-data`, `netbox-media-files`, etc.) do not need `:z` — Podman
-creates them already labeled `container_file_t`.
 
 ### Using the example orchestrator
 
@@ -1767,6 +1690,105 @@ This approach keeps the orchestrator's customer data in sync with the authoritat
 ## Configuration
 
 Environment variables and orchestrator-core can be overridden for development purposes. Please refer to [this documentation](./docker/overrides/configuration.md) for more details.
+
+## Docker runtimes
+
+The [Quickstart](#quickstart) assumes a stock Docker install on Linux or Intel
+macOS. The notes below cover two setups that need extra steps: Apple Silicon
+Macs, and Fedora / RHEL Linux used with Podman.
+
+### Apple Silicon (colima + virtiofs)
+
+> [!NOTE]
+> This section is **only** needed on **ARM / Apple Silicon (M-series) Macs**. On
+> Linux and Intel machines the stock Docker install works.
+
+The containerlab SR Linux nodes (`clab/srlinux01.clab.yaml`) don't run under a
+default macOS Docker setup. They need a Docker VM that mounts host paths with
+**virtiofs** and has enough memory. Two hard requirements, both learned the hard
+way:
+
+- **`virtiofs` mounts, not `sshfs`.** SR Linux generates a TLS keypair at boot and
+  `chown`s it. `sshfs` (colima's legacy mount type) forbids `chown` even as root,
+  so the keygen fails, `sr_linux_mgr` crash-loops, and no management server
+  (JSON-RPC / gNMI / gRPC) ever comes online.
+- **≥ 8 GB VM memory.** Each SR Linux node reserves ~2 GB. On a smaller VM the
+  kernel OOM-killer repeatedly kills `sr_mgmt_server` and the nodes never settle.
+
+Install [colima](https://github.com/abiosoft/colima) and the Docker CLI, then
+create the VM with the right settings:
+
+```bash
+brew install colima docker
+
+# vm-type vz + virtiofs is the Apple Silicon fast/reliable path.
+# Sizes: 8 GB RAM / 4 CPUs comfortably runs the 3-node lab + the compose stack.
+colima start --vm-type vz --mount-type virtiofs --memory 8 --cpu 4
+```
+
+> [!CAUTION]
+> **Do not run Docker Desktop at the same time as colima.** Both register a
+> `docker` CLI context and fight over the `/var/run/docker.sock` symlink and host
+> ports, giving you a broken, non-deterministic Docker setup. Quit Docker Desktop
+> (and disable "Start at login") before using colima.
+
+> [!WARNING]
+> `mountType` and `vmType` can **only** be set when the VM is first created — the
+> `--mount-type`/`--vm-type` flags are silently ignored on an existing VM. If your
+> colima VM was created with `sshfs`, recreate it (this destroys the VM's
+> containers, images and volumes):
+>
+> ```bash
+> colima delete && colima start --vm-type vz --mount-type virtiofs --memory 8 --cpu 4
+> ```
+>
+> Memory and CPU, by contrast, *can* be changed on a plain restart:
+> `colima stop && colima start --memory 8 --cpu 4`.
+
+Verify the VM before continuing:
+
+```bash
+colima status | grep mountType   # -> mountType: virtiofs
+colima ssh -- free -h            # Mem total should be ~8 GB
+```
+
+### Fedora / RHEL with Podman
+
+Podman (`podman-compose`) is a drop-in replacement for Docker on Fedora and
+other RHEL-family systems, but two independent issues can bite you. One stems
+from SELinux (enabled by default on these distros) and the other from
+podman-compose itself — they are unrelated and each can be fixed on its own.
+
+#### podman-compose optional dependencies
+
+The `orchestrator` service declares an optional dependency on `embeddings`
+(`required: false`), and `embeddings` is gated behind the `embeddings` profile.
+`podman-compose` does not honour `required: false` — it still tries to wait on
+the `embeddings` container, which is absent when the profile is off, and the
+resulting error silently leaves `orchestrator` (and everything downstream) in
+`Created`. Two workarounds:
+
+- enable the profile so the dependency exists:
+  ```
+  COMPOSE_PROFILES=embeddings podman-compose up
+  ```
+- or drop the `embeddings` entry from `orchestrator.depends_on` (e.g. via an
+  override file) so podman-compose no longer waits on it.
+
+#### SELinux bind-mount labels
+
+On SELinux-enforcing systems, bind-mounted host directories keep the
+`user_home_t` label, which container processes (`container_t`) cannot read. The
+`:z` flag tells Podman to relabel the source to `container_file_t` so the mount
+is accessible. The base `docker-compose.yml` ships without `:z` for
+portability; apply `selinux-override.yml` to add it to the bind mounts:
+
+```
+podman-compose -f docker-compose.yml -f selinux-override.yml up
+```
+
+Named volumes (`db-data`, `netbox-media-files`, etc.) do not need `:z` — Podman
+creates them already labeled `container_file_t`.
 
 ## Glossary
 
