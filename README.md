@@ -173,11 +173,6 @@ http://localhost:4000
 The instructions above assume Docker. Podman (`podman-compose`) works too, but
 needs a few adjustments on Fedora and other SELinux-enforcing systems.
 
-**Host port 80.** The `nginx` service maps `80:80`, but rootless Podman cannot
-bind host ports below 1024 (the kernel reserves those for root). Either run
-Podman as root, or remap the port, e.g. `-f` an override that sets `8082:80`,
-and open `http://localhost:8082/` instead.
-
 **Optional `depends_on` with `required: false`.** The `orchestrator` service
 declares an optional dependency on `embeddings` (`required: false`), and
 `embeddings` is gated behind the `embeddings` profile. `podman-compose` does
