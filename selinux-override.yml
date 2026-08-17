@@ -19,6 +19,18 @@ services:
       - ./docker/netbox/entrypoint.sh:/etc/netbox/entrypoint.sh:z
       - ./docker/netbox/data.json:/etc/netbox/data.json:z
 
+  librechat:
+    volumes:
+      - ./docker/librechat/librechat.yaml:/app/librechat.yaml:z,ro
+
+  inventory-agent:
+    volumes:
+      - ./docker/inventory-agent:/config:z,ro
+
+  planner-agent:
+    volumes:
+      - ./docker/planner-agent:/config:z,ro
+
   orchestrator:
     volumes:
       - ./db:/home/orchestrator/db:z

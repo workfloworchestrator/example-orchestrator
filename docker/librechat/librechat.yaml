@@ -1,0 +1,28 @@
+# LibreChat endpoint configuration for the agents compose profile.
+#
+# LibreChat has no native A2A client, so agents are surfaced as OpenAI
+# "models" through the a2a-proxy service (kagent-a2a-proxy), which translates
+# /v1/chat/completions <-> the agents' A2A protocol:
+#
+#   LibreChat -> a2a-proxy (:8080/v1) -> planner / wfo-search / inventory (A2A)
+#
+# Each agent registered in the proxy's PROXY_AGENT_MAP appears as one model
+# entry here. `planner` delegates to the two domain agents over A2A; the
+# domain agents are also selectable directly to inspect what each one does.
+
+version: 1.2.1
+cache: true
+
+endpoints:
+  custom:
+    - name: "WFO Agents"
+      # The proxy does not validate auth; any non-empty string works
+      apiKey: "no-auth-required"
+      baseURL: "http://a2a-proxy:8080/v1"
+      models:
+        default: ["planner", "wfo-search", "inventory"]
+        fetch: false
+      # Title generation would be forwarded to the agent as a real LLM call;
+      # keep it off
+      titleConvo: false
+      modelDisplayLabel: "WFO Agents"

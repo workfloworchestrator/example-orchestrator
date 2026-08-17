@@ -163,7 +163,11 @@ services:
 
   orchestrator:
     container_name: orchestrator
-    image: ${ORCH_BACKEND_TAG:-ghcr.io/workfloworchestrator/orchestrator-core:latest}
+    # Keep this tag in sync with the orchestrator-core pin in pyproject.toml:
+    # the image ships a preinstalled venv, and running `db upgrade heads` with
+    # a newer image against a database used by the pinned version (or vice
+    # versa) leaves alembic revisions the other version cannot resolve.
+    image: ${ORCH_BACKEND_TAG:-ghcr.io/workfloworchestrator/orchestrator-core:5.1.0}
     env_file:
       - ./docker/orchestrator/orchestrator.env
       - path: ./docker/overrides/orchestrator/orchestrator.env
@@ -227,8 +231,149 @@ services:
       - ./ansible/inventory:/opt/ansible_inventory
       - ./docker/lso/config.json:/app/config.json
 
+  # AI agents (--profile agents) — see the "AI agents" section in the README
+
+  wfo-agent:
+    container_name: wfo-agent
+    image: ${AGENT_TAG:-ghcr.io/workfloworchestrator/orchestrator-agent:latest}
+    profiles:
+      - agents
+    env_file:
+      - ./docker/wfo-agent/wfo-agent.env
+      - path: ./docker/overrides/wfo-agent/wfo-agent.env
+        required: false
+    environment:
+      # pydantic-ai model string, e.g. "openai:gpt-5-mini" or "anthropic:claude-sonnet-5"
+      AGENT_MODEL: ${AGENT_MODEL:-openai:gpt-5-mini}
+      # API key for the model provider; set it in a root `.env` file
+      AGENT_API_KEY: ${AGENT_API_KEY:-}
+    ports:
+      - "8082:8080"
+    depends_on:
+      orchestrator:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    # The agent verifies its tool contract against the orchestrator's MCP
+    # server at startup; restart covers races around orchestrator reloads
+    restart: unless-stopped
+
+  netbox-mcp:
+    container_name: netbox-mcp
+    image: docker.io/netboxlabs/netbox-mcp-server:latest
+    profiles:
+      - agents
+    env_file:
+      - ./docker/netbox-mcp/netbox-mcp.env
+      - path: ./docker/overrides/netbox-mcp/netbox-mcp.env
+        required: false
+    ports:
+      - "8092:8000"
+    depends_on:
+      netbox:
+        condition: service_healthy
+
+  # planner-agent and inventory-agent are declarative docker-agent (cagent)
+  # agents: model, prompt and toolsets live in each service's agent.yaml (the
+  # compose analog of a kagent Agent resource), served over A2A by the
+  # official docker/docker-agent image (pin in sync with new releases as
+  # needed - the config dialect still evolves).
+  #
+  # `--listen <service-name>:8080` binds the container address so the A2A
+  # agent card advertises a URL peers can actually reach (docker-agent has no
+  # separate public-url flag, and a wildcard listen would advertise
+  # localhost). The card captures the container IP at startup, so after
+  # `docker compose restart inventory-agent` also restart planner-agent.
+  inventory-agent:
+    container_name: inventory-agent
+    image: docker/docker-agent:1.125.0
+    profiles:
+      - agents
+    command: ["serve", "a2a", "/config/agent.yaml", "--listen", "inventory-agent:8080"]
+    environment:
+      # API key for the model declared in agent.yaml; from the root `.env`
+      OPENAI_API_KEY: ${AGENT_API_KEY:-}
+      TELEMETRY_ENABLED: "false"
+    volumes:
+      # agent.yaml plus the instructions.md it references
+      - ./docker/inventory-agent:/config:ro
+    ports:
+      - "8083:8080"
+    depends_on:
+      - netbox-mcp
+
+  planner-agent:
+    container_name: planner-agent
+    image: docker/docker-agent:1.125.0
+    profiles:
+      - agents
+    command: ["serve", "a2a", "/config/agent.yaml", "--listen", "planner-agent:8080"]
+    environment:
+      # API key for the model declared in agent.yaml; from the root `.env`
+      OPENAI_API_KEY: ${AGENT_API_KEY:-}
+      TELEMETRY_ENABLED: "false"
+    volumes:
+      # agent.yaml plus the instructions.md it references
+      - ./docker/planner-agent:/config:ro
+    ports:
+      - "8084:8080"
+    depends_on:
+      - wfo-agent
+      - inventory-agent
+
+  a2a-proxy:
+    container_name: a2a-proxy
+    # TEMPORARY: built from the feat/local-setup branch because the direct
+    # agent URL option (PROXY_AGENT_URLS, needed to run without a kagent
+    # controller) is not yet in a released image. Switch back to
+    # image: ghcr.io/nren-agents/kagent-a2a-proxy:latest once it is merged
+    # and released (> 0.0.13).
+    build:
+      context: https://github.com/nren-agents/kagent-a2a-proxy.git#feat/local-setup
+    profiles:
+      - agents
+    env_file:
+      - ./docker/a2a-proxy/a2a-proxy.env
+      - path: ./docker/overrides/a2a-proxy/a2a-proxy.env
+        required: false
+    ports:
+      - "8090:8080"
+    depends_on:
+      wfo-agent:
+        condition: service_started
+      planner-agent:
+        condition: service_started
+
+  mongodb:
+    container_name: librechat-mongodb
+    image: docker.io/mongo:8
+    profiles:
+      - agents
+    command: mongod --noauth
+    volumes:
+      - librechat-mongo-data:/data/db
+
+  librechat:
+    container_name: librechat
+    image: ghcr.io/danny-avila/librechat-dev:latest
+    profiles:
+      - agents
+    env_file:
+      - ./docker/librechat/librechat.env
+      - path: ./docker/overrides/librechat/librechat.env
+        required: false
+    ports:
+      - "3080:3080"
+    volumes:
+      - ./docker/librechat/librechat.yaml:/app/librechat.yaml:ro
+    depends_on:
+      - mongodb
+      - a2a-proxy
+
 volumes:
   netbox-media-files:
+    driver: local
+  librechat-mongo-data:
     driver: local
   db-data:
     driver: local
