@@ -1,0 +1,30 @@
+# Planner agent — a declarative docker-agent (cagent) manifest, served over
+# A2A by the planner-agent compose service. Its A2A toolsets make each remote
+# agent callable as a tool; docker-agent fetches every peer's A2A agent card
+# (name, description, skills) and injects it into the planner's context, so
+# adding an agent here never means editing the prompt. The system prompt
+# lives in instructions.md next to this file.
+agents:
+  planner:
+    # The agent's model, like a kagent ModelConfig. Edit here to change
+    # provider/model; the API key comes from the OPENAI_API_KEY (or
+    # ANTHROPIC_API_KEY) environment variable, set from AGENT_API_KEY in the
+    # root `.env` via docker-compose.yml.
+    model: openai/gpt-4o
+    description: "Planning agent that answers questions by delegating to the domain agents over A2A and synthesizing the results."
+    instruction_file: instructions.md
+    toolsets:
+      # Remote A2A agents as tools. The url is where the agent card is
+      # fetched; message delivery follows the url advertised in the card.
+      # allow_private_ips: docker-agent's SSRF guard blocks compose-internal
+      # addresses unless explicitly allowed.
+      - type: a2a
+        name: wfo_search
+        url: http://wfo-agent:8080/
+        allow_private_ips: true
+        timeout: 180
+      - type: a2a
+        name: inventory
+        url: http://inventory-agent:8080/
+        allow_private_ips: true
+        timeout: 180

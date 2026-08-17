@@ -107,6 +107,8 @@ COMPOSE_PROFILES=lso LSO_ENABLED=True docker compose up
 
 This will build the Docker image for LSO locally, and make the orchestrator use the included Ansible playbooks.
 
+To also start a chat frontend with an AI agent that can search the orchestrator, see [AI agents](#ai-agents).
+
 To access the new v2 `orchestrator-ui`, point your browser to:
 
 ```
@@ -1686,6 +1688,107 @@ For production environments with an existing customer administration system (suc
 2. **Optionally syncing customers** into a local `CustomerTable` through a periodic task workflow that imports customers from the external system on a schedule.
 
 This approach keeps the orchestrator's customer data in sync with the authoritative source while still allowing the UI to use the standard customer dropdown.
+
+## AI agents
+
+The repository includes an optional set of AI agent services that mirror the
+agent architecture SURF runs in production on Kubernetes with
+[kagent](https://kagent.dev): a chat frontend talks to per-domain agents,
+agents speak the A2A protocol, and every agent gets its domain tools from an
+MCP server owned by the service it works against. This example is meant for
+orchestrator users who do not run Kubernetes, so docker compose +
+[docker-agent (cagent)](https://docs.docker.com/ai/cagent/) take kagent's
+place: the agents are declarative cagent manifests served over A2A, plus one
+BYO agent image, the same split kagent deployments use (declarative `Agent`
+resources alongside bring-your-own containers), with each compose service
+mapping 1:1 onto a kagent resource should you move to Kubernetes later.
+
+```
+LibreChat ──OpenAI /v1──► a2a-proxy ──A2A──► planner-agent (:8084)
+ (:3080)                   (:8090)             │ A2A
+                                               ├──► wfo-agent (:8082) ────────MCP──► orchestrator /mcp (:8080)
+                                               └──► inventory-agent (:8083) ──MCP──► netbox-mcp (:8092) ──► netbox
+```
+
+Three agents: a **planner** that decomposes questions and delegates over A2A,
+and two domain agents: **wfo-search** for orchestration data and
+**inventory** for the NetBox network inventory. Each domain agent owns
+exactly one MCP toolset, served by the system it works against.
+
+| Service           | Image                                             | Purpose                                                                         |
+| ----------------- | ------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `librechat`       | `ghcr.io/danny-avila/librechat-dev`               | [LibreChat](https://www.librechat.ai/) chat UI on :3080                         |
+| `mongodb`         | `mongo:8`                                         | LibreChat conversation/auth store                                               |
+| `a2a-proxy`       | `ghcr.io/nren-agents/kagent-a2a-proxy`            | Exposes A2A agents as OpenAI-compatible models (LibreChat has no A2A client)    |
+| `planner-agent`   | [docker-agent](https://docs.docker.com/ai/cagent/) runtime | Declarative cagent agent; delegates to the domain agents over A2A      |
+| `wfo-agent`       | `ghcr.io/workfloworchestrator/orchestrator-agent` | WFO search agent (pydantic-ai); all tools come from the orchestrator MCP server |
+| `inventory-agent` | [docker-agent](https://docs.docker.com/ai/cagent/) runtime | Declarative cagent agent; read-only NetBox inventory tools via MCP     |
+| `netbox-mcp`      | `netboxlabs/netbox-mcp-server`                    | Read-only MCP server in front of the compose NetBox                             |
+
+`planner-agent` and `inventory-agent` are declarative
+[docker-agent (cagent)](https://docs.docker.com/ai/cagent/) agents, each
+served over A2A by the official `docker/docker-agent` image. Everything
+that makes an agent *that* agent lives in `docker/<name>-agent/`: an
+`agent.yaml` declaring model, toolsets and peers
+([planner](./docker/planner-agent/agent.yaml),
+[inventory](./docker/inventory-agent/agent.yaml)) with the system prompt in
+an `instructions.md` next to it (`instruction_file`). The
+planner's A2A toolsets fetch each peer's agent card (name, description,
+skills) at startup, so its knowledge of what it can delegate to is whatever
+the agents themselves advertise: adding an agent means adding a toolset
+entry with a URL, never editing the planner's prompt.
+
+The orchestrator itself needs no extra service: orchestrator-core ships a
+built-in MCP server, enabled with `MCP_ENABLED=True` in
+`docker/orchestrator/orchestrator.env` and mounted at
+`http://localhost:8080/mcp` (streamable HTTP).
+
+### Start the agents
+
+The only credential the agent stack needs is an LLM API key for the search
+agent. Put it in a `.env` file next to `docker-compose.yml` (gitignored):
+
+```
+AGENT_MODEL=openai:gpt-5-mini
+AGENT_API_KEY=sk-...
+```
+
+`AGENT_MODEL` is a [pydantic-ai model string](https://ai.pydantic.dev/models/)
+(`provider:model`) used by the wfo-agent; for providers that need a custom
+endpoint (Azure, Ollama, LiteLLM) additionally set `AGENT_API_BASE` in
+`docker/overrides/wfo-agent/wfo-agent.env`. The two cagent agents declare
+their model in their own `agent.yaml` (default `openai/gpt-4o`) and read the
+same `AGENT_API_KEY` from the root `.env`.
+
+Non-agent services keep their configuration in
+`docker/<service>/<service>.env` with `docker/overrides/<service>/` hooks,
+see [docker/overrides/configuration.md](./docker/overrides/configuration.md);
+the cagent agents are configured entirely through their mounted
+`agent.yaml` + `instructions.md`.
+
+> [!NOTE]
+> A cagent agent's A2A card captures its container address at startup. If you
+> restart `inventory-agent` on its own, restart `planner-agent` afterwards so
+> it re-resolves its peers.
+
+Then start the stack with the `agents` profile:
+
+```
+docker compose --profile agents up -d
+```
+
+Open http://localhost:3080, register a local account (stored in your own
+mongodb container), and pick a model under **WFO Agents**:
+
+- **planner** (default): cross-domain questions, e.g. *"Which sites exist in
+  NetBox, and how many products does the orchestrator have?"*; it delegates
+  to both domain agents and combines the answers.
+- **wfo-search** / **inventory**: talk to a domain agent directly to see
+  what each one contributes.
+
+The inventory answers get interesting after you run the `NetBox Bootstrap`
+task and some node/port workflows (see [Quickstart](#quickstart)) so NetBox
+actually contains devices.
 
 ## Configuration
 
