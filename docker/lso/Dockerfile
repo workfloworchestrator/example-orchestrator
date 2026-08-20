@@ -7,7 +7,7 @@ WORKDIR /app
 
 RUN apk add --update --no-cache gcc libc-dev libffi-dev
 
-RUN pip install orchestrator-lso=="3.0.0"
+RUN pip install orchestrator-lso=="5.0.1" ansible-core=="2.21.3"
 
 RUN pip install pynetbox ansible
 
