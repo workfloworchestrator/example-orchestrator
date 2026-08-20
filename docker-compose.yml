@@ -23,12 +23,25 @@ x-netbox: &netbox
     - netbox-media-files:/opt/netbox/netbox/media:z
     - ./docker/netbox/data.json:/etc/netbox/data.json
 
+# Published ports bind to the host loopback (127.0.0.1) by default, so the
+# services are only reachable from this machine. Several of them ship without
+# authentication or with well-known credentials, and on Linux published ports
+# bypass the host firewall, so widen these deliberately.
+#
+# Every service has its own BIND_ADDRESS_<SERVICE> variable, named after the
+# compose service in uppercase with dashes replaced by underscores; the
+# orchestrator's debugger has a separate one. To reach a service from another
+# machine, point it at another address:
+#
+#   BIND_ADDRESS_ORCHESTRATOR_UI=0.0.0.0 docker compose up
+#
+# See the "Service bind addresses" section in README.md for details.
 services:
   postgres:
     container_name: postgres
     image: "pgvector/pgvector:pg17"
     ports:
-      - "5432:5432"
+      - "${BIND_ADDRESS_POSTGRES:-127.0.0.1}:5432:5432"
     environment:
       POSTGRES_USER: nwa
       POSTGRES_PASSWORD: nwa
@@ -83,7 +96,7 @@ services:
       - path: ./docker/overrides/embeddings/embeddings.env
         required: false
     ports:
-      - "8081:80"
+      - "${BIND_ADDRESS_EMBEDDINGS:-127.0.0.1}:8081:80"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/health"]
       interval: 10s
@@ -112,7 +125,7 @@ services:
     container_name: federation
     image: ghcr.io/apollographql/router:v2.11.0
     ports:
-      - "4000:4000"
+      - "${BIND_ADDRESS_FEDERATION:-127.0.0.1}:4000:4000"
     depends_on:
       rover-compose:
         condition: service_completed_successfully
@@ -128,7 +141,7 @@ services:
     expose:
       - "8080"
     ports:
-      - "8000:8080"
+      - "${BIND_ADDRESS_NETBOX:-127.0.0.1}:8000:8080"
     entrypoint:
       ["/opt/netbox/docker-entrypoint.sh", "/etc/netbox/entrypoint.sh"]
 
@@ -156,7 +169,7 @@ services:
       - path: ./docker/overrides/orchestrator-ui/orchestrator-ui.env
         required: false
     ports:
-      - "3000:3000"
+      - "${BIND_ADDRESS_ORCHESTRATOR_UI:-127.0.0.1}:3000:3000"
     depends_on:
       orchestrator:
         condition: service_started
@@ -171,8 +184,8 @@ services:
     environment:
       LSO_ENABLED: ${LSO_ENABLED:-False}
     ports:
-      - "8080:8080"
-      - "5678:5678" #Enable Python debugger
+      - "${BIND_ADDRESS_ORCHESTRATOR:-127.0.0.1}:8080:8080"
+      - "${BIND_ADDRESS_ORCHESTRATOR_DEBUGPY:-127.0.0.1}:5678:5678" #Enable Python debugger
     expose:
       - 5678 #Enable Python debugger
     volumes:
@@ -221,7 +234,7 @@ services:
       - path: ./docker/overrides/lso/lso.env
         required: false
     ports:
-      - "8001:8000"
+      - "${BIND_ADDRESS_LSO:-127.0.0.1}:8001:8000"
     volumes:
       - ./ansible/plays_and_roles:/app/demo/ansible/playbooks
       - ./ansible/inventory:/opt/ansible_inventory

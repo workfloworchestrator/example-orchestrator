@@ -72,6 +72,7 @@ Example workflow orchestrator implementation based on the
     - [Local table](#local-table)
     - [Remote](#remote)
   - [Configuration](#configuration)
+    - [Service bind addresses](#service-bind-addresses)
   - [Docker runtimes](#docker-runtimes)
     - [Apple Silicon (colima + virtiofs)](#apple-silicon-colima--virtiofs)
     - [Fedora / RHEL with Podman](#fedora--rhel-with-podman)
@@ -124,6 +125,16 @@ To access `federation`, point your browser to:
 ```
 http://localhost:4000
 ```
+
+> [!WARNING]
+> This setup is not meant to be used in production!
+> All services bind to `127.0.0.1`, so they are only reachable from the machine
+> running them. This is on purpose: several of them use well-known credentials
+> or no authentication at all. If you run the stack on a remote machine and
+> browse to it from another one, bind the services you need to `0.0.0.0`, for
+> example `BIND_ADDRESS_ORCHESTRATOR_UI=0.0.0.0 docker compose up`. See
+> [Service bind addresses](#service-bind-addresses) for the full list and for
+> the extra steps the UI needs.
 
 ### Using the example orchestrator
 
@@ -1690,6 +1701,58 @@ This approach keeps the orchestrator's customer data in sync with the authoritat
 ## Configuration
 
 Environment variables and orchestrator-core can be overridden for development purposes. Please refer to [this documentation](./docker/overrides/configuration.md) for more details.
+
+### Service bind addresses
+
+Every published port binds to `127.0.0.1` by default, so the services are only
+reachable from the machine running them. This is deliberate as several services either
+use static credentials or no authentication at all, and some services expose a debugger. 
+In short, none of them services should be accessible on a shared network by accident,
+which is what the default configuration ensures.
+
+Each service has its own variable, named `BIND_ADDRESS_<SERVICE>`, that can be
+used for granular overrides of the bind address.
+
+| Variable | Service | Host port(s) |
+| --- | --- | --- |
+| `BIND_ADDRESS_ORCHESTRATOR_UI` | `orchestrator-ui` | 3000 |
+| `BIND_ADDRESS_ORCHESTRATOR` | `orchestrator` | 8080 |
+| `BIND_ADDRESS_ORCHESTRATOR_DEBUGPY` | `orchestrator` | 5678 (debugger) |
+| `BIND_ADDRESS_NETBOX` | `netbox` | 8000 |
+| `BIND_ADDRESS_FEDERATION` | `federation` | 4000 |
+| `BIND_ADDRESS_POSTGRES` | `postgres` | 5432 |
+| `BIND_ADDRESS_LSO` | `lso` | 8001 |
+| `BIND_ADDRESS_EMBEDDINGS` | `embeddings` | 8081 |
+
+To make a service reachable from other machines, bind it to `0.0.0.0` or to one specific host address:
+
+```bash
+BIND_ADDRESS_ORCHESTRATOR_UI=0.0.0.0 docker compose up
+```
+
+This can be made semi-persistent by adding it to the `.env` file.
+
+> [!WARNING]
+> Do not use this for permanent deployments in shared networks. If you do, consult the
+> documentation for each individual component on how to setup authentication.
+
+
+> [!NOTE]
+> The `orchestrator-ui` calls the orchestrator from the *browser*, so exposing
+> the UI on its own is not enough to use it from another machine. Also set
+> `BIND_ADDRESS_ORCHESTRATOR=0.0.0.0` and point the UI at an address the
+> browser can resolve, by overriding `ORCHESTRATOR_API_HOST`,
+> `ORCHESTRATOR_GRAPHQL_HOST` and `ORCHESTRATOR_WEBSOCKET_URL` in
+> `docker/overrides/orchestrator-ui/orchestrator-ui.env`.
+>
+> Similarly, `netbox` rejects form submissions from origins it does not know.
+> When reaching it by hostname or IP instead of `localhost`, add that origin to
+> `CSRF_TRUSTED_ORIGINS` in `docker/overrides/netbox/netbox.env`.
+
+> [!WARNING]
+> `BIND_ADDRESS_ORCHESTRATOR_DEBUGPY` exposes the Python debugger, which has no
+> authentication and allows arbitrary code execution. Only widen it on a network
+> you trust.
 
 ## Docker runtimes
 
