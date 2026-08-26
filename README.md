@@ -1721,6 +1721,11 @@ LibreChat ──OpenAI /v1──► a2a-proxy ──A2A──► planner-agent (
                                                └──► inventory-agent (:8083) ──MCP──► netbox-mcp (:8092) ──► netbox
 ```
 
+The agent services are defined in [`docker-compose.agents.yml`](docker-compose.agents.yml),
+pulled into the stack by the `include:` at the top of `docker-compose.yml`, and
+gated behind the `agents` profile, so the base orchestrator stack stays
+self-contained and unchanged when the agents are not started.
+
 Three agents: a **planner** that decomposes questions and delegates over A2A,
 and two domain agents: **wfo-search** for orchestration data and
 **inventory** for the NetBox network inventory. Each domain agent owns
