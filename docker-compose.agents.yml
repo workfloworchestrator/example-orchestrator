@@ -19,7 +19,7 @@ services:
       # API key for the model provider; set it in a root `.env` file
       AGENT_API_KEY: ${AGENT_API_KEY:-}
     ports:
-      - "8082:8080"
+      - "${BIND_ADDRESS_WFO_AGENT:-127.0.0.1}:8082:8080"
     depends_on:
       orchestrator:
         condition: service_healthy
@@ -39,7 +39,7 @@ services:
       - path: ./docker/overrides/netbox-mcp/netbox-mcp.env
         required: false
     ports:
-      - "8092:8000"
+      - "${BIND_ADDRESS_NETBOX_MCP:-127.0.0.1}:8092:8000"
     depends_on:
       netbox:
         condition: service_healthy
@@ -69,7 +69,7 @@ services:
       # agent.yaml plus the instructions.md it references
       - ./docker/inventory-agent:/config:ro
     ports:
-      - "8083:8080"
+      - "${BIND_ADDRESS_INVENTORY_AGENT:-127.0.0.1}:8083:8080"
     depends_on:
       - netbox-mcp
 
@@ -87,7 +87,7 @@ services:
       # agent.yaml plus the instructions.md it references
       - ./docker/planner-agent:/config:ro
     ports:
-      - "8084:8080"
+      - "${BIND_ADDRESS_PLANNER_AGENT:-127.0.0.1}:8084:8080"
     depends_on:
       - wfo-agent
       - inventory-agent
@@ -108,7 +108,7 @@ services:
       - path: ./docker/overrides/a2a-proxy/a2a-proxy.env
         required: false
     ports:
-      - "8090:8080"
+      - "${BIND_ADDRESS_A2A_PROXY:-127.0.0.1}:8090:8080"
     depends_on:
       wfo-agent:
         condition: service_started
@@ -134,7 +134,7 @@ services:
       - path: ./docker/overrides/librechat/librechat.env
         required: false
     ports:
-      - "3080:3080"
+      - "${BIND_ADDRESS_LIBRECHAT:-127.0.0.1}:3080:3080"
     volumes:
       - ./docker/librechat/librechat.yaml:/app/librechat.yaml:ro
     depends_on:
