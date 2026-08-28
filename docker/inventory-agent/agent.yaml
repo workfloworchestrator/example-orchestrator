@@ -1,0 +1,23 @@
+# Inventory agent — a declarative docker-agent (cagent) manifest, served over
+# A2A by the inventory-agent compose service. This file is the compose analog
+# of a kagent Agent resource: model, prompt and toolsets in one place, with
+# the system prompt in instructions.md next to this file.
+agents:
+  inventory:
+    # The agent's model, like a kagent ModelConfig. Edit here to change
+    # provider/model (e.g. anthropic/claude-sonnet-5); the API key comes from
+    # the OPENAI_API_KEY (or ANTHROPIC_API_KEY) environment variable, set from
+    # AGENT_API_KEY in the root `.env` via docker-compose.yml.
+    model: openai/gpt-4o
+    # Published in the A2A agent card; this is what the planner reads to
+    # decide when to delegate here — keep it accurate and specific.
+    description: "Read-only NetBox network inventory agent: sites, devices, interfaces, cables, prefixes, IP addresses, VLANs and L2VPNs."
+    instruction_file: instructions.md
+    toolsets:
+      - type: mcp
+        remote:
+          url: http://netbox-mcp:8000/mcp
+          transport_type: streamable
+        # netbox-mcp resolves to a compose-internal address; docker-agent's
+        # SSRF guard blocks private IPs unless explicitly allowed
+        allow_private_ips: true

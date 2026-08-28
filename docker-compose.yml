@@ -1,3 +1,8 @@
+# The AI agent services (--profile agents) live in docker-compose.agents.yml;
+# see the "AI agents" section in the README.
+include:
+  - path: docker-compose.agents.yml
+
 x-netbox: &netbox
   build:
     context: docker/netbox
@@ -176,7 +181,11 @@ services:
 
   orchestrator:
     container_name: orchestrator
-    image: ${ORCH_BACKEND_TAG:-ghcr.io/workfloworchestrator/orchestrator-core:latest}
+    # Keep this tag in sync with the orchestrator-core pin in pyproject.toml:
+    # the image ships a preinstalled venv, and running `db upgrade heads` with
+    # a newer image against a database used by the pinned version (or vice
+    # versa) leaves alembic revisions the other version cannot resolve.
+    image: ${ORCH_BACKEND_TAG:-ghcr.io/workfloworchestrator/orchestrator-core:5.1.0}
     env_file:
       - ./docker/orchestrator/orchestrator.env
       - path: ./docker/overrides/orchestrator/orchestrator.env
