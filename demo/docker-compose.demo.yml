@@ -1,0 +1,34 @@
+# Network demo services (--profile network), included from docker-compose.yml.
+# Adds a read-only network agent whose tools come from an MCP server over the
+# containerlab SR Linux nodes (clab/), on top of the agents profile. Relative
+# paths resolve against this file's directory (demo/).
+#
+#   source demo/demo.env && docker compose up -d && (cd clab && containerlab deploy)
+
+services:
+  network-mcp:
+    container_name: network-mcp
+    profiles:
+      - network
+    build:
+      context: ./network-mcp
+    env_file:
+      - ./network-mcp/network-mcp.env
+    ports:
+      - "${BIND_ADDRESS_NETWORK_MCP:-127.0.0.1}:8093:8000"
+
+  network-agent:
+    container_name: network-agent
+    image: docker/docker-agent:1.125.0
+    profiles:
+      - network
+    command: ["serve", "a2a", "/config/agent.yaml", "--listen", "network-agent:8080"]
+    environment:
+      OPENAI_API_KEY: ${AGENT_API_KEY:-}
+      TELEMETRY_ENABLED: "false"
+    volumes:
+      - ./network-agent:/config:ro
+    ports:
+      - "${BIND_ADDRESS_NETWORK_AGENT:-127.0.0.1}:8094:8080"
+    depends_on:
+      - network-mcp
