@@ -28,3 +28,11 @@ agents:
         url: http://inventory-agent:8080/
         allow_private_ips: true
         timeout: 180
+      # Network specialist: reads live device state from the demo lab
+      # (demo/, compose profile `network`). Optional: The planner starts and
+      # answers without it, and reports it as unavailable when it is not up.
+      - type: a2a
+        name: network
+        url: http://network-agent:8080/
+        allow_private_ips: true
+        timeout: 180

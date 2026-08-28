@@ -2,6 +2,7 @@
 # see the "AI agents" section in the README.
 include:
   - path: docker-compose.agents.yml
+  - path: demo/docker-compose.demo.yml
 
 x-netbox: &netbox
   build:
