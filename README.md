@@ -100,16 +100,6 @@ docker compose up
 
 This will start the `orchestrator`, `orchestrator-ui`, `netbox`, `federation`, `postgres` and `redis`.
 
-To include LSO, run the following command instead:
-
-```
-COMPOSE_PROFILES=lso LSO_ENABLED=True docker compose up
-```
-
-This will build the Docker image for LSO locally, and make the orchestrator use the included Ansible playbooks.
-
-To also start a chat frontend with an AI agent that can search the orchestrator, see [AI agents](#ai-agents).
-
 To access the new v2 `orchestrator-ui`, point your browser to:
 
 ```
@@ -137,6 +127,18 @@ http://localhost:4000
 > example `BIND_ADDRESS_ORCHESTRATOR_UI=0.0.0.0 docker compose up`. See
 > [Service bind addresses](#service-bind-addresses) for the full list and for
 > the extra steps the UI needs.
+
+#### Profiles
+
+To include the Lightweight Service Orchestrator (LSO), run the following command instead:
+
+```
+COMPOSE_PROFILES=lso LSO_ENABLED=True docker compose up
+```
+
+This will build the Docker image for LSO locally, and make the orchestrator use the included Ansible playbooks.
+
+To also start a chat frontend with an AI agent that can search the orchestrator, see [AI agents](#ai-agents).
 
 ### Using the example orchestrator
 
@@ -1790,7 +1792,10 @@ the cagent agents are configured entirely through their mounted
 Then start the stack with the `agents` profile:
 
 ```
-docker compose --profile agents up -d
+# Set the profile in this env-var. When using multiple profiles, separate them by a comma
+export COMPOSE_PROFILES=agents
+
+docker compose up -d
 ```
 
 Open http://localhost:3080, register a local account (stored in your own
