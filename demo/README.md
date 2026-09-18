@@ -35,6 +35,9 @@ LibreChat → a2a-proxy → planner ─A2A─┬─► wfo-agent ──MCP──
 | `tickets/`                      | four static tickets, one per use case                                                                                                                     | stand in for the ticket system                                                                                                       |
 | `demo.env` | compose env file: profiles, LSO, planner prompt | `docker compose --env-file .env --env-file demo/demo.env` |
 
+To run the demo on a public server with HTTPS hostnames (Traefik + Let's
+Encrypt), see [HTTPS.md](HTTPS.md).
+
 ## Prerequisites
 
 - The base stack and the agents as described in the root README:
