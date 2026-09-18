@@ -1,0 +1,117 @@
+# HTTPS front door for the network demo: Traefik + Let's Encrypt in front of
+# the orchestrator (api.), its UI (gui.), LibreChat (chat.), NetBox (netbox.)
+# and the Traefik dashboard (traefik.), all behind one IP allowlist. The apps
+# themselves have no authentication in this setup, so the allowlist is the
+# only thing keeping them private. See demo/HTTPS.md.
+#
+# Overlay on the base stack, never used on its own:
+#
+#   export COMPOSE_FILE=docker-compose.yml:demo/docker-compose.traefik.yml
+#   export COMPOSE_ENV_FILES=.env,demo/demo.env,demo/networkdemo.env
+#   docker compose up -d --wait
+#
+# `environment:` entries below take precedence over the services' env_file
+# settings, so the tracked docker/*/*.env files stay untouched. The existing
+# 127.0.0.1 port bindings stay too, so demo/scripts/demo.py keeps working on
+# the host.
+
+x-allowlist-label: &allowlist demo-allowlist
+
+services:
+  traefik:
+    container_name: traefik
+    # Docker Engine 29 requires API >= 1.44; Traefik negotiates it from v3.6
+    image: docker.io/traefik:v3.6
+    restart: unless-stopped
+    command:
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --certificatesresolvers.le.acme.email=${ACME_EMAIL:?set ACME_EMAIL in demo/networkdemo.env}
+      - --certificatesresolvers.le.acme.storage=/acme/acme.json
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.le.acme.caserver=${ACME_CA_SERVER:-https://acme-v02.api.letsencrypt.org/directory}
+      - --api.dashboard=true
+      - --accesslog=true
+      - --log.level=INFO
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-acme:/acme
+    labels:
+      traefik.enable: "true"
+      traefik.http.middlewares.demo-allowlist.ipallowlist.sourcerange: ${ALLOWED_IPS:?set ALLOWED_IPS in demo/networkdemo.env}
+      traefik.http.routers.dashboard.rule: Host(`traefik.${DEMO_DOMAIN:?set DEMO_DOMAIN in demo/networkdemo.env}`)
+      traefik.http.routers.dashboard.entrypoints: websecure
+      traefik.http.routers.dashboard.tls.certresolver: le
+      traefik.http.routers.dashboard.middlewares: *allowlist
+      traefik.http.routers.dashboard.service: api@internal
+
+  postgres:
+    # Only the containers use the database; not publishing it avoids a clash
+    # with a PostgreSQL already running on the server's 127.0.0.1:5432
+    ports: !reset []
+
+  orchestrator:
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.api.rule: Host(`api.${DEMO_DOMAIN}`)
+      traefik.http.routers.api.entrypoints: websecure
+      traefik.http.routers.api.tls.certresolver: le
+      traefik.http.routers.api.middlewares: *allowlist
+      traefik.http.services.api.loadbalancer.server.port: "8080"
+
+  orchestrator-ui:
+    environment:
+      # The UI calls the API from the browser, so these must be public URLs
+      ORCHESTRATOR_API_HOST: https://api.${DEMO_DOMAIN}
+      ORCHESTRATOR_GRAPHQL_HOST: https://api.${DEMO_DOMAIN}
+      ORCHESTRATOR_WEBSOCKET_URL: wss://api.${DEMO_DOMAIN}/api/ws/events
+      NEXTAUTH_URL: https://gui.${DEMO_DOMAIN}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?set NEXTAUTH_SECRET in demo/networkdemo.env}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.gui.rule: Host(`gui.${DEMO_DOMAIN}`)
+      traefik.http.routers.gui.entrypoints: websecure
+      traefik.http.routers.gui.tls.certresolver: le
+      traefik.http.routers.gui.middlewares: *allowlist
+      traefik.http.services.gui.loadbalancer.server.port: "3000"
+
+  librechat:
+    environment:
+      DOMAIN_CLIENT: https://chat.${DEMO_DOMAIN}
+      DOMAIN_SERVER: https://chat.${DEMO_DOMAIN}
+      # The values in docker/librechat/librechat.env are public; replace them
+      JWT_SECRET: ${LIBRECHAT_JWT_SECRET:?set LIBRECHAT_JWT_SECRET in demo/networkdemo.env}
+      JWT_REFRESH_SECRET: ${LIBRECHAT_JWT_REFRESH_SECRET:?set LIBRECHAT_JWT_REFRESH_SECRET in demo/networkdemo.env}
+      CREDS_KEY: ${LIBRECHAT_CREDS_KEY:?set LIBRECHAT_CREDS_KEY in demo/networkdemo.env}
+      CREDS_IV: ${LIBRECHAT_CREDS_IV:?set LIBRECHAT_CREDS_IV in demo/networkdemo.env}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.chat.rule: Host(`chat.${DEMO_DOMAIN}`)
+      traefik.http.routers.chat.entrypoints: websecure
+      traefik.http.routers.chat.tls.certresolver: le
+      traefik.http.routers.chat.middlewares: *allowlist
+      traefik.http.services.chat.loadbalancer.server.port: "3080"
+
+  netbox:
+    environment:
+      CSRF_TRUSTED_ORIGINS: https://netbox.${DEMO_DOMAIN} http://localhost:8000 http://localhost:8080
+      # Only applied when NetBox creates the superuser on its first start
+      SUPERUSER_PASSWORD: ${NETBOX_ADMIN_PASSWORD:?set NETBOX_ADMIN_PASSWORD in demo/networkdemo.env}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.netbox.rule: Host(`netbox.${DEMO_DOMAIN}`)
+      traefik.http.routers.netbox.entrypoints: websecure
+      traefik.http.routers.netbox.tls.certresolver: le
+      traefik.http.routers.netbox.middlewares: *allowlist
+      traefik.http.services.netbox.loadbalancer.server.port: "8080"
+
+volumes:
+  traefik-acme:
+    driver: local
