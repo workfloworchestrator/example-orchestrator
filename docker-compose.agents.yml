@@ -135,6 +135,12 @@ services:
       - ./docker/librechat/librechat.env
       - path: ./docker/overrides/librechat/librechat.env
         required: false
+    environment:
+      # LibreChat Agents need a real tool-calling LLM of their own (the
+      # a2a-proxy endpoint only relays to the agents and cannot do tool
+      # calls). Reuse the provider key the other agents use, from the root
+      # `.env`; the models are listed in docker/librechat/librechat.env.
+      OPENAI_API_KEY: ${AGENT_API_KEY:-}
     ports:
       - "${BIND_ADDRESS_LIBRECHAT:-127.0.0.1}:3080:3080"
     volumes:
