@@ -12,9 +12,12 @@
 # limitations under the License.
 
 
+from typing import Annotated
+
 from orchestrator.core.forms import FormPage
 from orchestrator.core.workflow import StepList, begin, step
 from orchestrator.core.workflows.utils import terminate_workflow
+from pydantic import Field
 
 from products.product_types.node import Node
 from pydantic_forms.types import InputForm, State, UUIDstr
@@ -23,10 +26,10 @@ from services import netbox
 
 
 def terminate_initial_input_form_generator(subscription_id: UUIDstr) -> InputForm:
-    temp_subscription_id = subscription_id
+    SubscriptionId = Annotated[DisplaySubscription, Field(subscription_id)]
 
     class TerminateForm(FormPage):
-        subscription_id: DisplaySubscription = temp_subscription_id  # type: ignore
+        subscription_id: SubscriptionId
 
     return TerminateForm
 
