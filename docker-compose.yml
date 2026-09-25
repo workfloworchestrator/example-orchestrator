@@ -114,6 +114,8 @@ services:
     build:
       context: docker/federation
       dockerfile: rover.Dockerfile
+      args:
+        ROVER_UID: ${ROVER_UID:-1001}
     depends_on:
       orchestrator:
         condition: service_healthy
