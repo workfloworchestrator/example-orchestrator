@@ -26,3 +26,40 @@ endpoints:
       # keep it off
       titleConvo: false
       modelDisplayLabel: "WFO Agents"
+
+# LibreChat's own MCP client. Separate from the agent path above: the entries
+# here let a LibreChat *Agent* call the orchestrator and NetBox MCP tools
+# directly, without going through a2a-proxy. Both servers speak streamable
+# HTTP on the compose network.
+#
+#   LibreChat Agent -> orchestrator:8080/mcp/  (MCP_ENABLED=True on the orchestrator)
+#   LibreChat Agent -> netbox-mcp:8000/mcp     (same server the inventory agent uses)
+#
+# The orchestrator's trailing slash matters: /mcp answers 307 to /mcp/, and
+# LibreChat refuses to follow a redirect to a private address.
+mcpServers:
+  orchestrator:
+    type: streamable-http
+    url: http://orchestrator:8080/mcp/
+    timeout: 120000
+    initTimeout: 30000
+    # Surface the server's own instructions to the model and list it in the
+    # chat's MCP menu
+    serverInstructions: true
+    chatMenu: true
+  netbox:
+    type: streamable-http
+    url: http://netbox-mcp:8000/mcp
+    timeout: 120000
+    initTimeout: 30000
+    serverInstructions: true
+    chatMenu: true
+
+# Both MCP servers live on the compose network, so their addresses are
+# private. With no allowlist configured LibreChat blocks private addresses as
+# SSRF targets ("Domain ... is not allowed"), so exempt exactly these two
+# host:port pairs; everything else stays blocked.
+mcpSettings:
+  allowedAddresses:
+    - orchestrator:8080
+    - netbox-mcp:8000
