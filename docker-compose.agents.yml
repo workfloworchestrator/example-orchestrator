@@ -119,7 +119,7 @@ services:
 
   mongodb:
     container_name: librechat-mongodb
-    image: docker.io/mongo:8
+    image: docker.io/mongo:7
     profiles:
       - agents
     command: mongod --noauth
