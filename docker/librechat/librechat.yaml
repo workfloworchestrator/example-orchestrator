@@ -27,13 +27,41 @@ endpoints:
       titleConvo: false
       modelDisplayLabel: "WFO Agents"
 
+# Presets for the OpenAI models LibreChat has no context size for. Unknown
+# models fall back to 32k tokens; these get 1.05M, what LibreChat's own map
+# gives their sibling gpt-6-astra. The models only accept tools through the
+# Responses API, so the presets switch it on. prioritize: false and
+# addedEndpoints keep the normal endpoint picker next to the presets.
+modelSpecs:
+  prioritize: false
+  addedEndpoints: [openAI, custom, agents]
+  list:
+    - name: gpt-6-sol
+      label: GPT-6 Sol
+      preset:
+        endpoint: openAI
+        model: gpt-6-sol
+        maxContextTokens: 1050000
+        useResponsesApi: true
+    - name: gpt-6-luna
+      label: GPT-6 Luna
+      preset:
+        endpoint: openAI
+        model: gpt-6-luna
+        maxContextTokens: 1050000
+        useResponsesApi: true
+
 # LibreChat's own MCP client. Separate from the agent path above: the entries
-# here let a LibreChat *Agent* call the orchestrator and NetBox MCP tools
-# directly, without going through a2a-proxy. Both servers speak streamable
-# HTTP on the compose network.
+# here let a LibreChat *Agent* call the orchestrator, NetBox and network MCP
+# tools directly, without going through a2a-proxy. All servers speak
+# streamable HTTP on the compose network.
 #
 #   LibreChat Agent -> orchestrator:8080/mcp/  (MCP_ENABLED=True on the orchestrator)
 #   LibreChat Agent -> netbox-mcp:8000/mcp     (same server the inventory agent uses)
+#   LibreChat Agent -> network-mcp:8000/mcp    (demo SR Linux lab, read-only; network profile)
+#
+# network-mcp only exists with the demo's network profile; without it
+# LibreChat logs that it cannot reach that server and serves the others.
 #
 # The orchestrator's trailing slash matters: /mcp answers 307 to /mcp/, and
 # LibreChat refuses to follow a redirect to a private address.
@@ -54,12 +82,20 @@ mcpServers:
     initTimeout: 30000
     serverInstructions: true
     chatMenu: true
+  network:
+    type: streamable-http
+    url: http://network-mcp:8000/mcp
+    timeout: 120000
+    initTimeout: 30000
+    serverInstructions: true
+    chatMenu: true
 
-# Both MCP servers live on the compose network, so their addresses are
+# The MCP servers live on the compose network, so their addresses are
 # private. With no allowlist configured LibreChat blocks private addresses as
-# SSRF targets ("Domain ... is not allowed"), so exempt exactly these two
+# SSRF targets ("Domain ... is not allowed"), so exempt exactly these
 # host:port pairs; everything else stays blocked.
 mcpSettings:
   allowedAddresses:
     - orchestrator:8080
     - netbox-mcp:8000
+    - network-mcp:8000
