@@ -8,7 +8,7 @@ set -eu
 export UV_PYTHON_DOWNLOADS=never
 
 # Install extra requirements for example-orchestrator
-uv sync
+uv sync --frozen
 source .venv/bin/activate
 
 setup() {

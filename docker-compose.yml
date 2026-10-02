@@ -212,6 +212,7 @@ services:
       - ./utils:/home/orchestrator/utils
       - ./services:/home/orchestrator/services
       - ./pyproject.toml:/home/orchestrator/pyproject.toml
+      - ./uv.lock:/home/orchestrator/uv.lock
       - ./alembic.ini:/home/orchestrator/alembic.ini
       - ./translations:/home/orchestrator/translations
       - ./templates:/home/orchestrator/templates
