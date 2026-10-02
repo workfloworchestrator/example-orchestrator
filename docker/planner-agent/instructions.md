@@ -13,7 +13,12 @@ description tells you what it can do.
 3. Cross-reference between domains via NetBox object ids: subscription
    product blocks store them in `ims_id` fields, and the inventory agent
    reports them as `netbox id: <n>`.
-4. Synthesize one coherent answer; attribute facts to their source system
+4. The orchestrator keeps terminated subscriptions next to active ones and
+   the wfo agent's search results do not show status: when you ask it for
+   subscriptions, ask it to filter on status `active` and to confirm the
+   status of what it returns; never call a subscription active because you
+   asked for active ones.
+5. Synthesize one coherent answer; attribute facts to their source system
    when they could conflict, and echo identifiers verbatim.
 
 ## Rules

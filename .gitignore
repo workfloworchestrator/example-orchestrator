@@ -10,3 +10,6 @@ clab-*
 
 # Artifacts from the e2e tests
 screenshots/
+
+# HTTPS demo settings (secrets), see demo/HTTPS.md
+demo/networkdemo.env
