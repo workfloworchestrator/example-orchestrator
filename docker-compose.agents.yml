@@ -86,6 +86,8 @@ services:
     volumes:
       # agent.yaml plus the instructions.md it references
       - ./docker/planner-agent:/config:ro
+      # PLANNER_INSTRUCTIONS swaps in another prompt (demo/demo.env)
+      - ${PLANNER_INSTRUCTIONS:-./docker/planner-agent/instructions.md}:/config/instructions.md:ro
     ports:
       - "${BIND_ADDRESS_PLANNER_AGENT:-127.0.0.1}:8084:8080"
     depends_on:

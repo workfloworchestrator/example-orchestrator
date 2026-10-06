@@ -1,0 +1,19 @@
+# Network agent — a declarative docker-agent (cagent) manifest, served over
+# A2A by the network-agent compose service (demo/docker-compose.demo.yml).
+# Same shape as the inventory agent: model, prompt and toolsets in one place,
+# with the system prompt in instructions.md next to this file.
+agents:
+  network:
+    model: openai/gpt-4o
+    # Published in the A2A agent card; the planner reads it to decide when to
+    # delegate here — keep it accurate and specific.
+    description: "Read-only live state of the demo network's SR Linux nodes: intent-vs-reality check of all core links including loss and round-trip time per link (check_core_links), which core link subscription and customer uses a given node and interface (find_core_link), loss and round-trip time per core link hop (measure_core_links), per-link health from both ends, interfaces, LLDP neighbors, IS-IS adjacencies, routes and ping."
+    instruction_file: instructions.md
+    toolsets:
+      - type: mcp
+        remote:
+          url: http://network-mcp:8000/mcp
+          transport_type: streamable
+        # compose-internal address; docker-agent's SSRF guard blocks private
+        # IPs unless explicitly allowed
+        allow_private_ips: true
