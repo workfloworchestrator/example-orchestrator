@@ -11,7 +11,7 @@ env:
 jobs:
   precommit:
     name: Run pre-commit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
       - uses: actions/checkout@v6
@@ -38,7 +38,7 @@ jobs:
   validate-compose-and-e2e-tests:
     # Validates the Docker Compose stack is healthy and runs the e2e test suite against it.
     name: Spin up services and run e2e tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # As of version 1.60 playwright does not yet support chromium on ubuntu-26.04
     needs: precommit  # Only run if precommit checks pass
 
     steps:
