@@ -1,6 +1,6 @@
 # LibreChat endpoint configuration for the agents compose profile.
 #
-# WFO connects directly so LibreChat can display workflow questions and
+# WFO (HITL) connects directly so LibreChat can display workflow questions and
 # approval forms. The planner and other A2A agents use a2a-proxy:
 #
 #   LibreChat -> wfo-agent (:8080/v1) -> orchestrator (MCP)
@@ -22,7 +22,7 @@ endpoints:
         default: ["wfo"]
         fetch: false
       titleConvo: false
-      modelDisplayLabel: "WFO agent"
+      modelDisplayLabel: "WFO (HITL)"
       headers:
         X-Conversation-Id: "{{LIBRECHAT_BODY_CONVERSATIONID}}"
         X-Agent-Client: "librechat"
@@ -45,12 +45,13 @@ endpoints:
 # addedEndpoints keep the normal endpoint picker next to the presets.
 modelSpecs:
   prioritize: false
-  # Custom endpoints must be listed by name. Keep both routes available
-  # alongside the WFO model spec, which enables workflow forms.
-  addedEndpoints: [openAI, "WFO agent", "WFO Agents", agents]
+  # Show the direct WFO route only through its HITL-enabled model spec.
+  # Listing its raw endpoint too would offer a duplicate without forms.
+  # Custom endpoints that stay in the picker must be listed by name.
+  addedEndpoints: [openAI, "WFO Agents", agents]
   list:
     - name: wfo
-      label: WFO
+      label: WFO (HITL)
       softDefault: true
       askUserQuestion: true
       preset:

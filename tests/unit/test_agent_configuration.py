@@ -20,12 +20,14 @@ def test_workflow_model_has_a_direct_form_capable_connection():
     )
 
     assert spec["askUserQuestion"] is True
+    assert spec["label"] == "WFO (HITL)"
     assert spec["preset"]["model"] in endpoint["models"]["default"]
     assert endpoint["baseURL"] == "http://wfo-agent:8080/v1"
     assert endpoint["headers"]["X-Agent-Client"] == "librechat"
     assert endpoint["headers"]["X-Conversation-Id"] == "{{LIBRECHAT_BODY_CONVERSATIONID}}"
     assert endpoint["titleConvo"] is False
-    assert endpoint["name"] in config["modelSpecs"]["addedEndpoints"]
+    # The preset supplies HITL; the raw endpoint would duplicate it without forms.
+    assert endpoint["name"] not in config["modelSpecs"]["addedEndpoints"]
 
 
 def test_planner_is_still_selectable_alongside_model_specs():

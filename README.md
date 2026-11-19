@@ -1724,7 +1724,7 @@ mapping 1:1 onto a kagent resource should you move to Kubernetes later.
 
 ```
 LibreChat (:3080)
- ├── WFO ───────────────OpenAI /v1──► wfo-agent (:8082) ──MCP──► orchestrator /mcp (:8080)
+ ├── WFO (HITL) ────────OpenAI /v1──► wfo-agent (:8082) ──MCP──► orchestrator /mcp (:8080)
  └── WFO Agents ──OpenAI /v1──► a2a-proxy (:8090) ──A2A──► planner-agent (:8084)
                                                           ├──A2A──► wfo-agent
                                                           └──A2A──► inventory-agent (:8083)
@@ -1832,7 +1832,7 @@ curl -f http://localhost:8082/health
 ```
 
 Open http://localhost:3080, register a local account (stored in your own
-MongoDB container), and select **WFO**. This model connects directly to the
+MongoDB container), and select **WFO (HITL)**. This model connects directly to the
 Orchestrator Agent and supports search, charts and workflow forms. Start with
 *"Which subscriptions are active?"* after seeding the workshop data.
 
@@ -1842,7 +1842,8 @@ For cross-system questions, start a new chat and select **WFO Agents → planner
   NetBox, and how many products does the orchestrator have?"*; it delegates
   to both domain agents and combines the answers.
 - **wfo-search** / **inventory**: reach one domain agent through the A2A
-  proxy to see what each contributes. Use **WFO** for workflow forms.
+  proxy to see what each contributes. These routes do not display workflow
+  questions or approval forms; use **WFO (HITL)** for those.
 
 The inventory answers get interesting after you run the `NetBox Bootstrap`
 task and some node/port workflows (see [Quickstart](#quickstart)) so NetBox
@@ -1898,7 +1899,7 @@ commands. To return to the standard UI, run the base `docker compose up -d orche
 
 ### Run a workflow from chat
 
-After completing the workshop's seeding steps, select **WFO** in a new chat
+After completing the workshop's seeding steps, select **WFO (HITL)** in a new chat
 and ask to create the second core link. The agent asks the workflow's form
 questions, then shows all values for review. **Approve**, followed by
 **Submit**, starts the workflow; **Reject** cancels it. Open the returned
@@ -1910,7 +1911,7 @@ for the exact node names, cabled ports and expected results. The bundled
 the direct endpoint and forms. For another stack or an older checkout, see
 [Connect LibreChat](https://workfloworchestrator.org/orchestrator-agent/guides/librechat/).
 
-If **WFO** or its forms are missing, check that the pinned LibreChat image is
+If **WFO (HITL)** or its forms are missing, check that the pinned LibreChat image is
 running and the bundled configuration is mounted, then recreate LibreChat:
 
 ```shell
