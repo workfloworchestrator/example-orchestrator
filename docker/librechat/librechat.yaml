@@ -1,20 +1,31 @@
 # LibreChat endpoint configuration for the agents compose profile.
 #
-# LibreChat has no native A2A client, so agents are surfaced as OpenAI
-# "models" through the a2a-proxy service (kagent-a2a-proxy), which translates
-# /v1/chat/completions <-> the agents' A2A protocol:
+# WFO connects directly so LibreChat can display workflow questions and
+# approval forms. The planner and other A2A agents use a2a-proxy:
 #
+#   LibreChat -> wfo-agent (:8080/v1) -> orchestrator (MCP)
 #   LibreChat -> a2a-proxy (:8080/v1) -> planner / wfo-search / inventory (A2A)
 #
 # Each agent registered in the proxy's PROXY_AGENT_MAP appears as one model
 # entry here. `planner` delegates to the two domain agents over A2A; the
 # domain agents are also selectable directly to inspect what each one does.
 
-version: 1.2.1
+version: 1.3.17
 cache: true
 
 endpoints:
   custom:
+    - name: "WFO agent"
+      apiKey: "unused"
+      baseURL: "http://wfo-agent:8080/v1"
+      models:
+        default: ["wfo"]
+        fetch: false
+      titleConvo: false
+      modelDisplayLabel: "WFO agent"
+      headers:
+        X-Conversation-Id: "{{LIBRECHAT_BODY_CONVERSATIONID}}"
+        X-Agent-Client: "librechat"
     - name: "WFO Agents"
       # The proxy does not validate auth; any non-empty string works
       apiKey: "no-auth-required"
@@ -34,8 +45,17 @@ endpoints:
 # addedEndpoints keep the normal endpoint picker next to the presets.
 modelSpecs:
   prioritize: false
-  addedEndpoints: [openAI, custom, agents]
+  # Custom endpoints must be listed by name. Keep both routes available
+  # alongside the WFO model spec, which enables workflow forms.
+  addedEndpoints: [openAI, "WFO agent", "WFO Agents", agents]
   list:
+    - name: wfo
+      label: WFO
+      softDefault: true
+      askUserQuestion: true
+      preset:
+        endpoint: "WFO agent"
+        model: wfo
     - name: gpt-6-sol
       label: GPT-6 Sol
       preset:

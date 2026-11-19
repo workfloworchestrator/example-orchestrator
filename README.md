@@ -187,6 +187,12 @@ netbox pages to see the orchestrator interact with netbox:
 
 The project includes a Playwright-based end-to-end test suite located in `tests/e2e/`. The tests run against the full Docker Compose stack and are executed automatically in CI on every pull request.
 
+Agent client configuration checks run without starting the stack:
+
+```shell
+uv run pytest tests/unit/
+```
+
 To run the tests locally, start the stack first (see [Quickstart](#quickstart)), then:
 
 ```bash
@@ -1717,10 +1723,12 @@ resources alongside bring-your-own containers), with each compose service
 mapping 1:1 onto a kagent resource should you move to Kubernetes later.
 
 ```
-LibreChat ──OpenAI /v1──► a2a-proxy ──A2A──► planner-agent (:8084)
- (:3080)                   (:8090)             │ A2A
-                                               ├──► wfo-agent (:8082) ────────MCP──► orchestrator /mcp (:8080)
-                                               └──► inventory-agent (:8083) ──MCP──► netbox-mcp (:8092) ──► netbox
+LibreChat (:3080)
+ ├── WFO ───────────────OpenAI /v1──► wfo-agent (:8082) ──MCP──► orchestrator /mcp (:8080)
+ └── WFO Agents ──OpenAI /v1──► a2a-proxy (:8090) ──A2A──► planner-agent (:8084)
+                                                          ├──A2A──► wfo-agent
+                                                          └──A2A──► inventory-agent (:8083)
+                                                                       └──MCP──► netbox-mcp (:8092) ──► netbox
 ```
 
 The agent services are defined in [`docker-compose.agents.yml`](docker-compose.agents.yml),
@@ -1735,8 +1743,8 @@ exactly one MCP toolset, served by the system it works against.
 
 | Service           | Image                                             | Purpose                                                                         |
 | ----------------- | ------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `librechat`       | `ghcr.io/danny-avila/librechat-dev`               | [LibreChat](https://www.librechat.ai/) chat UI on :3080                         |
-| `mongodb`         | `mongo:8`                                         | LibreChat conversation/auth store                                               |
+| `librechat`       | `registry.librechat.ai/librechat-ai/librechat:v0.8.8` | [LibreChat](https://www.librechat.ai/) chat UI with workflow forms on :3080    |
+| `mongodb`         | `mongo:7`                                         | LibreChat conversation/auth store                                               |
 | `a2a-proxy`       | `ghcr.io/nren-agents/kagent-a2a-proxy`            | Exposes A2A agents as OpenAI-compatible models (LibreChat has no A2A client)    |
 | `planner-agent`   | [docker-agent](https://docs.docker.com/ai/cagent/) runtime | Declarative cagent agent; delegates to the domain agents over A2A      |
 | `wfo-agent`       | `ghcr.io/workfloworchestrator/orchestrator-agent` | WFO search agent (pydantic-ai); all tools come from the orchestrator MCP server |
@@ -1763,8 +1771,14 @@ built-in MCP server, enabled with `MCP_ENABLED=True` in
 
 ### Start the agents
 
-The only credential the agent stack needs is an LLM API key for the search
-agent. Put it in a `.env` file next to `docker-compose.yml` (gitignored):
+The example pairs Orchestrator Agent **0.5.1** with Core **5.7.0a3**, an alpha
+release required by the agent's workflow-form API, and LibreChat **0.8.8**.
+Keep the Core package pin in `pyproject.toml`, `uv.lock` and the Compose image
+tag together when changing versions. Existing databases are migrated at
+startup; use a disposable workshop database when trying this alpha.
+
+The default agent stack needs an OpenAI API key shared by WFO, the planner
+and inventory agent. Put it in a `.env` file next to `docker-compose.yml` (gitignored):
 
 ```
 AGENT_MODEL=openai:gpt-5-mini
@@ -1776,7 +1790,9 @@ AGENT_API_KEY=sk-...
 endpoint (Azure, Ollama, LiteLLM) additionally set `AGENT_API_BASE` in
 `docker/overrides/wfo-agent/wfo-agent.env`. The two cagent agents declare
 their model in their own `agent.yaml` (default `openai/gpt-4o`) and read the
-same `AGENT_API_KEY` from the root `.env`.
+same `AGENT_API_KEY` from the root `.env` as `OPENAI_API_KEY`. Changing
+`AGENT_MODEL` changes only WFO; using another provider for the whole stack
+also requires changing the companion manifests and their provider-key settings.
 
 Non-agent services keep their configuration in
 `docker/<service>/<service>.env` with `docker/overrides/<service>/` hooks,
@@ -1786,30 +1802,72 @@ the cagent agents are configured entirely through their mounted
 
 > [!NOTE]
 > A cagent agent's A2A card captures its container address at startup. If you
-> restart `inventory-agent` on its own, restart `planner-agent` afterwards so
+> restart `wfo-agent` or `inventory-agent` on its own, restart `planner-agent` afterwards so
 > it re-resolves its peers.
 
-Then start the stack with the `agents` profile:
+For the [example orchestrator workshop](https://workfloworchestrator.org/workshops/example-orchestrator/overview/),
+keep LSO enabled so workflows can provision the network:
+
+```shell
+source .env.workshop
+export COMPOSE_PROFILES=lso,agents
+docker compose up -d
+```
+
+Use these commands again in a fresh terminal or after stopping the stack.
+The workshop's ContainerLab topology must also be running for provisioning.
+
+For an agents-only try-out without the workshop's LSO provisioning path:
 
 ```
-# Set the profile in this env-var. When using multiple profiles, separate them by a comma
 export COMPOSE_PROFILES=agents
 
 docker compose up -d
 ```
 
-Open http://localhost:3080, register a local account (stored in your own
-mongodb container), and pick a model under **WFO Agents**:
+Wait for the WFO agent to become ready:
 
-- **planner** (default): cross-domain questions, e.g. *"Which sites exist in
+```shell
+curl -f http://localhost:8082/health
+```
+
+Open http://localhost:3080, register a local account (stored in your own
+MongoDB container), and select **WFO**. This model connects directly to the
+Orchestrator Agent and supports search, charts and workflow forms. Start with
+*"Which subscriptions are active?"* after seeding the workshop data.
+
+For cross-system questions, start a new chat and select **WFO Agents → planner**:
+
+- **planner**: cross-domain questions, e.g. *"Which sites exist in
   NetBox, and how many products does the orchestrator have?"*; it delegates
   to both domain agents and combines the answers.
-- **wfo-search** / **inventory**: talk to a domain agent directly to see
-  what each one contributes.
+- **wfo-search** / **inventory**: reach one domain agent through the A2A
+  proxy to see what each contributes. Use **WFO** for workflow forms.
 
 The inventory answers get interesting after you run the `NetBox Bootstrap`
 task and some node/port workflows (see [Quickstart](#quickstart)) so NetBox
 actually contains devices.
+
+### Run a workflow from chat
+
+After completing the workshop's seeding steps, select **WFO** in a new chat
+and ask to create the second core link. The agent asks the workflow's form
+questions, then shows all values for review. **Approve**, followed by
+**Submit**, starts the workflow; **Reject** cancels it. Open the returned
+process in WFO to follow provisioning and resume its confirmation step.
+
+Follow [Tutorial: spinning up the example orchestrator](https://workfloworchestrator.org/learn/orchestrator-agent/tutorials/example-orchestrator/)
+for the exact node names, cabled ports and expected results. The bundled
+[LibreChat configuration](docker/librechat/librechat.yaml) already enables
+the direct endpoint and forms. For another stack or an older checkout, see
+[Connect LibreChat](https://workfloworchestrator.org/orchestrator-agent/guides/librechat/).
+
+If **WFO** or its forms are missing, check that the pinned LibreChat image is
+running and the bundled configuration is mounted, then recreate LibreChat:
+
+```shell
+docker compose up -d --force-recreate librechat
+```
 
 ## Configuration
 

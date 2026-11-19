@@ -6,7 +6,8 @@
 services:
   wfo-agent:
     container_name: wfo-agent
-    image: ${AGENT_TAG:-ghcr.io/workfloworchestrator/orchestrator-agent:latest}
+    # 0.5.1 requires Core >= 5.7.0a3 for the workflow-form protocol.
+    image: ${AGENT_TAG:-ghcr.io/workfloworchestrator/orchestrator-agent:0.5.1}
     profiles:
       - agents
     env_file:
@@ -128,7 +129,9 @@ services:
 
   librechat:
     container_name: librechat
-    image: ghcr.io/danny-avila/librechat-dev:latest
+    # Workflow forms need LibreChat >= 0.8.8. Keep this release and the
+    # configuration in docker/librechat/librechat.yaml in sync.
+    image: registry.librechat.ai/librechat-ai/librechat:v0.8.8
     profiles:
       - agents
     env_file:
