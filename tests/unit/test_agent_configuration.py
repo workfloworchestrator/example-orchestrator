@@ -1,5 +1,9 @@
 """Keep the two LibreChat routes usable together, including workflow forms."""
 
+import json
+import os
+import shutil
+import subprocess
 import tomllib
 from pathlib import Path
 
@@ -48,3 +52,35 @@ def test_core_package_lock_and_image_versions_match():
     assert compose["services"]["orchestrator"]["image"] == (
         "${ORCH_BACKEND_TAG:-ghcr.io/workfloworchestrator/orchestrator-core:" + version + "}"
     )
+
+
+def test_agui_overlay_builds_the_ui_and_keeps_the_agent_on_the_server():
+    compose = shutil.which("docker-compose") or "/usr/libexec/docker/cli-plugins/docker-compose"
+    command = [compose] if Path(compose).is_file() else ["docker", "compose"]
+    env = {**os.environ, "AGENT_API_KEY": "compose-config-test"}
+    result = subprocess.run(
+        [
+            *command,
+            "--profile",
+            "agents",
+            "-f",
+            "docker-compose.yml",
+            "-f",
+            "docker-compose.agui.yml",
+            "config",
+            "--format",
+            "json",
+        ],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    ui = json.loads(result.stdout)["services"]["orchestrator-ui"]
+    assert ui["environment"]["ORCHESTRATOR_AGENT_URL"] == "/api/agent/agui/"
+    assert ui["environment"]["ORCHESTRATOR_AGENT_UPSTREAM"] == "http://wfo-agent:8080"
+    assert "wfo-agent" in ui["depends_on"]
+    assert ui["build"]["context"].endswith("example-orchestrator-ui")
+    base = yaml.safe_load((ROOT / "docker-compose.yml").read_text())
+    assert "ORCHESTRATOR_AGENT_URL" not in base["services"]["orchestrator-ui"].get("environment", {})

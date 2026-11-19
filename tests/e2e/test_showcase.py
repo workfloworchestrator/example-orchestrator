@@ -31,7 +31,12 @@ def fill_showcase_form(
     page.get_by_test_id("constrained_integer").fill("5")
     page.get_by_test_id("boolean_value").check()
     select_combo_option(page, "single_choice.search-input", "Beta")
-    select_combo_option(page, "multi_choice.0.search-input", "One")
+    # UI 11 renders short enum lists as checkboxes; older images use a combo.
+    one = page.get_by_role("checkbox", name="One", exact=True)
+    if one.count():
+        one.check()
+    else:
+        select_combo_option(page, "multi_choice.0.search-input", "One")
 
     if not run_conditional_step:
         page.get_by_test_id("run_conditional_step").uncheck()

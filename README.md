@@ -1848,6 +1848,46 @@ The inventory answers get interesting after you run the `NetBox Bootstrap`
 task and some node/port workflows (see [Quickstart](#quickstart)) so NetBox
 actually contains devices.
 
+### Explore the agent inside the WFO UI
+
+The [companion UI](https://github.com/workfloworchestrator/example-orchestrator-ui)
+also includes a native AG-UI chat popup for search, charts, CSV downloads and
+workflow forms. This uses a local source build until the integration is included
+in a published UI image. Use a UI checkout with `orchestrator-ui-components`
+11.0.0 or later, `ORCHESTRATOR_AGENT_URL` and `pages/api/agent/[...path].ts`
+alongside this repository:
+
+```text
+parent/
+  example-orchestrator/
+  example-orchestrator-ui/
+```
+
+From `example-orchestrator`, build and start the UI integration:
+
+```shell
+source .env.workshop
+export COMPOSE_PROFILES=lso,agents
+docker compose -f docker-compose.yml -f docker-compose.agui.yml up -d --build
+```
+
+Open http://localhost:3000 and use the chat button in the bottom-right corner.
+The popup talks directly to WFO; LibreChat remains available for the planner.
+Try these in the popup:
+
+- `Find all active subscriptions.`
+- `Show the active subscriptions per product type as a bar chart.`
+- `Export these results to CSV.` Then use **Download CSV**.
+
+Reload the UI to find the conversation in the chat history. Workflow forms
+also work here; review every value before approving a start.
+
+The overlay builds the UI locally and forwards chat, history, form options
+and downloads through the UI's own origin. No browser CORS configuration is
+needed. If the UI checkout lives elsewhere, set `ORCH_UI_SOURCE` to its path.
+Use the same two `-f` arguments for subsequent `up`, `logs` and `down`
+commands. To return to the standard UI, run the base `docker compose up -d orchestrator-ui` without the overlay.
+
 ### Run a workflow from chat
 
 After completing the workshop's seeding steps, select **WFO** in a new chat
