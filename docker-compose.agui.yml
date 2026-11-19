@@ -1,0 +1,13 @@
+# Optional native chat in the WFO UI, built from the companion UI checkout.
+# COMPOSE_PROFILES=lso,agents docker compose -f docker-compose.yml -f docker-compose.agui.yml up -d --build
+services:
+  orchestrator-ui:
+    image: ${ORCH_UI_AGUI_TAG:-example-orchestrator-ui:agui-local}
+    build:
+      context: ${ORCH_UI_SOURCE:-../example-orchestrator-ui}
+    environment:
+      ORCHESTRATOR_AGENT_URL: /api/agent/agui/
+      ORCHESTRATOR_AGENT_UPSTREAM: http://wfo-agent:8080
+    depends_on:
+      wfo-agent:
+        condition: service_started

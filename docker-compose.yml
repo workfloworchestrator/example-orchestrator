@@ -112,6 +112,9 @@ services:
 
   rover-compose:
     container_name: rover-compose
+    # Rootless Podman maps container root to the invoking host user. Set
+    # ROVER_USER=0:0 there so Rover can write the bind-mounted schema.
+    user: ${ROVER_USER:-rover-user}
     build:
       context: docker/federation
       dockerfile: rover.Dockerfile
@@ -188,7 +191,7 @@ services:
     # the image ships a preinstalled venv, and running `db upgrade heads` with
     # a newer image against a database used by the pinned version (or vice
     # versa) leaves alembic revisions the other version cannot resolve.
-    image: ${ORCH_BACKEND_TAG:-ghcr.io/workfloworchestrator/orchestrator-core:5.1.0}
+    image: ${ORCH_BACKEND_TAG:-ghcr.io/workfloworchestrator/orchestrator-core:5.7.0a3}
     env_file:
       - ./docker/orchestrator/orchestrator.env
       - path: ./docker/overrides/orchestrator/orchestrator.env

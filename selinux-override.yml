@@ -30,6 +30,7 @@ services:
   planner-agent:
     volumes:
       - ./docker/planner-agent:/config:z,ro
+      - ${PLANNER_INSTRUCTIONS:-./docker/planner-agent/instructions.md}:/config/instructions.md:z,ro
 
   orchestrator:
     volumes:
@@ -45,6 +46,7 @@ services:
       - ./utils:/home/orchestrator/utils:z
       - ./services:/home/orchestrator/services:z
       - ./pyproject.toml:/home/orchestrator/pyproject.toml:z
+      - ./uv.lock:/home/orchestrator/uv.lock:z
       - ./alembic.ini:/home/orchestrator/alembic.ini:z
       - ./translations:/home/orchestrator/translations:z
       - ./templates:/home/orchestrator/templates:z
