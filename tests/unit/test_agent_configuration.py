@@ -54,7 +54,7 @@ def test_core_package_lock_and_image_versions_match():
     )
 
 
-def test_agui_overlay_builds_the_ui_and_keeps_the_agent_on_the_server():
+def compose_config(*overlays):
     compose = shutil.which("docker-compose") or "/usr/libexec/docker/cli-plugins/docker-compose"
     command = [compose] if Path(compose).is_file() else ["docker", "compose"]
     env = {**os.environ, "AGENT_API_KEY": "compose-config-test"}
@@ -65,8 +65,7 @@ def test_agui_overlay_builds_the_ui_and_keeps_the_agent_on_the_server():
             "agents",
             "-f",
             "docker-compose.yml",
-            "-f",
-            "docker-compose.agui.yml",
+            *(argument for overlay in overlays for argument in ("-f", overlay)),
             "config",
             "--format",
             "json",
@@ -77,10 +76,29 @@ def test_agui_overlay_builds_the_ui_and_keeps_the_agent_on_the_server():
         text=True,
         check=True,
     )
-    ui = json.loads(result.stdout)["services"]["orchestrator-ui"]
+    return json.loads(result.stdout)
+
+
+def test_agui_overlay_builds_the_ui_and_keeps_the_agent_on_the_server():
+    ui = compose_config("docker-compose.agui.yml")["services"]["orchestrator-ui"]
     assert ui["environment"]["ORCHESTRATOR_AGENT_URL"] == "/api/agent/agui/"
     assert ui["environment"]["ORCHESTRATOR_AGENT_UPSTREAM"] == "http://wfo-agent:8080"
     assert "wfo-agent" in ui["depends_on"]
     assert ui["build"]["context"].endswith("example-orchestrator-ui")
     base = yaml.safe_load((ROOT / "docker-compose.yml").read_text())
     assert "ORCHESTRATOR_AGENT_URL" not in base["services"]["orchestrator-ui"].get("environment", {})
+
+
+def test_selinux_overlay_labels_all_orchestrator_and_planner_bind_mounts():
+    base = compose_config("docker-compose.agui.yml")["services"]
+    labeled = compose_config("docker-compose.agui.yml", "selinux-override.yml")["services"]
+
+    for service in ("orchestrator", "planner-agent"):
+        mounts = {mount["target"]: mount for mount in labeled[service]["volumes"]}
+        for original in base[service]["volumes"]:
+            if original["type"] != "bind":
+                continue
+            mount = mounts[original["target"]]
+            assert mount["source"] == original["source"]
+            assert mount.get("read_only", False) == original.get("read_only", False)
+            assert mount["bind"].get("selinux") == "z", f"{service}: {mount['target']}"

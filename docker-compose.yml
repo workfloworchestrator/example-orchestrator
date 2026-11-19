@@ -112,6 +112,9 @@ services:
 
   rover-compose:
     container_name: rover-compose
+    # Rootless Podman maps container root to the invoking host user. Set
+    # ROVER_USER=0:0 there so Rover can write the bind-mounted schema.
+    user: ${ROVER_USER:-rover-user}
     build:
       context: docker/federation
       dockerfile: rover.Dockerfile

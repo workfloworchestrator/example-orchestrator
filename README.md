@@ -1871,6 +1871,14 @@ export COMPOSE_PROFILES=lso,agents
 docker compose -f docker-compose.yml -f docker-compose.agui.yml up -d --build
 ```
 
+On SELinux-enforcing hosts (such as Fedora), also include the mount-label
+override. With rootless Podman, first set `ROVER_USER=0:0` in the root `.env`
+file so the schema builder can write its output as your host user:
+
+```shell
+docker compose -f docker-compose.yml -f docker-compose.agui.yml -f selinux-override.yml up -d --build
+```
+
 Open http://localhost:3000 and use the chat button in the bottom-right corner.
 The popup talks directly to WFO; LibreChat remains available for the planner.
 Try these in the popup:
@@ -1885,7 +1893,7 @@ also work here; review every value before approving a start.
 The overlay builds the UI locally and forwards chat, history, form options
 and downloads through the UI's own origin. No browser CORS configuration is
 needed. If the UI checkout lives elsewhere, set `ORCH_UI_SOURCE` to its path.
-Use the same two `-f` arguments for subsequent `up`, `logs` and `down`
+Use the same `-f` arguments for subsequent `up`, `logs` and `down`
 commands. To return to the standard UI, run the base `docker compose up -d orchestrator-ui` without the overlay.
 
 ### Run a workflow from chat
@@ -2063,6 +2071,11 @@ podman-compose -f docker-compose.yml -f selinux-override.yml up
 
 Named volumes (`db-data`, `netbox-media-files`, etc.) do not need `:z` — Podman
 creates them already labeled `container_file_t`.
+
+With **rootless Podman**, also set `ROVER_USER=0:0` in the root `.env` file.
+Container UID 0 maps to your unprivileged host user, allowing `rover-compose`
+to write `docker/federation/supergraph.graphql`. The default `rover-user`
+maps to a subordinate host UID and cannot write that host-owned file.
 
 ## Glossary
 
