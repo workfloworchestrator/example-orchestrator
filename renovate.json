@@ -1,0 +1,43 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "local>workfloworchestrator/renovate-config",
+    "local>workfloworchestrator/renovate-config//languages/python",
+    "local>workfloworchestrator/renovate-config//projects/application",
+    "local>workfloworchestrator/renovate-config//extras/security-alerts"
+  ],
+  "packageRules": [
+    {
+      "description": "[group] Update the orchestrator-core package (incl. the mcp extra) and the ghcr.io/workfloworchestrator/orchestrator-core image together: docker-compose.yml mounts this repo's pyproject.toml and uv.lock into the image, and running 'db upgrade heads' with an image that differs from the pinned package leaves alembic revisions the other version cannot resolve. The group is always proposed and always manual: a dashboard approval would postpone the image entry until the package entry is approved separately, which is exactly the drift this rule prevents",
+      "matchPackageNames": [
+        "orchestrator-core",
+        "ghcr.io/workfloworchestrator/orchestrator-core"
+      ],
+      "groupName": "orchestrator-core",
+      "automerge": false,
+      "labels": ["kind/dependencies"]
+    },
+    {
+      "description": "[cooldown] The orchestrator-core image is pinned by bare version tag and ghcr.io/workfloworchestrator/orchestrator-core has no v-prefixed tags; if a pinDigest adds a digest, the image index carries no release timestamp, so matchUpdateTypes digest skips the release age instead of leaving that update pending forever",
+      "matchPackageNames": ["ghcr.io/workfloworchestrator/orchestrator-core"],
+      "matchUpdateTypes": ["digest"],
+      "minimumReleaseAge": null
+    },
+    {
+      "description": "[automerge] Keep a NetBox image bump manual: docker/postgresql/01-netbox.sql is a database snapshot that has to be regenerated for a new NetBox version (see docker/postgresql/README.md)",
+      "matchPackageNames": ["netboxcommunity/netbox"],
+      "automerge": false
+    },
+    {
+      "description": "[disable] Only patch updates for the python Docker image (docker/lso/Dockerfile): it, requires-python and the orchestrator-core image stay on one Python version (currently 3.13), and docker versioning does not support version ranges, so a regex that accepts 3.13 patches only is the way to disable major/minor bumps",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["python"],
+      "allowedVersions": "/^3\\.13\\./"
+    }
+  ],
+  "ignorePaths": [
+    "docker/postgresql/**",
+    "docker/netbox/**",
+    "docker/federation/**"
+  ]
+}
