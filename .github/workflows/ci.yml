@@ -39,10 +39,7 @@ jobs:
     # Validates the Docker Compose stack is healthy and runs the e2e test suite against it.
     name: Spin up services and run e2e tests
     runs-on: ubuntu-24.04  # As of version 1.60 playwright does not yet support chromium on ubuntu-26.04
-    # Always run: the compose stack is validated even when precommit fails, and the
-    # 'CI result' gate below reports the failures of both jobs.
-    needs: precommit
-    if: always()
+    needs: precommit  # Only run if precommit checks pass
 
     steps:
       - name: Checkout repository
