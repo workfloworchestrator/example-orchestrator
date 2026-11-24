@@ -76,3 +76,8 @@ dev = [
     "pytest-playwright>=0.7.2",
     "ruff>=0.15.0",
 ]
+
+[tool.uv]
+# Keep this equal to `minimumReleaseAge` in the shared Renovate base preset (3 days):
+# Renovate's release age does not lift uv's cutoff, so `uv lock` has its own.
+exclude-newer = "3 days"

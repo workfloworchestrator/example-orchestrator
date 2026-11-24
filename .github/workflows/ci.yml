@@ -20,7 +20,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           # It is considered best practice to pin to a specific uv version.
-          version: "0.9.29"
+          version: "0.13.9"
           python-version: '3.13'
 
       - name: Install the project
@@ -51,7 +51,7 @@ jobs:
       - name: Install uv and set the python version
         uses: astral-sh/setup-uv@v7
         with:
-          version: "0.9.29"
+          version: "0.13.9"
           python-version: '3.13'
 
       - name: Install the project
@@ -138,3 +138,18 @@ jobs:
       - name: Tear down Docker Compose
         if: always()
         run: docker compose down -v
+
+  gate:
+    # Single required check for the GitHub ruleset: Renovate automerges once it is green.
+    # The informational uv-lock-report and gh-pages workflows are not part of it.
+    name: CI result
+    needs:
+      - precommit
+      - validate-compose-and-e2e-tests
+    runs-on: ubuntu-slim
+    if: always()  # also report when a needed job failed or was cancelled
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
+        with:
+          jobs: ${{ toJSON(needs) }}
